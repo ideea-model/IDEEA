@@ -1,9 +1,8 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# IDEEA.dev <img src="man/figures/logo.png" align="right"/>
+# IDEEA model R-library <img src="man/figures/logo.png" align="right"/>
 
-\[development version of IDEEA model R-package and manual\]
 <!-- badges: start -->
 
 [![Lifecycle:
@@ -26,7 +25,7 @@ variable renewables and identify a set of most cost-efficient options of
 deep decarbonization and carbon neutrality for India for broad public
 discussion.
 
-## IDEEA models
+## IDEEA model(s)
 
 Decarbonization of electricity is a critical milestone of the energy
 transition to low/zero emissions. Wind and solar energy are the most
@@ -41,7 +40,7 @@ resolution.
 
 ## Installation
 
-You can install the development version of IDEEA.dev from
+You can install the development version of IDEEA from
 [GitHub](https://github.com/) with:
 
 ``` r
@@ -49,11 +48,3 @@ You can install the development version of IDEEA.dev from
 devtools::install_github("ideea-model/IDEEA.dev")
 ```
 
-## Example
-
-This is a basic example which shows you how to solve a common problem:
-
-``` r
-library(IDEEA.dev)
-## basic example code
-```
