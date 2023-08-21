@@ -45,6 +45,6 @@ You can install the development version of IDEEA from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("ideea-model/IDEEA.dev")
+devtools::install_github("ideea-model/IDEEA")
 ```
 
