@@ -18,7 +18,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Depends: 
     R (>= 4.0),
-    energyRt (>= 0.01.31),
+    energyRt (>= 0.01.32),
     sf
 LazyData: true
 VignetteBuilder: knitr
