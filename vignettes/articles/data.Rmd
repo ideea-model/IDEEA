@@ -1,0 +1,436 @@
+---
+title: "IDEEA: open datasets"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, 
+  # fig.retina = T,
+  comment = "#>"
+)
+```
+
+discussion of data sets used in the library
+
+```{r setup, warning=FALSE, message=FALSE}
+library(IDEEA)
+library(tidyverse)
+library(sf)
+library(data.table)
+library(ggthemes)
+
+home_dir <- getwd()
+```
+
+### Generating capacity  
+Global Power Plant Database
+https://datasets.wri.org/dataset/globalpowerplantdatabase
+v1.3.0
+```{r, eval=FALSE, include=FALSE}
+# run once to download and save WRI data
+tmp_dir <- "tmp/wri"
+dir.create(tmp_dir, recursive = T, showWarnings = F)
+setwd(tmp_dir)
+# download 
+gppd_url <- "https://wri-dataportal-prod.s3.amazonaws.com/manual/global_power_plant_database_v_1_3.zip"
+download.file(gppd_url, destfile = "global_power_plant_database_v_1_3.zip")
+# unzip 
+unzip("global_power_plant_database_v_1_3.zip", overwrite = F)
+
+wri <- fread("global_power_plant_database.csv")
+setwd(home_dir)
+save(wri, file = "data-raw/wri.RData")
+```
+
+
+```{r, fig.cap="Power plants location by fuel and capacity"}
+ggplot(get_ideea_map(nreg = 36, offshore = T, islands = T, ROW = T)) +
+  geom_sf() +
+  geom_point(aes(longitude, latitude, color = primary_fuel, size = capacity_mw), 
+             data = pp, alpha = .5) +
+  scale_color_viridis_d(option = "H", direction = -1) +
+  # theme_bw() +
+  labs(x = "", y = "") +
+  theme_void()
+```
+*Source: WRI.*
+
+### Demand, load curve  
+
+```{r}
+load_2019_MWh <- ideea_data$load_2019_MWh %>%
+  mutate(
+    datetime = timeslices::tsl2dtm(slice, tmz = "Asia/Kolkata", year = 2019),
+    YDAY = timeslices::tsl2yday(slice),
+    HOUR = timeslices::tsl2hour(slice),
+    .after = "slice"
+  )
+
+ggplot(load_2019_MWh) +
+  geom_line(aes(HOUR, MWh/1e3, color = YDAY, group = YDAY), alpha = .25) +
+  scale_color_viridis_c(option = "H", limits = c(1, 365)) +
+  facet_wrap(~reg36, ncol = 4, scales = "free_y") +
+  labs(y = "GWh", x = "hour") +
+  theme_bw()
+ggsave("load_2019_reg36.png", width = 7, height = 9, path = "tmp")
+
+load_2019_reg7 <- load_2019_MWh %>% 
+  group_by(reg7, slice, datetime, YDAY, HOUR) %>%
+  summarise(MWh = sum(MWh, na.rm = T), .groups = "drop")
+  # mutate(
+  #   datetime = timeslices::tsl2dtm(slice, tmz = "Asia/Kolkata", year = 2019),
+  #   YDAY = timeslices::tsl2yday(slice),
+  #   HOUR = timeslices::tsl2hour(slice),
+  #   .after = "slice"
+  # )
+
+ggplot(load_2019_reg7) +
+  geom_line(aes(HOUR, MWh/1e3, color = YDAY, group = YDAY), alpha = .25) +
+  scale_color_viridis_c(option = "H", limits = c(1, 365)) +
+  facet_wrap(~reg7, ncol = 1, scales = "free_y") +
+  labs(y = "GWh", x = "hour") +
+  theme_bw()
+
+```
+
+
+### Wind capacity factors
+
+```{r, eval=T, message=FALSE}
+library(merra2ools)
+gis_sf <- get_ideea_map(36, offshore = T, islands = T)
+
+ideea_locid <- get_locid(gis_sf)
+ideea_locid_sf <- get_merra2_grid(type = "poly", locid = ideea_locid)
+
+wind_clusters <- get_ideea_data(name = "merra_wind_clusters", raw = T) 
+
+# Cluster 10% loss
+locid_win_cl_k <- wind_clusters %>% 
+    filter(sd_loss <= .1) %>% 
+    group_by(reg36_off) %>% 
+    mutate(k_min = (k == min(k))) %>% ungroup() %>% 
+    filter(k_min) %>% select(-k_min) %>%
+    as.data.table()
+
+# Cluster-loss figure
+locid_win_cl_kk <- wind_clusters %>%
+  group_by(reg36_off, k) %>%
+  summarise(sd_loss = max(sd_loss), N = max(N), .groups = "drop")
+
+locid_win_cl_k_i <- locid_win_cl_k %>%
+  group_by(reg36_off, k) %>%
+  summarise(sd_loss = max(sd_loss), N = max(N), .groups = "drop")
+
+a <- ggplot(locid_win_cl_kk) +
+  geom_line(aes(k, sd_loss), color = "dodgerblue", linewidth = 1.5) +
+  geom_point(aes(k, sd_loss), color = "red", data = locid_win_cl_k_i) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, NA)) +
+  # scale_x_continuous(breaks = rev_integer_breaks(5)) +
+  labs(x = "Number of clusters (k)", 
+       y = "loss, % of s.d.",
+       title = "Aggregation lossess by number of clusters") +
+  facet_wrap(~paste0(reg36_off, " (", N," locations)"), scales = "free",
+             ncol = max(1, round(36 / 5))) +
+  theme_bw()
+
+ideea_wind_sf <- ideea_locid_sf %>%
+  full_join(locid_win_cl_k) %>%
+  filter(!is.na(k)) %>%
+  left_join(select(merra2ools::mean_cf, locid, starts_with("waf"))) %>%
+  group_by(reg36_off, cluster) %>%
+  summarise(
+    wcf100m = mean(waf100m, na.rm = T),
+    area_km2 = sum(area)
+  )
+
+fig.wind.clusters <- ggplot() +
+  geom_sf(data = gis_sf) +
+  geom_sf(aes(fill = wcf100m), data = ideea_wind_sf, color = alpha("white", .75)) +
+  geom_sf(data = gis_sf, fill = NA, color = alpha("black", 1)) +
+  scale_fill_viridis_c(option = "D", name = "CF", limits = c(.1, NA)) +
+  theme_map()
+
+```
+
+```{r, echo=FALSE, fig.cap="Wind capacity factors clusters (< 10% sd loss)",}
+fig.wind.clusters
+```
+
+
+```{r, eval=FALSE, include=FALSE}
+win_cf_cl_r36 <- ideea_data$merra_raw_2014 %>%
+  fWindCF(height = 100, return_name = "wcf100m") %>%
+  right_join(locid_win_cl_k, relationship = "many-to-many") %>%
+  group_by(UTC, reg36_off, cluster) %>%
+  summarize(
+    wcf100m = weighted.mean(wcf100m, weight = area, na.rm = T),
+    area = sum(area, na.rm = T)
+  )
+save(win_cf_cl_r36, file = "data-raw/merra/win_cf_cl_r36.RData")
+
+reg36_reg7 <- ideea_data$reg_tbl %>%
+  select(reg36, reg7, offshore) %>%
+  mutate(
+    # region = reg46,
+    reg36_off = if_else(offshore, paste0(reg36, "_off"), reg36), 
+    reg7_off = if_else(offshore, paste0(reg7, "_off"), reg7), 
+    .before = 1) %>%
+  filter(!is.na(reg7)) %>%
+  select(reg36_off, reg7_off) %>%
+  unique()
+
+win_cf_r7 <- win_cf_cl_r36 %>%
+  left_join(reg36_reg7) %>%
+  group_by(UTC, reg7_off) %>%
+  #!!! add weights (area)
+  summarize(
+    wcf100m = mean(wcf100m, na.rm = T),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    slice = timeslices::dtm2tsl(lubridate::with_tz(UTC, "Asia/Kolkata")),
+    cluster = as.integer(1) # for a simplest case
+  ) %>%
+  select(matches("reg7"), slice, cluster, wcf100m)
+win_cf_r7$wcf100m %>% summary()
+
+save(win_cf_r7, file = "data-raw/merra/win_cf_r7.RData")
+
+```
+
+
+### Solar capacity factors
+<details>
+<summary>code</summary>
+```{r, eval=T, message=FALSE}
+library(merra2ools)
+gis_sf <- get_ideea_map(36, offshore = T, islands = T)
+
+ideea_locid <- get_locid(gis_sf)
+ideea_locid_sf <- get_merra2_grid(type = "poly", locid = ideea_locid)
+
+sol_clusters <- get_ideea_data(name = "merra_solar_clusters", raw = T) 
+
+# Cluster 10% loss
+locid_sol_cl_k <- sol_clusters %>% 
+    filter(sd_loss <= .01) %>% 
+    group_by(reg36_off) %>% 
+    mutate(k_min = (k == min(k))) %>% ungroup() %>% 
+    filter(k_min) %>% select(-k_min) %>%
+    as.data.table()
+
+# Cluster-loss figure
+locid_sol_cl_kk <- sol_clusters %>%
+  group_by(reg36_off, k) %>%
+  summarise(sd_loss = max(sd_loss), N = max(N), .groups = "drop")
+
+locid_sol_cl_k_i <- locid_sol_cl_k %>%
+  group_by(reg36_off, k) %>%
+  summarise(sd_loss = max(sd_loss), N = max(N), .groups = "drop")
+
+a <- ggplot(locid_sol_cl_kk) +
+  geom_line(aes(k, sd_loss), color = "dodgerblue", linewidth = 1.5) +
+  geom_point(aes(k, sd_loss), color = "red", data = locid_sol_cl_k_i) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, NA)) +
+  # scale_x_continuous(breaks = rev_integer_breaks(5)) +
+  labs(x = "Number of clusters (k)", 
+       y = "loss, % of s.d.",
+       title = "Aggregation lossess by number of clusters") +
+  facet_wrap(~paste0(reg36_off, " (", N," locations)"), scales = "free",
+             ncol = max(1, round(36 / 5))) +
+  theme_bw()
+
+
+ideea_sol_sf <- ideea_locid_sf %>%
+  full_join(locid_sol_cl_k) %>%
+  filter(!is.na(k)) %>%
+  left_join(select(merra2ools::mean_cf, locid, starts_with("saf_"))) %>%
+  mutate(area = as.numeric(st_area(geometry))/1e6) %>%
+  group_by(reg36_off, cluster) %>%
+  summarise(
+    scf_tl = mean(saf_tl, na.rm = T),
+    sol_MW_max = sum(sol_MW_max, na.rm = T),
+    area_km2 = sum(area, na.rm = T)
+  )
+
+fig.sol.clusters <- ggplot() +
+  geom_sf(data = gis_sf) +
+  geom_sf(aes(fill = scf_tl), data = ideea_sol_sf, color = alpha("white", .75)) +
+  geom_sf(data = gis_sf, fill = NA, color = alpha("black", 1)) +
+  scale_fill_viridis_c(option = "B", name = "CF", limits = c(.2, NA)) +
+  theme_map()
+# ggsave("vignets/images/fig.sol.clusters.")
+
+```
+</details>
+
+```{r, echo=FALSE, fig.cap="Solar capacity factors clusters (< 1% sd loss)",}
+fig.sol.clusters
+```
+
+
+```{r, eval=FALSE, include=FALSE}
+
+sol_cf_cl_r36 <- ideea_data$merra_raw_2014 %>%
+  # fsolCF(height = 100, return_name = "wcf100m") %>%
+  fPOA("tl") %>%
+  mutate(
+    scf_tl = POA.tl/1000,
+    scf_tl = if_else(scf_tl > 1, 1, scf_tl)
+  ) %>%
+# sol_cf_cl_r36$POA.tl %>% summary()
+  right_join(locid_sol_cl_k, relationship = "many-to-many") %>%
+  group_by(UTC, reg36_off, cluster) %>%
+  summarize(
+    scf_tl = weighted.mean(scf_tl, weight = area, na.rm = T)
+  )
+sol_cf_cl_r36$scf_tl %>% summary() # check mean value of capacity factor
+
+save(sol_cf_cl_r36, file = "data-raw/merra/sol_cf_cl_r36.RData")
+
+# reg36_reg7 <- ideea_data$reg_tbl %>%
+#   select(reg36, reg7, offshore) %>%
+#   mutate(
+#     # region = reg46,
+#     reg36_off = if_else(offshore, paste0(reg36, "_off"), reg36), 
+#     reg7_off = if_else(offshore, paste0(reg7, "_off"), reg7), 
+#     .before = 1) %>%
+#   filter(!is.na(reg7)) %>%
+#   select(reg36_off, reg7_off) %>%
+#   unique()
+
+sol_cf_r7 <- sol_cf_cl_r36 %>%
+  left_join(reg36_reg7) %>%
+  group_by(UTC, reg7_off) %>%
+  #!!! add weights (area)
+  summarize(
+    scf_tl = mean(scf_tl, na.rm = T),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    slice = timeslices::dtm2tsl(lubridate::with_tz(UTC, "Asia/Kolkata")),
+    cluster = as.integer(1) # for a simplest case
+  ) %>%
+  select(matches("reg7"), slice, cluster, scf_tl)
+
+sol_cf_r7
+sol_cf_r7$scf_tl %>% summary() # check before saving
+save(sol_cf_r7, file = "data-raw/merra/sol_cf_r7.RData")
+```
+
+
+
+```{r, eval=FALSE, include=FALSE}
+# NREL locations
+nrel_wind_locations <- fst::read_fst(
+  path = "D:/Dropbox/India/IDEEA/ideea_data/nrel/IND_points_wind_5m.fst", 
+  as.data.table = T)
+usethis::use_data(nrel_wind_locations)
+
+```
+
+
+```{r, fig.cap="Potential sites to deploy wind power plants, onshore and offshore, and installed capacity (MW)"}
+ggplot() +
+  # geom_sf(data = ideea_maps$ROW$ROW$sf, inherit.aes = F) +
+  geom_sf(fill = "wheat", data = ideea_maps$r34$land$sf, inherit.aes = F) +
+  geom_point(aes(Longitude, Latitude, color = as.logical(`Is Offshore`)), 
+             size = .1, data = nrel_wind_locations, alpha = .15, show.legend = F) +
+  scale_color_brewer(palette = "Set1") +
+  geom_point(aes(longitude, latitude, size = capacity_mw), 
+             data = filter(pp, primary_fuel == "Wind"), 
+             alpha = .75, inherit.aes = F, color = "blue", shape = 1) +
+  scale_size_continuous(range = c(.05, 3)) +
+  theme_bw() +
+  labs(x = "", y = "")
+```
+*Source: NREL, Global Wind Atlas.*
+
+## Time resolution
+```{r, eval=FALSE, include=FALSE}
+# tsl_sets <- timeslices::tsl_sets$d365_h24 %>%
+#   mutate(
+#     slice = paste(YDAY, HOUR, sep = "_")
+#   )
+# (load("tmp/time_sets_8760.RData"))
+# tsl_sets <- time_sets_8760
+# (load("tmp/time_levels_8760.RData"))
+# tsl_levels <- time_levels_8760
+
+# 
+# # Subsets 
+# ## 1. one day per month
+# library(lubridate)
+# yday_1day_x_12mon <- 
+#   paste0("d", 
+#          formatC(yday(ymd(paste("2023", 1:12, 15, sep = "-"))), 
+#                  width = 3, flag = "0")
+#          )
+# yday_1day_x_12mon
+# 
+# ## 2. three days per month
+# yday_3day_x_12mon <- 
+#   sapply(14:16, function(month_day) {
+#     paste0("d", 
+#            formatC(yday(ymd(paste("2023", 1:12, month_day, sep = "-"))), 
+#                    width = 3, flag = "0")
+#            )
+#   }) %>% sort()
+# yday_3day_x_12mon
+# 
+# ## 3. three days per month
+# yday_5day_x_12mon <- 
+#   sapply(13:17, function(month_day) {
+#     paste0("d", 
+#            formatC(yday(ymd(paste("2023", 1:12, month_day, sep = "-"))), 
+#                    width = 3, flag = "0")
+#            )
+#   }) %>% sort()
+# yday_5day_x_12mon
+# 
+# ## 4. three days per month
+# yday_7day_x_12mon <- 
+#   sapply(12:18, function(month_day) {
+#     paste0("d", 
+#            formatC(yday(ymd(paste("2023", 1:12, month_day, sep = "-"))), 
+#                    width = 3, flag = "0")
+#            )
+#   }) %>% sort()
+# yday_7day_x_12mon
+# 
+# 
+# # tsl_levels <- timeslices::tsl_sets
+# ## Full year (8760 hours = 24h * 365d)
+# # tsl_levels <- list(
+# #   ANNUAL = "ANNUAL",
+# #   YDAY = tsl_levels$d365_h24$YDAY,
+# #   HOUR = tsl_levels$d365_h24$HOUR
+# # )
+# names(tsl_levels)
+# 
+# time_sets <- list(
+#   tsl_sets = tsl_sets, 
+#   tsl_levels = tsl_levels, 
+#   yday_1day_x_12mon = yday_1day_x_12mon,
+#   yday_3day_x_12mon = yday_3day_x_12mon,
+#   yday_5day_x_12mon = yday_5day_x_12mon,
+#   yday_7day_x_12mon = yday_7day_x_12mon
+# )
+# 
+# save(time_sets, file = "data-raw/time_sets.RData")
+
+time_tables <- list(
+  d365_h24 = make_timetable(timeslices::tsl_levels$d365_h24)
+)
+ 
+save(time_tables, file = "data-raw/time_tables.RData")
+
+
+
+```
+
+
+

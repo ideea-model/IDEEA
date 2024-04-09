@@ -1,0 +1,55 @@
+---
+title: "IDEEA team and community"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Founding Members
+
+-   *Dr Balachandra Patil*, Chief Research Scientist, Department of Management Studies, Indian Institute of Science, Bengaluru
+-   *Dr Joyashree Roy*, Founder and Director, South and Southeast Asia Multidisciplinary Research Network on Transforming Societies on Global South (SMARTS), Asian Institute of Technology, Bangkok, and Representing Global Change Program, Jadavpur University, Kolkata
+-   *Parthaa Bosu*, Principal, Domain and Functional Advisory LLP (DFAG) and Lead Advisor -- India, Environmental Defense Fund (EDF)
+-   *Dr Oleg Lugovoy*, Lead Senior Economist, EDF
+
+## IDEEA team
+
+[ToDo: arrange in alphabetical order? position/roles]
+
+**Jadavpur University**
+
+-   *Joyashree Roy*, Founder and Director, South and Southeast Asia Multidisciplinary Research Network on Transforming Societies of Global South (SMARTS), Asian Institute of Technology, Bangkok, and Represents Global Change Program, Jadavpur University
+-   *Anupam Debsarkar,* Professor, Department of Civil and Environmental Engineering
+-   *Sourish Chatterjee*
+-   *Arijit Mukherjee*
+-   *Piku Sen*
+-   *Prantika Sarkar*
+-   *Biswajit Thakur*
+-   *Biswanath Roy*
+
+**Indian Institute of Science**
+
+-   *Abhishek Das*
+-   *Manjunath M*
+-   *Samridh Sharma*
+-   *Varun Jyothiprakash*
+-   *Balachandra Patil*
+
+**EDF**
+
+-   *Parthaa Bosu,* Principal, Domain and Functional Advisory LLP (DFAG) and Lead Advisor
+-   *Lavanya Padhi, Advisor,* Program Coordinator
+-   *Oleg Lugovoy,* Lead Senior Economist
+
+## Reviewers
+
+-   *Dr Tarun Sharma,* Assistant Professor, Indian Institute of Technology, Roorkee, Uttarakhand
+-   *Mitavachan Hiremath,* Co-founder and Director, Centre for Sustainability (SusPoT), Bengaluru
+
+## List of projects/studies
+
+Link to the main website

@@ -1,0 +1,29 @@
+---
+title: "IDEEA: Karnataka model"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE, warning=FALSE}
+library(IDEEA)
+```
+
+
+## Datasets
+
+### Generation and capacity structure
+
+### Reservoirs 
+
+### Load curve
+
+## Model
+
+## Basic scenarios
+
+## References

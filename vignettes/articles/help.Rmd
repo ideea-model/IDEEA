@@ -1,0 +1,44 @@
+---
+title: "Getting help with IDEEA"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+# usethis::use_article("help", "Getting help")
+```
+
+## IDEEA R-package help
+- functions  
+- data  
+
+## Report bugs
+[github link]
+
+## Suggest features
+[github link]
+
+## IDEEA community Discord
+[link to Discord]
+
+## IDEEA in Switch
+[link to Switch]
+
+## Alternative models and resources
+* PyPSA
+* OpenMod
+
+## FAQ:
+
+**Is IDEEA free?**
+
+**Can I use IDEEA for my research?**
+
+**Can I use IDEEA for commercial projects?**
+
+**Should I cite IDEEA if I use it?**
+
+**Can I use IDEEA resources to build another model?**
+

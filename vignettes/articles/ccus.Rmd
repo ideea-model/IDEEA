@@ -1,0 +1,600 @@
+---
+title: "Carbon capture, utilisation and storage"
+params:
+  nreg: [7, 36]
+  save_ccus_objects: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(kableExtra)
+library(here)
+# if (!interactive()) {
+#   
+#   # here::i_am("../../")
+# }
+```
+
+```{r setup, results=FALSE, message=FALSE, warning=FALSE, echo=TRUE}
+library(IDEEA)
+# devtools::load_all(".")
+library(tidyverse)
+```
+
+The goal of carbon capture, utilization and storage (CCS or CCUS)  technologies is to reduce carbon emissions from fuels combustion and industrial processes. The emissions are captured, transported, and stored in geological formations, or used in other industrial processes. The captured CO2 potentially can be used in enhanced oil recovery (EOR), or in the production of chemicals, fuels, and materials. However, the current status of utilization is limited and the main focus is on the storage of CO2 in geological formations.  
+
+## Carbon sink potential
+The potential of geological storage varies by region and depends on the availability of suitable geological formations, the distance to the sources of CO2, and the existing infrastructure. Here we use an estimated value [LINK] of CCS storage potential in saline aquifers and basalt formations by region.
+
+```{r}
+# A commodity to represent the storage of CO2
+CO2SINK <- newCommodity(
+  name = "CO2SINK", 
+  desc = "Stored CO2 in geological formations",
+  unit = "kt", 
+  timeframe = "ANNUAL"
+)
+
+# Data on the potential of CO2 storage in geological formations
+ccs_reserve <- get_ideea_data(name = "ccs_r5", raw = T)
+
+# Declaration of domestic carbon sink resources
+RES_CO2SINK <- newSupply(
+  name = "RES_CO2SINK",
+  desc = "Permanent geological carbon storage (saline aquifers and basalt).",
+  commodity = "CO2SINK",
+  unit = "kt",
+  region = unique(ccs_reserve$reg5),
+  reserve = data.frame(
+    region = ccs_reserve$reg5,
+    res.up = ccs_reserve$CCS_potential_GtCO2 * 1e6
+  ) |> unique(),
+  availability = list(
+    # represent injection costs per unit of stored CO2
+    cost = convert(12.1, "USD/t", "cr.₹/kt") # ~0.1 cr.₹/kt, assumption
+  )
+)
+
+```
+
+The implementation of CCS technologies in energy models can be done in many ways with different levels of detail. CO2 emissions in electric power sector in IDEEA model are linked to the fuels use (combustion) by power plants. The emission factor is set for every fuel in `@emis` slot of every commodity. For example, the `emis` slot of coal commodity `COA@emis` is set to:
+```{r, echo=FALSE}
+kableExtra::kable(ideea_modules$energy$COA@emis) |>
+  kableExtra::kable_styling(full_width = F)
+```
+and for natural gas (`GAS@emis`):
+```{r, echo=FALSE}
+kableExtra::kable(ideea_modules$energy$GAS@emis) |>
+  kableExtra::kable_styling(full_width = F)
+```
+
+In the current settings, the `emis` parameter in the `@emis` slot represents the `kt` of CO2 emissions per `GWh` of fuel use (by default, all energy is measured in `GWh` in IDEEA model).  
+When the fuels are used in power plants, the emissions are calculated based on the fuel use, the emission factors, and the `combustion` parameter in technology class (slot `@input`) which is set to `1` by default. 
+
+## CCS with fixed capture rate
+The simplest way to reduce CO2 emissions of a power generation in the model is not adjust the `combustion` parameter by the CCS capture rate. The efficiency and costs associated with CCS must be also adjusted accordingly. Bellow we "upgrade" a coal power plant from IDEEA model dataset with CCS technology.
+
+### Coal power plant with CCS
+
+```{r}
+COA <- ideea_modules$energy$COA
+ECOA_prototype <- ideea_modules$techs$ECOAULT@data$ECOAULT_2030
+ECOA_prototype@input
+```
+If the combustion parameter is not set (`NA` or `empty`), the default value is used (`1`). For simplicity, we assume that the plant with CCS has 90% capture rate, 10% efficiency loss, and 50% capital, fixed, and variable costs increase. The prototype of the CCS technology is shown below.
+
+```{r}
+# no CCS
+ECOA_prototype@input 
+# with CCS
+ECOA_CCS_FX <- update(
+  ECOA_prototype,
+  name = "ECOA_CCS_FX",
+  desc = "Coal power plant with fixed CCS",
+  input = list(comm = "COA", combustion = 0.1, unit = "GWh")
+  )
+
+# Efficiency, no CCS
+ECOA_prototype@ceff$cinp2use
+# Efficiency, with CCS
+ECOA_CCS_FX@ceff$cinp2use <- ECOA_prototype@ceff$cinp2use * 0.9
+
+# Costs
+ECOA_CCS_FX@invcost$invcost <- ECOA_prototype@invcost$invcost * 1.5
+ECOA_CCS_FX@fixom$fixom <- ECOA_prototype@fixom$fixom * 1.5
+ECOA_CCS_FX@varom$varom <- ECOA_prototype@varom$varom * 1.5
+
+# extend the availability window of the technology on the market
+ECOA_CCS_FX@end$end <- 2100
+```
+
+Finally, since the sequestration potential is also limited, we can track the utilization of carbon storage by specifying input commodity (`CO2SINK`) and in the `aeff` slot of the technology. The `CO2SINK` commodity is used to track the amount of CO2 stored in geological formations. We can also reduce the emissions of conventional pollutants (NOX, SOX, PM) by the same percentage as the CO2 emissions, specified in the auxiliary commodities and efficiency slots `@aux` and `@aeff`.  
+```{r}
+# no CCS
+ECOA_prototype@aux
+ECOA_prototype@aeff |> select(acomm, comm, cinp2aout, cinp2ainp)
+
+# with CCS
+ECOA_CCS_FX <- update(
+  ECOA_CCS_FX,
+  aux = data.frame(
+    acomm = c("NOX", "SOX", "PM", "CO2SINK"),
+    unit = c("kt", "kt", "kt", "kt")
+  ),
+  aeff = data.frame(
+    acomm = c("CO2SINK", ECOA_prototype@aeff$acomm),
+    comm = c("COA", "COA", "COA", "COA"),
+    cinp2ainp = c(COA@emis$emis * 0.9, NA, NA, NA), # 90% capture rate
+    cinp2aout = c(NA,  ECOA_prototype@aeff$cinp2aout * 0.1)
+  ),
+  varom = data.frame(
+    acomm = "CO2SINK",
+    cvarom = convert(120.1, "USD/t", "cr.₹/kt") # ~0.1 cr.₹/kt
+  )
+)
+
+draw(ECOA_CCS_FX)
+```
+
+If `CO2SINK` is used, the commodity and it's resource must be added to the model.
+
+### Gas power plant with CCS
+Similarly we can add CCS to natural gas and biomass-powered plants. Instead of updating the existing technology without CCS, we design the technology from scratch to demonstrate a technology-building process. 
+
+```{r, eval=TRUE}
+GAS <- ideea_modules$energy$GAS
+EGAS_prototype <- ideea_modules$techs$ENGCC$ENGCC_2030
+
+EGAS_CCS_FX <- newTechnology(
+  name = "EGAS_CCS_FX",
+  desc = "Natural gas power plant with fixed CCS",
+  input = list(
+    comm = "GAS", 
+    unit = "GWh", 
+    combustion = .1 # 10% of emissions are not captured by CCS
+    ),
+  output = data.frame(
+    comm = "ELC",
+    unit = c("GWh")
+  ), 
+  aux = data.frame(
+    acomm = c("NOX", "SOX", "PM", "CO2SINK", "CO2"),
+    unit = c("kt", "kt", "kt", "kt", "kt")
+  ),
+  ceff = list(
+    cinp2use = c(EGAS_prototype@ceff$cinp2use, NA), # 62% efficiency w/o CCS
+    use2cact = c(NA, .9), # 10% efficiency loss with CCS
+    comm = c("GAS", "ELC")
+  ),
+  aeff = data.frame(
+    acomm = c("CO2SINK", "NOX", "SOX", "PM"),
+    comm = c("GAS", rep("ELC", 3)),
+    cinp2ainp = c(GAS@emis$emis[1], rep(NA, 3)),
+    cout2aout = c(NA, .01, .01, .005) # arbitrary
+  ),
+  olife = list(olife = 40),
+  invcost = data.frame(
+    invcost = 1.5 * EGAS_prototype@invcost$invcost
+  ),
+  fixom = data.frame(
+    fixom = 1.5 * EGAS_prototype@fixom$fixom
+  ),
+  # variable costs are assigned in the CO2SINK supply,
+  # here is an alternative formulation with the same effect:
+  # varom = data.frame(
+  #   acomm = "CO2SINK",
+  #   cvarom = convert(12.1, "USD/t", "cr.₹/kt") # ~0.1 cr.₹/kt
+  # ),
+  start = list(start = 2025)
+  # end = list(end = 2060),
+)
+draw(EGAS_CCS_FX)
+
+```
+
+## CCS with flexible capture rate
+The example above assumes that once installed, CCS will be operated at maximum removal capacity. This setting will probably fit most decarbonization studies, but in some cases it might be helpful to have an optional use of CCS technology. For example, the technology can be designed to operate at a lower capture rate, depending on the strength of the carbon control policy, carbon price or the market. 
+
+The following case demonstrates an alternative way to design a CCS technology with a flexible capture rate. To make the operation rate flexible, we introduce an alternative fuel input (`COA_CCS` or `GAS_CCS`) and define a group of fuel inputs with different capture rates (set via `combistion` parameter as before).
+
+```{r}
+# Alias commodity for coal (COA) with zero emissions
+COA0 <- COA |>
+  update(
+    name = "COA0",
+    desc = "Alias for COA"
+  )
+
+ALIAS_COA <- newTechnology(
+  name = "ALIAS_COA",
+  desc = "Artificial technology to create an alias for COA commodity",
+  input = list(
+    comm = "COA",
+    unit = "GWh",
+    combustion = 0
+  ),
+  output = data.frame(
+    comm = "COA0",
+    unit = "GWh"
+  ), 
+  cap2act = 1e12, # capable to convert GWh a year
+  capacity = list(stock = 1), # pre-defined capacity to reduce the model dimension
+  end = list(end = 2000) #
+)
+draw(ALIAS_COA)
+  
+```
+ 
+This "alias" commodity does not require a new resource, it's  supply will be defined and bounded by the supply of the original commodity via the `ALIAS_COA` technology which has no costs, therefore will not affect the model's objective, but will be responsible for the supply of the `COA0` commodity, "made" of the `COA` commodity.
+
+### Coal power plant with flexible CCS
+The key difference of the flexible CCS technology vs. fixed described above is the introduction of the `group` parameter in the `input` and `ceff` slots. The `group` parameter is used to define a group of commodities with different capture rates. The `ceff` slot is used to define the efficiency loss when the alternative fuel is used (`cinp2ginp`) and the share of each commodity in the group to define the maximum capture rate (`share.up`).
+```{r}
+ECOA_CCS_FL <- ECOA_CCS_FX |>
+  update(
+    name = "ECOA_CCS_FL",
+    desc = "Coal power plant with flexible CCS",
+    input = list(
+      comm = c("COA", "COA0"),
+      unit = c("GWh", "GWh"),
+      group = c("i", "i"), # any group name
+      combustion = c(1, 0) # 10% of emissions are not captured by CCS
+    ),
+    geff = list(
+      group = "i",
+      ginp2use = ECOA_prototype@ceff$cinp2use[1]
+    ),
+    ceff = list(
+      comm = c("COA", "COA0"),
+      cinp2ginp = c(1, .9), # efficiency loss when COA is used
+      share.up = c(1, .9) # max share of each commodity in the group
+    ),
+    # auxiliary inputs/outputs does not require adjustment for CCS
+    # since it is defined by CCS utilization (COA vs COA0)
+    aeff = data.frame(
+      acomm = c("CO2SINK", ECOA_prototype@aeff$acomm),
+      comm = c("COA0", "COA", "COA", "COA"),
+      cinp2ainp = c(COA@emis$emis, NA, NA, NA), # 90% capture rate
+      cinp2aout = c(NA,  ECOA_prototype@aeff$cinp2aout)
+    )
+  )
+
+draw(ECOA_CCS_FL)
+```
+
+This technology is designed to operate from 0% to 90% capture rate instead of fixed 90% in the fixed rate example. 
+
+### Gas power plant with flexible CCS
+The same approach can be applied to the gas technology. 
+```{r}
+GAS0 <- GAS |>
+  update(
+    name = "GAS0",
+    desc = "Alias for GAS"
+  )
+
+ALIAS_GAS <- newTechnology(
+  name = "ALIAS_GAS",
+  desc = "Artificial technology to create an alias for GAS commodity",
+  input = list(
+    comm = "GAS",
+    unit = "GWh",
+    combustion = 0
+  ),
+  output = data.frame(
+    comm = "GAS0",
+    unit = "GWh"
+  ), 
+  cap2act = 1e12, # capable to convert GWh a year
+  capacity = list(stock = 1), # pre-defined capacity to reduce the model dimension
+  end = list(end = 2000) #
+)
+draw(ALIAS_GAS)
+
+EGAS_CCS_FL <- EGAS_CCS_FX |>
+  update(
+    name = "EGAS_CCS_FL",
+    desc = "Gas power plant with flexible CCS",
+    input = list(
+      comm = c("GAS", "GAS0"),
+      unit = c("GWh", "GWh"),
+      group = c("i", "i"), # any group name
+      combustion = c(1, 0) # 10% of emissions are not captured by CCS
+    ),
+    geff = list(
+      group = "i",
+      ginp2use = EGAS_prototype@ceff$cinp2use[1]
+    ),
+    ceff = list(
+      comm = c("GAS", "GAS0"),
+      cinp2ginp = c(1, .9), # efficiency loss when COA is used
+      share.up = c(1, .9) # max share of each commodity in the group
+    ),
+    aeff = data.frame(
+      acomm = c("CO2SINK", EGAS_prototype@aeff$acomm),
+      comm = c("GAS", "GAS", "GAS", "GAS"),
+      cinp2ainp = c(GAS@emis$emis, NA, NA, NA), # 90% capture rate
+      cinp2aout = c(NA,  EGAS_prototype@aeff$cinp2aout)
+    )
+  )
+
+draw(EGAS_CCS_FL)
+```
+   
+ 
+```{r, eval=TRUE, include=FALSE}
+repo_CCUS <- newRepository(
+  name = "CCS Technologies",
+  desc = "Repository for CC(U)S technologies",
+  CO2SINK, RES_CO2SINK, # CO2 sink commodity and resource
+  ECOA_CCS_FX, ECOA_CCS_FL, COA0, ALIAS_COA, # coal technologies
+  EGAS_CCS_FX, EGAS_CCS_FL, GAS0, ALIAS_GAS # gas technologies
+)
+if (isTRUE(params$save_ccus_objects)) {
+  save(repo_CCUS, file = file.path(
+    here(), "data-raw/repo_CCUS.RData"
+  ))
+}
+
+```
+
+```{r, eval=FALSE, include=FALSE}
+library(data.table)
+# test CCUS on minimal model
+gis_sf <- get_ideea_map(7, offshore = F, reg_off = F)
+timetable_full_year <- ideea_modules$time_tables$d365_h24
+
+COA0 <- newCommodity(
+  name = "COA0",
+  desc = "Coal with zero CO2 emissions, alias for COA",
+  unit = "GWh",
+  emis = ideea_modules$energy$COA@emis,
+  agg = list(comm = "COA", unit = "GWh", agg = 1)
+)
+COA0@emis$emis <- 1
+
+ELC <- newCommodity(
+  name = "ELC",
+  desc = "Electricity",
+  unit = "GWh",
+  timeframe = "HOUR"
+)
+
+CO2 <- newCommodity(
+  name = "CO2",
+  desc = "Carbon emissions",
+  unit = "kt",
+  timeframe = "ANNUAL"
+)
+
+NOX <- newCommodity(
+  name = "NOX",
+  desc = "Nitrogen oxide emissions NOx",
+  unit = "kt",
+  timeframe = "ANNUAL"
+)
+
+SOX <- newCommodity(
+  name = "SOX",
+  desc = "Sulfur oxide emissions SOx",
+  unit = "kt",
+  timeframe = "ANNUAL"
+)
+
+PM <- newCommodity(
+  name = "PM",
+  desc = "Particulate matter (particle pollution)",
+  unit = "kt",
+  timeframe = "ANNUAL"
+)
+
+REN <- newCommodity(
+  name = "REN",
+  desc = "Generic renewable energy",
+  unit = "GWh",
+  timeframe = "ANNUAL"
+)
+
+repo_comm <- newRepository(
+  name = "repo_comm",
+  desc = "Electricity & emissions commodity"
+) %>%
+  add(ELC, CO2, NOX, SOX, PM)
+
+load_BY <- get_ideea_data("load_2019_MWh", nreg = 7, variable = "MWh_clean") |>
+  mutate(GWh = MWh_clean / 1e3) |>
+  rename(region = reg7)
+
+DEMELC_BY <- newDemand(
+  name = "DEMELC_BY",
+  desc = "houlry electric demand by region",
+  commodity = "ELC",
+  unit = ELC@unit,
+  dem = data.frame(
+    region = load_BY$region,
+    # year = load_BY$year,
+    slice = load_BY$slice, # comment to assign to all hours
+    dem = load_BY$GWh # * dem_adj
+  )
+)
+
+repo_supply <- newRepository(
+  name = "repo_supply",
+  desc = "Energy supply (markets)"
+) %>%
+  add( # from energy module
+    # coal
+    ideea_modules$energy$COA, # commodity
+    ideea_modules$energy$SUP_COA, # supply
+    ideea_modules$energy$IMP_COA ,# import
+    # natural gas
+    ideea_modules$energy$GAS,
+    ideea_modules$energy$SUP_GAS,
+    ideea_modules$energy$IMP_GAS
+)
+
+UNSERVED <- newImport(
+  name = "UNSERVED",
+  desc = "Unserved load, ~ 10 cr.INR/GWh, equal 100 INR/kWh",
+  commodity = "ELC",
+  unit = "GWh",
+  imp = list(price = 5e4)
+)
+
+CO2_CAP <- newConstraint("CO2_CAP",
+  eq = "<=",
+  rhs = list(
+    year = c(2055),
+    rhs = c(5e5)
+  ),
+  for.each = list(year = 2055), # Cap total emission
+  variable = list(
+    variable = "vBalance",
+    for.sum = list(
+      comm = "CO2",
+      slice = NULL,
+      region = NULL
+    )
+  ),
+  defVal = Inf,
+  interpolation = "inter"
+)
+
+repo <- newRepository("repo") %>%
+  add(
+    # commodities
+    # ELC, COA, CO2, NOX, SOX,
+    repo_comm,
+    # supply & import
+    repo_supply,
+    # Generating technologies
+    # ECOA,
+    CO2SINK,
+    RES_CO2SINK,
+    ECOA_CCS_FL,
+    COA0,
+    ALIAS_COA,
+    # EGAS,
+    # CT_EGAS,
+    # ENUC,
+    # NO_NEW_NUCLEAR,
+    # EHYD$EHYD_2020,
+    # EHYD,
+    # NO_NEW_HYDRO, # limit on hydro construction
+    # ESOL, WSOL, WHYD,
+    # EWIN, WWIN,
+    # EBIO,
+    # battery
+    # STG_BTR, # add during interpolation or solving - one of the options
+    # STG_BTR_daily, # add during interpolation or solving - one of...
+    # transmission
+    # repo_transmission,
+    # repo_geoccs,
+    # repo_ccstechs,
+    # unserved load
+    UNSERVED, # unserved load penalty
+    CO2_CAP,
+    # demand
+    DEMELC_BY # BY demand
+    # DEMELC_2X, # additional demand
+    # CT_ESOL, # solar capacity constraints
+    # NO_BY_INV #
+  )
+
+length(repo)
+print(repo)
+names(repo)
+summary(repo)
+
+# model horizon
+horizon_2020_2055_by_10 <- newHorizon(
+  period = 2050:2060,
+  intervals = c(1, 5, 10, 10, rep(10, 15)), 
+  mid_is_end = T
+)
+horizon_2020_2055_by_10
+
+full_calendar_d365_h24 <- newCalendar(ideea_modules$time_tables$d365_h24)
+
+# model-class object
+mod <- newModel(
+  name = "IDEEA_r7_base",
+  desc = "IDEEA CCS model",
+  region = unique(gis_sf$region),
+  discount = 0.05,
+  calendar = full_calendar_d365_h24,
+  horizon = horizon_2020_2055_by_10,
+  data = repo
+)
+
+set_progress_bar()
+# show_progress_bar(F)
+
+# See `/dev/settings.R` to configure your system
+if (file.exists("~/.ideea/settings.R")) source("~/.ideea/settings.R")
+
+timetable_subset <- timetable_full_year %>%
+  filter(YDAY %in% yday2YDAY(1:10))
+  # filter(HOUR %in% hour2HOUR(hour_sample))
+timetable_subset
+
+partial_calendar <- newCalendar(
+  timetable = timetable_subset, 
+  year_fraction = sum(timetable_subset$share)
+)
+
+scen_CCS_FLEX <- solve_model(
+  mod,
+  name = "CCS_FLEX",
+  # GHG_CAP,
+  # STG_BTR_daily,
+  partial_calendar,
+  solver = solver_options$gams_gdx_cplex_parallel,
+  tmp.del = FALSE
+)
+
+scen <- scen_CCS_FLEX
+scen@modInp@parameters$pCnsRhsCO2_CAP@data
+scen@modInp@parameters$pEmissionFactor
+scen@modInp@parameters$pTechEmisComm
+scen@modInp@parameters$pTechShare@data
+getData(scen, name_ = "NewCap", merge = T, parameters = F, drop.zeros = T) |>
+  as.data.table()
+
+getData(scen, name_ = "vTechEmsFuel", merge = T, parameters = F, 
+        drop.zeros = T) |>
+  group_by(comm, year) |>
+  summarise(value = sum(value), .groups = "drop") |>
+  as.data.table()
+
+getData(scen, name = "vImportRow", merge = T, parameters = F, 
+        drop.zeros = T, comm = "ELC") |>
+  group_by(comm, year) |>
+  summarise(value = sum(value), .groups = "drop") |>
+  as.data.table()
+
+getData(scen, name = "vTechInp", merge = T, parameters = F, 
+        drop.zeros = T, tech_ = "^E") |>
+  # pivot_wider(names_from = "comm") |>
+  as.data.table() |>
+  ggplot() +
+  geom_bar(aes(x = year, y = value, fill = comm), stat = "identity")
+
+getData(scen, name_ = "vTechEmsFuel", merge = T, parameters = F, 
+        drop.zeros = T) |>
+  as.data.table() |>
+  ggplot() +
+  geom_bar(aes(x = year, y = value, fill = comm), stat = "identity")
+
+
+```
+
+
+## References
+Carbon Capture, Utilization and Storage (CCUS) Policy Framework and its Deployment Mechanism in India Utilization and Storage (CCUS)	
+  <https://www.niti.gov.in/sites/default/files/2022-11/CCUS-Report.pdf>

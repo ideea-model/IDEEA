@@ -1,0 +1,101 @@
+---
+title: "IDEEA"
+output: rmarkdown::html_vignette
+params:
+  solve: false
+vignette: >
+  %\VignetteIndexEntry{IDEEA}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  eval = FALSE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE, warning=FALSE}
+library(IDEEA)
+source("~/.ideea/settings.R")
+```
+
+
+### Build electric power system model
+```{r, eval=params$solve}
+# get the spatial features
+ideea_sf <- get_ideea_map(nreg = 7, offshore = FALSE)
+
+# select the pre-defined model
+ideea_mod <- ideea_modules$electricity$reg7_base
+
+# create repository for the model
+repo_elc <- newRepository("repo_electricity") |>
+  add(
+    ideea_mod$repo_comm, # commodities
+    ideea_mod$repo_supply, # primary supply & imports
+    ideea_mod$ECOA, # coal-fired generators
+    ideea_mod$EGAS, # gas-fired generators
+    ideea_mod$CT_EGAS, # limits on gas-fired investments
+    ideea_mod$ENUC, # nuclear generators
+    ideea_mod$EHYD, # hydro generators
+    ideea_mod$WHYD, # hydro capacity factors
+    ideea_mod$EBIO, # biomass generators
+    ideea_mod$ESOL, # solar generators
+    ideea_mod$WSOL, # solar capacity factors
+    ideea_mod$CT_ESOL, # limits on solar investments
+    ideea_mod$EWIN, # wind generators
+    ideea_mod$WWIN, # wind capacity factors
+    ideea_mod$repo_geoccs, # CCS storage geo-potential
+    ideea_mod$repo_ccstechs, # CCS technologies
+    ideea_mod$repo_transmission, # transmission lines
+    ideea_mod$NO_BY_INV, # no investments in base year
+    ideea_mod$NO_NEW_NUCLEAR, # no new nuclear construction
+    ideea_mod$NO_NEW_HYDRO, # no new hydro construction
+    ideea_mod$DEMELC_BY, # demand, load curve in the base year
+    ideea_mod$DEMELC_2X # demand growth
+  )
+summary(repo_elc)
+names(repo_elc)
+
+mod <- newModel(
+  name = "mod_electricity",
+  repository = repo_elc,
+  region = ideea_sf$region,
+  discount = 0.05,
+  calendar = ideea_mod$full_calendar_d365_h24,
+  horizon = ideea_mod$horizon_2020_2060_by_10
+)
+
+```
+
+### Solve base scenario
+```{r, eval=params$solve}
+# settings
+set_default_solver(solver_options$gams_gdx_cplex_barrier)
+set_progress_bar(TRUE)
+
+# base year scenario (1 year only)
+scen_BY <- solve(mod, horizon = newHorizon(2020, rep(1, 1)))
+summary(scen_BY)
+
+# reference scenario (40 years) with subset of the calendar
+scen_REF <- solve_model(mod, name = "REF", 
+                        calendar = ideea_mod$partial_calendar_1day_per_month)
+summary(scen_REF)
+```
+
+tbc...
+
+### Policy scenarios
+```{r, eval=params$solve}
+
+```
+
+### Reports
+```{r, eval=params$solve}
+
+```
+

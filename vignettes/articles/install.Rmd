@@ -1,0 +1,167 @@
+---
+title: "IDEEA model installation"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+The `IDEEA` library is written as an R-package and it is currently based on the `energyRt` energy systems modeling library. Both can be installed from a GitHub repository, and operated as a regular R-packages. The key step in any model-based analysis is data preparation and post-processing. R scripts and data embedded in IDEEA package serve as an interface to generate large-scale input files for IDEEA model, run the model, and post-process the results. All powerful R-packages for data manipulation and visualization in R are available to conduct an analysis and master reports. `IDEEA` library is just one of them to integrate energy system modeling into your study's pipeline. We recommend using [RStudio](https://posit.co/products/open-source/rstudio/) as an IDE for R to work with IDEEA. Other interfaces can be used as well, including Visual Studio Code by Microsoft.
+
+R is powerful language for data manipulation and visualization that defined the choice for the models interface, but it is not the best for large scale optimization problems. Therefore, IDEEA algebraic model can be solved in one of the following languages: `Python`, `Julia`, `GAMS`, or `GLPK`/`MathProg`. `IDEEA` (via `energyRt`) makes data-input files for created by a user model structure and scenario, sends it to one of the external solver-software, and reads the results back to R for post-processing. The user can choose the solver software and the language to run the model. The most common choice of free software is `Python` with `Pyomo` or `Julia` with `JuMP.` If you have `GAMS` license, the model can be solved with `GAMS`.
+
+Besides algebraic language choice, there are different linear solvers to choose from. `GLPK`, `Cbc` and `HiGHS` are free solvers, but they are not as efficient as commercial solvers like IBM `CPLEX` or `GUROBI`. Large-scale models (with many regions, hourly resolution, and many technologies) required commercial solvers to solve them. Though free solvers can be used for large-scale models as well, but with reduced dimension - by using sample of hours (time-slices) instead of the full year, also reducing number of years, regions, or technological options. The divergence of 'sampled' solution from the 'full' depends on many factors, including the sample size, weights, and the choice. The bright side is that the model can be solved several times on different samples, results can be compared and averaged, and it can be done with free software on a regular laptop, and the results are obtained in a reasonable time. Once results are confirmed on smaller samples, the model can be solved on the full dataset with commercial solvers on a workstation.
+
+To run IDEEA models one requires to install R, RStudio IDE (or alternative), required R-packages, at least one of modeling software options (Python, Julia, GLPK, GAMS) with required libraries, and solvers. The following steps describe installation steps from scratch with available options.
+
+## Install R
+
+R is a free, open-source software, initially developed for statistical computing, and currently has a broad sets of powerful tool for data manipulation and visualization, including mapping. Download **base** R for your system (Windows, macOS, or Linux) from CRAN (<https://cloud.r-project.org/>) and install following the installation instructions (<https://cloud.r-project.org/>). Windows users must also install (RTools)[<https://cloud.r-project.org/>] of version matching R version (if the current/installed version of R is `R-4.3.*` then RTools version must be `RTools 4.3`). Installation of RTools is required to be able to compile packages on Windows system, these tools are already a part of UNIX-based systems like Linux and MacOS.
+
+## Install RStudio (recommended)
+
+Integrated Development Environment (IDE) is not required to run IDEEA models, but to develop and conduct a study. We recommend using RStudio IDE, which has the best integration with R and R-packages. Download RStudio from <https://posit.co/download/rstudio-desktop/#download> and install it following the installation instructions.
+
+### Create RStudio project
+
+An often overlooked step by new RStudio users is a creation of RStudio project. It is a good practice to create a project for every study, as it helps to keep all files and scripts in one place, and to avoid conflicts between different projects. To create a project, open RStudio, go to `File -> New Project... -> New Directory -> New Project` and specify the project name and location. Here we create an `IDEEA_test` project in the `Documents/RProjects` folder. Once done, please create a new R-markdown file in the project folder and save it as `install_ideea.Rmd`. 
+
+## Install R packages
+Add R-chunks to the just created `.Rmd` file (use the `+` button in the top right corner of the RStudio editor), and copy-paste the code from this document to the R-markdown file.
+
+```{r}
+# install package management library
+if (!("pak" %in% rownames(installed.packages()))) install.packages("pak")
+library("pak")
+# install required packages (if not installed)
+pkg_install("devtools", upgrade = TRUE) # to compile packages
+pkg_install("tidyverse", upgrade = TRUE) # packages for data and graphics
+pkg_install("data.table", upgrade = TRUE) # memory and time-efficient data-frames
+pkg_install("sf", upgrade = TRUE) # working with GIS/maps
+pkg_install("reticulate", upgrade = TRUE) # running Python from R
+# install energyRt 
+pkg_install("energyRt/energyRt@dev") # (fix version later)
+# install IDEEA
+pkg_install("ideea-model/IDEEA") 
+# GAMS users may want to install `gdxtools` (see GAMS section)
+# pkg_install("lolow/gdxtools") # Manipulate GDX-files for data exchange
+```
+The script in the chunk above can be run by pressing `Ctrl+Enter` or `Cmd+Enter` in the RStudio editor. It will install all required R-packages for IDEEA model.
+
+## Optimization software options
+
+At least one of algebraic modeling languages must be installed to solve IDEEA models. Bellow is a step-by-step guide or references to install Python, Julia, GLPK, and GAMS.
+
+### Install Python
+
+There are several ways to install Python. Most common is the direct installation on the [Python distribution](https://www.python.org/downloads/), or using `Anaconda` tool to manage Python environments and packages. The example below installs `miniconda` (a minimal version of `Anaconda`) from R and creates `ideea` environment with all required packages. If you have `Anaconda` or `miniconda` on your system this installation step can be omitted.
+
+#### Install `miniconda`
+`conda` is a package manager that can install Python packages and other software packages. `miniconda` is a minimal version of `Anaconda` that includes only Python and `conda`. 
+
+```{r}
+library(reticulate) # run Python from R
+conda_list() # check if conda is installed
+install_miniconda() # install miniconda
+miniconda_path() # check the path to miniconda to use in IDEEA & energyRt settings
+# miniconda_uninstall() # use to uninstall miniconda
+```
+
+#### Create `ideea` environment
+Create a new environment `ideea` and install required Python-packages. 
+```{r}
+conda_create("ideea")
+conda_list() 
+condaenv_exists("ideea") # check if the 'ideea' environment exists
+use_condaenv("ideea")
+```
+
+#### Install Python packages
+IDEEA/energyRt models in Python are formulated in Pyomo open-source optimization modeling language. Pyomo can be used with different solvers, including open-source `GLPK`, `Cbc`, and commercial `CPLEX`, `GUROBI`, and others. The example below installs `Pyomo`, `GLPK`, `Cbc`, and several other required packages. 
+
+```{r, eval=FALSE}
+# general purpose packages, used by IDEEA & energyRt in python models
+conda_install("ideea", "pandas", forge = TRUE) # data manipulation
+conda_install("ideea", "scipy", forge = TRUE) # scientific computing
+conda_install("ideea", "rpy2", forge = TRUE) # R-Python interface
+conda_install("ideea", "arrow", forge = TRUE) # efficient data manipulation and exchange
+conda_install("ideea", "datetime", pip = TRUE) # date-time manipulation
+# Algebraic modeling language/module Pyomo
+conda_install("ideea", "pyomo", forge = TRUE) # optimization modeling language
+# Linear solvers
+conda_install("ideea", "glpk", forge = TRUE) # open-source linear solver GLPK
+conda_install("ideea", "coincbc", pip = TRUE) # open-source linear solver Cbc
+# If Cbc installation doesn't work (it is a common issue on Windows for Cbc), 
+# try to install it from alternative sources:
+# conda_install("ideea", "coin-or-cbc", forge = T)
+# conda_install("ideea", "cbcpy", forge = T)
+# py_install("cbcpy", envname = "ideea", pip = T)
+```
+IBM CPLEX and GUROBI are the most efficient commercial solvers which are also free for academia. Please refer to the IBM and GUROBI installation guides. [...]   
+
+Several other mainstream solvers can be used with Pyomo, but the installation must be done separately for every solver/software. Cbc and HiGHS are the most powerful open-source solvers, but it is not strightforward to install them on Windows and make them working with Pyomo. If you are planning to use open-source solvers on Windows, consider using Julia instead where the installation of these solvers is streamlined.  
+
+If you plan to use IDEEA-Switch version (forthcoming), please also install Switch-model library.
+```{r, eval=FALSE}
+conda_install("ideea", "switch_model", forge = TRUE)
+```
+To test the installed `ideea` environment follow ... [tbc]
+
+### Install Julia
+Julia is a modern, high-level, high-performance programming language for scientific computing, machine learning, and data mining, designed for parallelism and distributed computation. Julia is a good choice for optimization problems, and it is easy to install and use. Knowing Julia (or Python) is not required for IDEEA users. But Julia can be used by `IDEEA` package via `energyRt` to solve models. To install Julia, download the latest version from the [Julia website](https://julialang.org/downloads/), and install it following the installation instructions. Windows users are advised to use `winget` package manager to install Julia from the Microsoft Store. 
+```{bash, eval=FALSE}
+winget install julia -s msstore
+```
+Mac and Linux users should download the installer compatible with their systems from the Julia website.
+
+Once installed, open terminal (or command prompt) and run Julia REPL by typing `julia`. In Julia REPL, install required packages by running the following commands:
+```{julia, eval=FALSE}
+println("Julia Version: ", VERSION)
+import Pkg
+Pkg.add("JuMP")
+Pkg.add("HiGHS")
+Pkg.add("Cbc")
+Pkg.add("Clp")
+# Pkg.add("CPLEX") # link to pre-installed CPLEX
+# Pkg.add("Gurobi") # link to pre-installed Gurobi
+Pkg.add("RData")
+Pkg.add("RCall")
+Pkg.add("CodecBzip2")
+Pkg.add("Gadfly")
+Pkg.add("DataFrames")
+Pkg.add("CSV")
+Pkg.add("SQLite")
+Pkg.add("Dates")
+Pkg.status() 
+# Pkg.update() # use to update packages
+```
+The commands above install Julia packages required to run IDEEA models. The `JuMP` package is an optimization modeling language, and `HiGHS`, `Cbc`, and `Clp` are linear solvers. `RCall` package is used to run R from Julia, and `RData` to exchange data between R and Julia. `Gadfly`, `DataFrames`, `CSV`, `SQLite`, and `Dates` are general-purpose packages used for data-exchange.  
+
+### Install GLPK/MathProg
+[GNU Linear Programming Kit (GLPK)](https://www.gnu.org/software/glpk/) is a lightwight linear solver with embedded language interpreter MathProg (a subset of AMPL) to solve linear programming problems. GLPK is a good choice for small to medium-size models, and it is free and open-source. To install GLPK on Windows, download the latest version from the [GLPK for Windows](https://winglpk.sourceforge.net/) and install it following the installation instructions. On MacOS GLPK can be installed from `homebrew` package manager: 
+```{bash, eval=FALSE}
+brew install glpk
+```
+Ubuntu users can try:
+```{bash, eval=FALSE}
+sudo apt-get install glpk-utils
+```
+For other Linux systems please refer to the <https://en.wikibooks.org/wiki/GLPK/Linux_OS> or GNU-GLPK guides.
+
+### Install GAMS
+[General Algebraic Modeling System (GAMS)](https://www.gams.com/products/gams/gams-language/) is a modeling language and proprietary software for mathematical modeling and numeric optimization. IDEEA users who already have GAMS license with powerful linear solvers (like CPLEX), or who plan to solve large-scale models regularly, this might be a good option due to better time performance on the model generation stage. Please follow installation instructions by GAMS and add it to the configuration file (below).
+
+## IDEEA settings file
+tbc.
+
+## Additional Datasets
+tbc.
+
+## References
+...

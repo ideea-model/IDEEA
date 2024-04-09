@@ -13,14 +13,14 @@ IDEEA is a capacity expansion and energy resource planning model built with a go
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/ideea-model/IDEEA}
-  \item \url{https://ideea-model.github.io/IDEEA.dev/index.html}
-  \item Report bugs at \url{https://github.com/ideea-model/info/issues}
+  \item \url{https://github.com/ideea-model}
+  \item \url{https://ideea-model.github.io/IDEEA/index.html}
+  \item Report bugs at \url{https://github.com/ideea-model/IDEEA/issues}
 }
 
 }
 \author{
-\strong{Maintainer}: IDEEA team \email{ideea@email.org}
+\strong{Maintainer}: IDEEA comunity \email{ideea@email.org}
 
 }
 \keyword{internal}

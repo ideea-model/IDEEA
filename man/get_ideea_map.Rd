@@ -8,10 +8,10 @@ get_ideea_map(
   nreg = 7,
   offshore = FALSE,
   islands = FALSE,
-  ROW = FALSE,
   aggregate = (nreg != 46),
   rename = TRUE,
-  reg_off = offshore
+  reg_off = offshore,
+  ...
 )
 }
 \arguments{
@@ -20,8 +20,6 @@ get_ideea_map(
 \item{offshore}{logical, if TRUE, offshore area with associated regions will be returned}
 
 \item{islands}{logical, should "Andaman and Nicobar" ("AN") and "Lakshadweep" ("LD") be included.}
-
-\item{ROW}{logical, if TRUE, an additional geometry with neighbour countries' land within 67-98 latitude and 5-38 longitude (ROW - the Rest of the World) will be added.}
 
 \item{aggregate}{logical, if true, geometries will be aggregated by region.}
 

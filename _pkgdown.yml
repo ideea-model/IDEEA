@@ -1,0 +1,64 @@
+url: https://ideea-model.github.io/IDEEA/index.html
+template:
+  bootstrap: 5
+  bootswatch: minty
+  ganalytics: G-1FN9MK20PS
+navbar:
+ components:
+   articles:
+    text: Articles
+    menu:
+    - text: About
+      href: articles/about.html
+    - text: Help
+      href: articles/help.html
+    - text: Installation
+      href: articles/install.html
+    # - text: -------
+    - text: "IDEEA model components"
+    - text: "—Regions"
+      href: articles/regions.html
+    - text: "—Datasets"
+      href: articles/data.html
+    - text: "IDEEA model sectors"
+    - text: "—Energy"
+      href: articles/energy.html
+    - text: "—Electricity"
+      href: articles/electricity.html
+    - text: "—Hydrogen"
+      href: articles/hydrogen.html
+    - text: "—CCUS"
+      href: articles/ccus.html
+    # - text: "● Demand projections"
+    # - text: -------
+    # - text: "Featured technologies"
+    - text: "Sectors in development"
+    - text: "—Transport"
+      href: articles/transport.html
+    - text: "—Buildings"
+      href: articles/buildings.html
+    - text: "—Iron and Stell"
+      href: articles/iron_steel.html
+    - text: "—Refineries"
+    - text: "—Cement and Clinker"
+    # - text: -------
+    - text: "Regional models"
+    - text: "—Karnataka"
+      # href: articles/karnataka.html
+    # - text: "IDEEA "
+    - text: -------
+    - text: "IDEEA in Switch (in work)"
+    - text: "IDEEA in PyPSA (planned)"
+
+# navbar:
+#   structure:
+#   left:
+#     - icon: fa-home
+#       href: index.html
+  # right: [search, github]
+
+# characters to use in menus (copy/paste)
+# – dash
+# — long dash
+# ● bullet point
+
