@@ -1,0 +1,26 @@
+---
+title: "Growth and demand scenarios"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+# library(IDEEA)
+```
+
+## GDP growth
+Historic and projections
+[references]
+
+## Electric demand scenarios
+Historic 2000-2022 (total and by region if available)  
+Projections (up to 2050-2070) by scenarios  
+* scenario 1    
+* scenario 2   
+* ...   
+[references]

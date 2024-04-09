@@ -1,0 +1,36 @@
+---
+title: "IDEEA: hydrogen technologies"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{hydrogen}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+## Green hydrogen
+about, balancing features   
+hydrogen in India - strategy   
+
+### Electrolysis
+
+## Other types?  
+
+
+## Hydrogen storage
+
+## Transportation  
+
+### pipelines  
+
+### Compressed  
+
+## Fuel cells  
+

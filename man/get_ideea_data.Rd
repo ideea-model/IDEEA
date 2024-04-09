@@ -7,11 +7,14 @@
 get_ideea_data(
   name,
   nreg = 7,
-  variable,
+  variable = ".",
+  sets = "^reg[0-9]+$|^slice$|^date$|^datetime|^MONTH$|^YDAY$|^HOUR$",
   agg_fun = sum,
   raw = FALSE,
   offshore = FALSE,
-  islands = FALSE
+  islands = FALSE,
+  as_DT = TRUE,
+  drop_na = TRUE
 )
 }
 \arguments{
@@ -19,7 +22,7 @@ get_ideea_data(
 
 \item{nreg}{integer, number of region to return}
 
-\item{variable}{name or a part of name (regular expression) of variable to return.}
+\item{variable}{character, regular expression for the name of variable(s) to return.}
 
 \item{agg_fun}{character, function to aggregate data by region, default "sum" (for volumes), "mean" is advised for costs variable.}
 
@@ -28,6 +31,9 @@ get_ideea_data(
 \item{offshore}{logical, should the data for offshore areas be returned, FALSE by default}
 
 \item{islands}{logical, should the data for remote islands be returned, FALSE by default}
+}
+\value{
+returns the requested table or NULL.
 }
 \description{
 Get data from IDEEA database

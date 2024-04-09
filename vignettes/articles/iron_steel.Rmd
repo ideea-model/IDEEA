@@ -1,0 +1,25 @@
+---
+title: "IDEEA: Iron and Steel sector"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Iron and Steel sector}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+# library(IDEEA)
+```
+
+
+```{r, echo=FALSE}
+knitr::include_graphics("https://www.steel.org/wp-content/uploads/2020/07/flowline1_540.gif")
+```
+
