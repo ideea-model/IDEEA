@@ -41,19 +41,23 @@ resolution.
 
 ## Installation
 
-Please refer to the full installation list the “Installation” article.
-The package itself can be installed from GitHub using the `pak` package:
+Please refer to the step=by-step installation guide the
+[“Installation”](https://ideea-model.github.io/IDEEA/articles/install.html)
+article. The package itself can be installed from GitHub using the `pak`
+package:
 
 ``` r
 # install.packages("pak")
 pak::pkg_install("ideea-model/IDEEA") # not updated yet!
+library("IDEEA")
 ```
 
 ## Examples
 
-tbc…
-
-``` r
-library(IDEEA)
-# ...
-```
+For a quick example please check the [Get
+started](https://ideea-model.github.io/IDEEA/articles/IDEEA.html) page
+on the [IDEEA R-package documentation
+page](https://ideea-model.github.io/IDEEA) (work in progress). More
+examples will be uploaded to the
+[ideea-model/ideea_example_project](https://github.com/ideea-model/ideea_example_project)
+repository.

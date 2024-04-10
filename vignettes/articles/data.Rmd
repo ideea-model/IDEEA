@@ -336,7 +336,7 @@ usethis::use_data(nrel_wind_locations)
 ```{r, fig.cap="Potential sites to deploy wind power plants, onshore and offshore, and installed capacity (MW)"}
 ggplot() +
   # geom_sf(data = ideea_maps$ROW$ROW$sf, inherit.aes = F) +
-  geom_sf(fill = "wheat", data = ideea_maps$r34$land$sf, inherit.aes = F) +
+  geom_sf(fill = "wheat", data = get_ideea_map(nreg = 34), inherit.aes = F) +
   geom_point(aes(Longitude, Latitude, color = as.logical(`Is Offshore`)), 
              size = .1, data = nrel_wind_locations, alpha = .15, show.legend = F) +
   scale_color_brewer(palette = "Set1") +
