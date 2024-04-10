@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# IDEEA <img src="man/figures/logo.png" align="right" width="200"/>
+# Indian Zero Carbon Energy Pathways Optimization Model <img src="man/figures/logo.png" align="right" width="256"/>
 
 <!-- badges: start -->
 
@@ -13,8 +13,7 @@ status](https://www.r-pkg.org/badges/version/IDEEA.dev)](https://CRAN.R-project.
 Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 
 <!-- badges: end -->
-
-## About
+<!-- ## About -->
 
 Indian Zero Carbon Energy Pathways (IDEEA) is a collaborative open
 energy modeling initiative between [Environmental Defense

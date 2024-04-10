@@ -7,6 +7,48 @@
     <loc>https://ideea-model.github.io/IDEEA/index.html/articles/about.html</loc>
   </url>
   <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/about.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/buildings.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/ccus.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/data.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/electricity.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/energy.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/growth.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/help.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/hydrogen.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/install.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/iron_steel.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/karnataka.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/regions.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/articles/articles/transport.html</loc>
+  </url>
+  <url>
     <loc>https://ideea-model.github.io/IDEEA/index.html/articles/buildings.html</loc>
   </url>
   <url>
@@ -67,6 +109,12 @@
     <loc>https://ideea-model.github.io/IDEEA/index.html/LICENSE.html</loc>
   </url>
   <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/reference/drop_process_vintage.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/reference/drop_vintage.html</loc>
+  </url>
+  <url>
     <loc>https://ideea-model.github.io/IDEEA/index.html/reference/get_ideea_data.html</loc>
   </url>
   <url>
@@ -83,5 +131,8 @@
   </url>
   <url>
     <loc>https://ideea-model.github.io/IDEEA/index.html/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/index.html/reference/pipe.html</loc>
   </url>
 </urlset>

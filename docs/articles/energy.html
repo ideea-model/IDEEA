@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">IDEEA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.20.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.21.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -213,7 +213,7 @@ code
 <span>  agg_fun <span class="op">=</span> <span class="va">sum</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="va">coa_sup</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"production"</span>, agg_fun <span class="op">=</span> <span class="va">sum</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"production"</span>, agg_fun <span class="op">=</span> <span class="va">sum</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">full_join</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"cost_USD_t_2020"</span>, agg_fun <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
@@ -282,7 +282,7 @@ code
 <span><span class="va">oil_sup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"oil"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, variable <span class="op">=</span> <span class="st">"reserve"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">full_join</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span><span class="st">"oil"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"cost"</span>, agg_fun <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">oil_reserve_GWh_2021</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span></span>
 <span>  </span>
 <span><span class="co"># oil_sup &lt;- </span></span>
@@ -343,7 +343,7 @@ code
 <span></span>
 <span><span class="co"># saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">OIL</span>, <span class="va">SUP_OIL</span>, <span class="va">IMP_OIL</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; commodity    import    supply </span></span>
 <span><span class="co">#&gt;         2         2         2</span></span>
 <span><span class="va">repo_energy</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -530,7 +530,7 @@ code
 <span></span>
 <span><span class="co"># saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">GAS</span>, <span class="va">SUP_GAS</span>, <span class="va">IMP_GAS</span>, overwrite <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "COA"     "SUP_COA" "IMP_COA" "OIL"     "SUP_OIL" "IMP_OIL" "GAS"    </span></span>
 <span><span class="co">#&gt; [8] "SUP_GAS" "IMP_GAS"</span></span></code></pre></div>
 </details><div class="figure">
@@ -607,7 +607,7 @@ code
 <span><span class="co"># Saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">CCSCO2</span>, <span class="va">CO2SINK</span>, <span class="va">GHG</span>, <span class="va">RES_CO2SINK</span>, </span>
 <span>                   overwrite <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "COA"         "SUP_COA"     "IMP_COA"     "OIL"         "SUP_OIL"    </span></span>
 <span><span class="co">#&gt;  [6] "IMP_OIL"     "GAS"         "SUP_GAS"     "IMP_GAS"     "CCSCO2"     </span></span>
 <span><span class="co">#&gt; [11] "CO2SINK"     "GHG"         "RES_CO2SINK"</span></span></code></pre></div>
@@ -641,7 +641,7 @@ code
 </summary><div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># loading and processing data</span></span>
 <span><span class="co"># get_ideea_data(name = "biomass", raw = T) # check raw data</span></span>
-<span><span class="va">bio_sup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"biomass"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, variable <span class="op">=</span> <span class="st">"max_MWe"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">bio_sup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"biomass"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, variable <span class="op">=</span> <span class="st">"max_MWe"</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">max_MWe</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bio_ava</span> <span class="op">&lt;-</span> <span class="va">ideea_data</span><span class="op">$</span><span class="va">biomass_ava_assumption</span> </span>
@@ -672,7 +672,7 @@ code
 <span></span>
 <span><span class="co"># saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">BIO</span>, <span class="va">RES_BIO</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "COA"         "SUP_COA"     "IMP_COA"     "OIL"         "SUP_OIL"    </span></span>
 <span><span class="co">#&gt;  [6] "IMP_OIL"     "GAS"         "SUP_GAS"     "IMP_GAS"     "CCSCO2"     </span></span>
 <span><span class="co">#&gt; [11] "CO2SINK"     "GHG"         "RES_CO2SINK" "BIO"         "RES_BIO"</span></span></code></pre></div>
@@ -772,7 +772,7 @@ normally not included to optimization<br><a href="https://www.world-nuclear.org/
 <span></span>
 <span><span class="co"># saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">NUC</span>, <span class="va">IMP_NUC</span>, overwrite <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "COA"         "SUP_COA"     "IMP_COA"     "OIL"         "SUP_OIL"    </span></span>
 <span><span class="co">#&gt;  [6] "IMP_OIL"     "GAS"         "SUP_GAS"     "IMP_GAS"     "CCSCO2"     </span></span>
 <span><span class="co">#&gt; [11] "CO2SINK"     "GHG"         "RES_CO2SINK" "BIO"         "RES_BIO"    </span></span>
