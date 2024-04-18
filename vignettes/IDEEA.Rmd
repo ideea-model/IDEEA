@@ -19,7 +19,11 @@ knitr::opts_chunk$set(
 
 ```{r setup, message=FALSE, warning=FALSE}
 library(IDEEA)
+library(ggplot2)
 source("~/.ideea/settings.R")
+# settings
+set_default_solver(solver_options$gams_gdx_cplex_barrier)
+set_progress_bar()
 ```
 
 
@@ -29,33 +33,33 @@ source("~/.ideea/settings.R")
 ideea_sf <- get_ideea_map(nreg = 7, offshore = FALSE)
 
 # select the pre-defined model
-ideea_mod <- ideea_modules$electricity$reg7_base
+ideea_elc <- ideea_modules$electricity$reg7_base
 
 # create repository for the model
 repo_elc <- newRepository("repo_electricity") |>
   add(
-    ideea_mod$repo_comm, # commodities
-    ideea_mod$repo_supply, # primary supply & imports
-    ideea_mod$ECOA, # coal-fired generators
-    ideea_mod$EGAS, # gas-fired generators
-    ideea_mod$CT_EGAS, # limits on gas-fired investments
-    ideea_mod$ENUC, # nuclear generators
-    ideea_mod$EHYD, # hydro generators
-    ideea_mod$WHYD, # hydro capacity factors
-    ideea_mod$EBIO, # biomass generators
-    ideea_mod$ESOL, # solar generators
-    ideea_mod$WSOL, # solar capacity factors
-    ideea_mod$CT_ESOL, # limits on solar investments
-    ideea_mod$EWIN, # wind generators
-    ideea_mod$WWIN, # wind capacity factors
-    ideea_mod$repo_geoccs, # CCS storage geo-potential
-    ideea_mod$repo_ccstechs, # CCS technologies
-    ideea_mod$repo_transmission, # transmission lines
-    ideea_mod$NO_BY_INV, # no investments in base year
-    ideea_mod$NO_NEW_NUCLEAR, # no new nuclear construction
-    ideea_mod$NO_NEW_HYDRO, # no new hydro construction
-    ideea_mod$DEMELC_BY, # demand, load curve in the base year
-    ideea_mod$DEMELC_2X # demand growth
+    ideea_elc$repo_comm, # commodities
+    ideea_elc$repo_supply, # primary supply & imports
+    ideea_elc$ECOA, # coal-fired generators
+    ideea_elc$EGAS, # gas-fired generators
+    ideea_elc$CT_EGAS, # limits on gas-fired investments
+    ideea_elc$ENUC, # nuclear generators
+    ideea_elc$EHYD, # hydro generators
+    ideea_elc$WHYD, # hydro capacity factors
+    ideea_elc$EBIO, # biomass generators
+    ideea_elc$ESOL, # solar generators
+    ideea_elc$WSOL, # solar capacity factors
+    ideea_elc$CT_ESOL, # limits on solar investments
+    ideea_elc$EWIN, # wind generators
+    ideea_elc$WWIN, # wind capacity factors
+    ideea_elc$repo_geoccs, # CCS storage geo-potential
+    ideea_elc$repo_ccstechs, # CCS technologies
+    ideea_elc$repo_transmission, # transmission lines
+    ideea_elc$NO_BY_INV, # no investments in base year
+    ideea_elc$NO_NEW_NUCLEAR, # no new nuclear construction
+    ideea_elc$NO_NEW_HYDRO, # no new hydro construction
+    ideea_elc$DEMELC_BY, # demand, load curve in the base year
+    ideea_elc$DEMELC_2X # demand growth
   )
 summary(repo_elc)
 names(repo_elc)
@@ -65,17 +69,14 @@ mod <- newModel(
   repository = repo_elc,
   region = ideea_sf$region,
   discount = 0.05,
-  calendar = ideea_mod$full_calendar_d365_h24,
-  horizon = ideea_mod$horizon_2020_2060_by_10
+  calendar = ideea_elc$full_calendar_d365_h24,
+  horizon = ideea_elc$horizon_2020_2060_by_10
 )
 
 ```
 
 ### Solve base scenario
 ```{r, eval=params$solve}
-# settings
-set_default_solver(solver_options$gams_gdx_cplex_barrier)
-set_progress_bar(TRUE)
 
 # base year scenario (1 year only)
 scen_BY <- solve(mod, horizon = newHorizon(2020, rep(1, 1)))
@@ -83,19 +84,33 @@ summary(scen_BY)
 
 # reference scenario (40 years) with subset of the calendar
 scen_REF <- solve_model(mod, name = "REF", 
-                        calendar = ideea_mod$partial_calendar_1day_per_month)
+                        calendar = ideea_elc$partial_calendar_1day_per_month)
 summary(scen_REF)
 ```
 
-tbc...
-
 ### Policy scenarios
 ```{r, eval=params$solve}
-
+# CO2 cap
+scen_CAP <- solve_model(mod, name = "CAP", 
+                        # here we can add policy objects
+                        ideea_elc$STG_BTR,
+                        ideea_elc$CO2_CAP,
+                        calendar = ideea_elc$partial_calendar_1day_per_month)
 ```
 
 ### Reports
 ```{r, eval=params$solve}
+# Collect all time-slices from a scenario
+all_slices <- scen_CAP@settings@calendar@timetable$slice
+# Plot "snapshot" of an system hourly operation for a particular day/year
+ideea_snapshot(scen_CAP, YEAR = 2055, SLICE = all_slices[grepl("d015", all_slices)])
+
+ideea_snapshot(scen_CAP, YEAR = 2060, 
+               SLICE = all_slices[grepl("d015", all_slices)],
+               return_data = F) +
+  facet_grid(region~year, scales = "free_y")
 
 ```
+
+tbc...
 
