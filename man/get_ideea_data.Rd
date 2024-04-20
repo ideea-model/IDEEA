@@ -14,7 +14,8 @@ get_ideea_data(
   offshore = FALSE,
   islands = FALSE,
   as_DT = TRUE,
-  drop_na = TRUE
+  drop_na = TRUE,
+  rename = TRUE
 )
 }
 \arguments{
@@ -39,9 +40,9 @@ returns the requested table or NULL.
 Get data from IDEEA database
 }
 \examples{
-  get_ideea_data("coal", raw = T)
-  get_ideea_data("coal", nreg = 7, "reserve")
-  get_ideea_data("oil", nreg = 34, "reserve", islands = T)
-  get_ideea_data("coal", nreg = 7, "cost", agg_fun = mean)
-  get_ideea_data("merra_raw_2014", raw = T) \%>\% head()
+get_ideea_data("coal", raw = T)
+get_ideea_data("coal", nreg = 7, "reserve")
+get_ideea_data("oil", nreg = 34, "reserve", islands = T)
+get_ideea_data("coal", nreg = 7, "cost", agg_fun = mean)
+get_ideea_data("merra_raw_2014", raw = T) \%>\% head()
 }
