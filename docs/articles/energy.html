@@ -35,11 +35,11 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <nav class="navbar fixed-top navbar-dark navbar-expand-lg bg-primary"><div class="container">
+    <nav class="navbar fixed-top navbar-dark navbar-expand-lg bg-primary" data-bs-theme="dark"><div class="container">
     
     <a class="navbar-brand me-2" href="../index.html">IDEEA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.22.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.26.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -219,7 +219,7 @@ code
 <span>  agg_fun <span class="op">=</span> <span class="va">sum</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="va">coa_sup</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"production"</span>, agg_fun <span class="op">=</span> <span class="va">sum</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"production"</span>, agg_fun <span class="op">=</span> <span class="va">sum</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">full_join</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"cost_USD_t_2020"</span>, agg_fun <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
@@ -231,11 +231,11 @@ code
 <span>  commodity <span class="op">=</span> <span class="st">"COA"</span>,</span>
 <span>  unit <span class="op">=</span> <span class="st">"GWh"</span>,</span>
 <span>  reserve <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span> <span class="co"># maximum </span></span>
-<span>    region <span class="op">=</span> <span class="va">coa_reserve</span><span class="op">$</span><span class="va">reg7</span>,</span>
+<span>    region <span class="op">=</span> <span class="va">coa_reserve</span><span class="op">$</span><span class="va">region</span>,</span>
 <span>    res.up <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">convert</span><span class="op">(</span><span class="st">"Mtce"</span>, <span class="st">"GWh"</span>, <span class="va">coa_reserve</span><span class="op">$</span><span class="va">total_reserve_Mt</span> <span class="op">*</span> <span class="fl">.7</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  availability <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    region <span class="op">=</span> <span class="va">coa_sup</span><span class="op">$</span><span class="va">reg7</span>,</span>
+<span>    region <span class="op">=</span> <span class="va">coa_sup</span><span class="op">$</span><span class="va">region</span>,</span>
 <span>    ava.up <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">convert</span><span class="op">(</span><span class="st">"Mtce"</span>, <span class="st">"GWh"</span>, <span class="va">coa_sup</span><span class="op">$</span><span class="va">production_2021</span> <span class="op">*</span> <span class="fl">.7</span><span class="op">)</span>, <span class="fl">0</span><span class="op">)</span>,</span>
 <span>    cost <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="fu">convert</span><span class="op">(</span><span class="st">"USD/tce"</span>, <span class="st">"cr.INR/GWh"</span>, </span>
 <span>                          <span class="va">coa_sup</span><span class="op">$</span><span class="va">cost_USD_t_2020</span> <span class="op">*</span> <span class="fl">.7</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
@@ -288,14 +288,14 @@ code
 <span><span class="va">oil_sup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"oil"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, variable <span class="op">=</span> <span class="st">"reserve"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">full_join</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span><span class="st">"oil"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"cost"</span>, agg_fun <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span>
-<span>  <span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">oil_reserve_GWh_2021</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span></span>
 <span>  </span>
 <span><span class="co"># oil_sup &lt;- </span></span>
-<span><span class="co">#   oil_reserve %&gt;%</span></span>
+<span><span class="co">#   oil_reserve |&gt;</span></span>
 <span><span class="co">#   full_join(</span></span>
 <span><span class="co">#     get_ideea_data("oil", nreg = 7, "cost", agg_fun = mean)</span></span>
-<span><span class="co">#   ) %&gt;%</span></span>
+<span><span class="co">#   ) |&gt;</span></span>
 <span><span class="co">#   filter(oil_reserve_GWh_2021 &gt; 0)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Declaration of commodity</span></span>
@@ -322,13 +322,13 @@ code
 <span>  desc <span class="op">=</span> <span class="st">"Domestic oil supply"</span>,</span>
 <span>  commodity <span class="op">=</span> <span class="st">"OIL"</span>,</span>
 <span>  unit <span class="op">=</span> <span class="st">"GWh"</span>,</span>
-<span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">oil_sup</span><span class="op">$</span><span class="va">reg7</span><span class="op">)</span>,</span>
+<span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">oil_sup</span><span class="op">$</span><span class="va">region</span><span class="op">)</span>,</span>
 <span>  reserve <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    region <span class="op">=</span> <span class="va">oil_sup</span><span class="op">$</span><span class="va">reg7</span>,</span>
+<span>    region <span class="op">=</span> <span class="va">oil_sup</span><span class="op">$</span><span class="va">region</span>,</span>
 <span>    res.up <span class="op">=</span> <span class="va">oil_sup</span><span class="op">$</span><span class="va">oil_reserve_GWh_2021</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  availability <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    region <span class="op">=</span> <span class="va">oil_sup</span><span class="op">$</span><span class="va">reg7</span>,</span>
+<span>    region <span class="op">=</span> <span class="va">oil_sup</span><span class="op">$</span><span class="va">region</span>,</span>
 <span>    ava.up <span class="op">=</span> <span class="va">oil_sup</span><span class="op">$</span><span class="va">oil_reserve_GWh_2021</span> <span class="op">/</span> <span class="fl">30</span>, <span class="co"># assumption</span></span>
 <span>    cost <span class="op">=</span> <span class="fu">convert</span><span class="op">(</span><span class="st">"USD/kWh"</span>, <span class="st">"cr.INR/GWh"</span>, <span class="va">oil_sup</span><span class="op">$</span><span class="va">oil_cost_USD_kWh</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
@@ -349,7 +349,7 @@ code
 <span></span>
 <span><span class="co"># saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">OIL</span>, <span class="va">SUP_OIL</span>, <span class="va">IMP_OIL</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; commodity    import    supply </span></span>
 <span><span class="co">#&gt;         2         2         2</span></span>
 <span><span class="va">repo_energy</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -376,111 +376,111 @@ code
 </summary><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># loading and processing oil data</span></span>
 <span><span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"gas"</span>, raw <span class="op">=</span> <span class="cn">T</span><span class="op">)</span> <span class="co"># check raw data</span></span>
-<span><span class="co">#&gt;     gas_reserve_Bcm_2021 gas_reserve_GWh_2021 gas_cost_USD_kWh reg36_off</span></span>
-<span><span class="co">#&gt;                    &lt;num&gt;                &lt;num&gt;            &lt;num&gt;    &lt;char&gt;</span></span>
-<span><span class="co">#&gt;  1:                65.50               695028             0.03        AP</span></span>
-<span><span class="co">#&gt;  2:                   NA                   NA               NA    AP_off</span></span>
-<span><span class="co">#&gt;  3:                 3.14                33319             0.03        AR</span></span>
-<span><span class="co">#&gt;  4:               166.63              1768129             0.03        AS</span></span>
-<span><span class="co">#&gt;  5:                   NA                   NA               NA        BR</span></span>
-<span><span class="co">#&gt;  6:                   NA                   NA               NA        CH</span></span>
-<span><span class="co">#&gt;  7:                   NA                   NA               NA        CT</span></span>
-<span><span class="co">#&gt;  8:                   NA                   NA               NA        DD</span></span>
-<span><span class="co">#&gt;  9:                   NA                   NA               NA    DD_off</span></span>
-<span><span class="co">#&gt; 10:                   NA                   NA               NA        DL</span></span>
-<span><span class="co">#&gt; 11:                   NA                   NA               NA        DN</span></span>
-<span><span class="co">#&gt; 12:                   NA                   NA               NA        GA</span></span>
-<span><span class="co">#&gt; 13:                   NA                   NA               NA    GA_off</span></span>
-<span><span class="co">#&gt; 14:                56.79               602605             0.03        GJ</span></span>
-<span><span class="co">#&gt; 15:                   NA                   NA               NA    GJ_off</span></span>
-<span><span class="co">#&gt; 16:                   NA                   NA               NA        HP</span></span>
-<span><span class="co">#&gt; 17:                   NA                   NA               NA        HR</span></span>
-<span><span class="co">#&gt; 18:                   NA                   NA               NA        JH</span></span>
-<span><span class="co">#&gt; 19:                   NA                   NA               NA        JK</span></span>
-<span><span class="co">#&gt; 20:                   NA                   NA               NA        KA</span></span>
-<span><span class="co">#&gt; 21:                   NA                   NA               NA    KA_off</span></span>
-<span><span class="co">#&gt; 22:                   NA                   NA               NA        KL</span></span>
-<span><span class="co">#&gt; 23:                   NA                   NA               NA    KL_off</span></span>
-<span><span class="co">#&gt; 24:                   NA                   NA               NA        MH</span></span>
-<span><span class="co">#&gt; 25:                   NA                   NA               NA    MH_off</span></span>
-<span><span class="co">#&gt; 26:                   NA                   NA               NA        ML</span></span>
-<span><span class="co">#&gt; 27:                   NA                   NA               NA        MN</span></span>
-<span><span class="co">#&gt; 28:                   NA                   NA               NA        MP</span></span>
-<span><span class="co">#&gt; 29:                   NA                   NA               NA        MZ</span></span>
-<span><span class="co">#&gt; 30:                 0.09                  955             0.03        NL</span></span>
-<span><span class="co">#&gt; 31:                   NA                   NA               NA        OR</span></span>
-<span><span class="co">#&gt; 32:                   NA                   NA               NA    OR_off</span></span>
-<span><span class="co">#&gt; 33:                   NA                   NA               NA        PB</span></span>
-<span><span class="co">#&gt; 34:                   NA                   NA               NA        PY</span></span>
-<span><span class="co">#&gt; 35:                   NA                   NA               NA    PY_off</span></span>
-<span><span class="co">#&gt; 36:                59.06               626692             0.03        RJ</span></span>
-<span><span class="co">#&gt; 37:                   NA                   NA               NA        SK</span></span>
-<span><span class="co">#&gt; 38:                   NA                   NA               NA        TG</span></span>
-<span><span class="co">#&gt; 39:                37.89               402055             0.03        TN</span></span>
-<span><span class="co">#&gt; 40:                   NA                   NA               NA    TN_off</span></span>
-<span><span class="co">#&gt; 41:                29.18               309632             0.03        TR</span></span>
-<span><span class="co">#&gt; 42:                   NA                   NA               NA        UP</span></span>
-<span><span class="co">#&gt; 43:                   NA                   NA               NA        UT</span></span>
-<span><span class="co">#&gt; 44:                   NA                   NA               NA        WB</span></span>
-<span><span class="co">#&gt; 45:                   NA                   NA               NA    WB_off</span></span>
-<span><span class="co">#&gt;     gas_reserve_Bcm_2021 gas_reserve_GWh_2021 gas_cost_USD_kWh reg36_off</span></span>
-<span><span class="co">#&gt;     offshore                 name36  name1  reg36</span></span>
-<span><span class="co">#&gt;       &lt;lgcl&gt;                 &lt;char&gt; &lt;char&gt; &lt;char&gt;</span></span>
-<span><span class="co">#&gt;  1:    FALSE         Andhra Pradesh  India     AP</span></span>
-<span><span class="co">#&gt;  2:     TRUE         Andhra Pradesh  India     AP</span></span>
-<span><span class="co">#&gt;  3:    FALSE      Arunachal Pradesh  India     AR</span></span>
-<span><span class="co">#&gt;  4:    FALSE                  Assam  India     AS</span></span>
-<span><span class="co">#&gt;  5:    FALSE                  Bihar  India     BR</span></span>
-<span><span class="co">#&gt;  6:    FALSE             Chandigarh  India     CH</span></span>
-<span><span class="co">#&gt;  7:    FALSE           Chhattisgarh  India     CT</span></span>
-<span><span class="co">#&gt;  8:    FALSE          Daman and Diu  India     DD</span></span>
-<span><span class="co">#&gt;  9:     TRUE          Daman and Diu  India     DD</span></span>
-<span><span class="co">#&gt; 10:    FALSE                  Delhi  India     DL</span></span>
-<span><span class="co">#&gt; 11:    FALSE Dadra and Nagar Haveli  India     DN</span></span>
-<span><span class="co">#&gt; 12:    FALSE                    Goa  India     GA</span></span>
-<span><span class="co">#&gt; 13:     TRUE                    Goa  India     GA</span></span>
-<span><span class="co">#&gt; 14:    FALSE                Gujarat  India     GJ</span></span>
-<span><span class="co">#&gt; 15:     TRUE                Gujarat  India     GJ</span></span>
-<span><span class="co">#&gt; 16:    FALSE       Himachal Pradesh  India     HP</span></span>
-<span><span class="co">#&gt; 17:    FALSE                Haryana  India     HR</span></span>
-<span><span class="co">#&gt; 18:    FALSE              Jharkhand  India     JH</span></span>
-<span><span class="co">#&gt; 19:    FALSE      Jammu and Kashmir  India     JK</span></span>
-<span><span class="co">#&gt; 20:    FALSE              Karnataka  India     KA</span></span>
-<span><span class="co">#&gt; 21:     TRUE              Karnataka  India     KA</span></span>
-<span><span class="co">#&gt; 22:    FALSE                 Kerala  India     KL</span></span>
-<span><span class="co">#&gt; 23:     TRUE                 Kerala  India     KL</span></span>
-<span><span class="co">#&gt; 24:    FALSE            Maharashtra  India     MH</span></span>
-<span><span class="co">#&gt; 25:     TRUE            Maharashtra  India     MH</span></span>
-<span><span class="co">#&gt; 26:    FALSE              Meghalaya  India     ML</span></span>
-<span><span class="co">#&gt; 27:    FALSE                Manipur  India     MN</span></span>
-<span><span class="co">#&gt; 28:    FALSE         Madhya Pradesh  India     MP</span></span>
-<span><span class="co">#&gt; 29:    FALSE                Mizoram  India     MZ</span></span>
-<span><span class="co">#&gt; 30:    FALSE               Nagaland  India     NL</span></span>
-<span><span class="co">#&gt; 31:    FALSE                 Odisha  India     OR</span></span>
-<span><span class="co">#&gt; 32:     TRUE                 Odisha  India     OR</span></span>
-<span><span class="co">#&gt; 33:    FALSE                 Punjab  India     PB</span></span>
-<span><span class="co">#&gt; 34:    FALSE             Puducherry  India     PY</span></span>
-<span><span class="co">#&gt; 35:     TRUE             Puducherry  India     PY</span></span>
-<span><span class="co">#&gt; 36:    FALSE              Rajasthan  India     RJ</span></span>
-<span><span class="co">#&gt; 37:    FALSE                 Sikkim  India     SK</span></span>
-<span><span class="co">#&gt; 38:    FALSE              Telangana  India     TG</span></span>
-<span><span class="co">#&gt; 39:    FALSE             Tamil Nadu  India     TN</span></span>
-<span><span class="co">#&gt; 40:     TRUE             Tamil Nadu  India     TN</span></span>
-<span><span class="co">#&gt; 41:    FALSE                Tripura  India     TR</span></span>
-<span><span class="co">#&gt; 42:    FALSE          Uttar Pradesh  India     UP</span></span>
-<span><span class="co">#&gt; 43:    FALSE            Uttarakhand  India     UT</span></span>
-<span><span class="co">#&gt; 44:    FALSE            West Bengal  India     WB</span></span>
-<span><span class="co">#&gt; 45:     TRUE            West Bengal  India     WB</span></span>
-<span><span class="co">#&gt;     offshore                 name36  name1  reg36</span></span>
+<span><span class="co">#&gt;      reg36 reg36_off   reg1 offshore                 name36  name1</span></span>
+<span><span class="co">#&gt;     &lt;char&gt;    &lt;char&gt; &lt;char&gt;   &lt;lgcl&gt;                 &lt;char&gt; &lt;char&gt;</span></span>
+<span><span class="co">#&gt;  1:     AP        AP    IND    FALSE         Andhra Pradesh  India</span></span>
+<span><span class="co">#&gt;  2:     AP    AP_off    IND     TRUE         Andhra Pradesh  India</span></span>
+<span><span class="co">#&gt;  3:     AR        AR    IND    FALSE      Arunachal Pradesh  India</span></span>
+<span><span class="co">#&gt;  4:     AS        AS    IND    FALSE                  Assam  India</span></span>
+<span><span class="co">#&gt;  5:     BR        BR    IND    FALSE                  Bihar  India</span></span>
+<span><span class="co">#&gt;  6:     CH        CH    IND    FALSE             Chandigarh  India</span></span>
+<span><span class="co">#&gt;  7:     CT        CT    IND    FALSE           Chhattisgarh  India</span></span>
+<span><span class="co">#&gt;  8:     DD        DD    IND    FALSE          Daman and Diu  India</span></span>
+<span><span class="co">#&gt;  9:     DD    DD_off    IND     TRUE          Daman and Diu  India</span></span>
+<span><span class="co">#&gt; 10:     DL        DL    IND    FALSE                  Delhi  India</span></span>
+<span><span class="co">#&gt; 11:     DN        DN    IND    FALSE Dadra and Nagar Haveli  India</span></span>
+<span><span class="co">#&gt; 12:     GA        GA    IND    FALSE                    Goa  India</span></span>
+<span><span class="co">#&gt; 13:     GA    GA_off    IND     TRUE                    Goa  India</span></span>
+<span><span class="co">#&gt; 14:     GJ        GJ    IND    FALSE                Gujarat  India</span></span>
+<span><span class="co">#&gt; 15:     GJ    GJ_off    IND     TRUE                Gujarat  India</span></span>
+<span><span class="co">#&gt; 16:     HP        HP    IND    FALSE       Himachal Pradesh  India</span></span>
+<span><span class="co">#&gt; 17:     HR        HR    IND    FALSE                Haryana  India</span></span>
+<span><span class="co">#&gt; 18:     JH        JH    IND    FALSE              Jharkhand  India</span></span>
+<span><span class="co">#&gt; 19:     JK        JK    IND    FALSE      Jammu and Kashmir  India</span></span>
+<span><span class="co">#&gt; 20:     KA        KA    IND    FALSE              Karnataka  India</span></span>
+<span><span class="co">#&gt; 21:     KA    KA_off    IND     TRUE              Karnataka  India</span></span>
+<span><span class="co">#&gt; 22:     KL        KL    IND    FALSE                 Kerala  India</span></span>
+<span><span class="co">#&gt; 23:     KL    KL_off    IND     TRUE                 Kerala  India</span></span>
+<span><span class="co">#&gt; 24:     MH        MH    IND    FALSE            Maharashtra  India</span></span>
+<span><span class="co">#&gt; 25:     MH    MH_off    IND     TRUE            Maharashtra  India</span></span>
+<span><span class="co">#&gt; 26:     ML        ML    IND    FALSE              Meghalaya  India</span></span>
+<span><span class="co">#&gt; 27:     MN        MN    IND    FALSE                Manipur  India</span></span>
+<span><span class="co">#&gt; 28:     MP        MP    IND    FALSE         Madhya Pradesh  India</span></span>
+<span><span class="co">#&gt; 29:     MZ        MZ    IND    FALSE                Mizoram  India</span></span>
+<span><span class="co">#&gt; 30:     NL        NL    IND    FALSE               Nagaland  India</span></span>
+<span><span class="co">#&gt; 31:     OR        OR    IND    FALSE                 Odisha  India</span></span>
+<span><span class="co">#&gt; 32:     OR    OR_off    IND     TRUE                 Odisha  India</span></span>
+<span><span class="co">#&gt; 33:     PB        PB    IND    FALSE                 Punjab  India</span></span>
+<span><span class="co">#&gt; 34:     PY        PY    IND    FALSE             Puducherry  India</span></span>
+<span><span class="co">#&gt; 35:     PY    PY_off    IND     TRUE             Puducherry  India</span></span>
+<span><span class="co">#&gt; 36:     RJ        RJ    IND    FALSE              Rajasthan  India</span></span>
+<span><span class="co">#&gt; 37:     SK        SK    IND    FALSE                 Sikkim  India</span></span>
+<span><span class="co">#&gt; 38:     TG        TG    IND    FALSE              Telangana  India</span></span>
+<span><span class="co">#&gt; 39:     TN        TN    IND    FALSE             Tamil Nadu  India</span></span>
+<span><span class="co">#&gt; 40:     TN    TN_off    IND     TRUE             Tamil Nadu  India</span></span>
+<span><span class="co">#&gt; 41:     TR        TR    IND    FALSE                Tripura  India</span></span>
+<span><span class="co">#&gt; 42:     UP        UP    IND    FALSE          Uttar Pradesh  India</span></span>
+<span><span class="co">#&gt; 43:     UT        UT    IND    FALSE            Uttarakhand  India</span></span>
+<span><span class="co">#&gt; 44:     WB        WB    IND    FALSE            West Bengal  India</span></span>
+<span><span class="co">#&gt; 45:     WB    WB_off    IND     TRUE            West Bengal  India</span></span>
+<span><span class="co">#&gt;      reg36 reg36_off   reg1 offshore                 name36  name1</span></span>
+<span><span class="co">#&gt;     gas_reserve_Bcm_2021 gas_reserve_GWh_2021 gas_cost_USD_kWh</span></span>
+<span><span class="co">#&gt;                    &lt;num&gt;                &lt;num&gt;            &lt;num&gt;</span></span>
+<span><span class="co">#&gt;  1:                65.50               695028             0.03</span></span>
+<span><span class="co">#&gt;  2:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt;  3:                 3.14                33319             0.03</span></span>
+<span><span class="co">#&gt;  4:               166.63              1768129             0.03</span></span>
+<span><span class="co">#&gt;  5:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt;  6:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt;  7:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt;  8:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt;  9:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 10:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 11:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 12:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 13:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 14:                56.79               602605             0.03</span></span>
+<span><span class="co">#&gt; 15:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 16:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 17:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 18:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 19:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 20:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 21:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 22:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 23:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 24:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 25:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 26:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 27:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 28:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 29:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 30:                 0.09                  955             0.03</span></span>
+<span><span class="co">#&gt; 31:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 32:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 33:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 34:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 35:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 36:                59.06               626692             0.03</span></span>
+<span><span class="co">#&gt; 37:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 38:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 39:                37.89               402055             0.03</span></span>
+<span><span class="co">#&gt; 40:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 41:                29.18               309632             0.03</span></span>
+<span><span class="co">#&gt; 42:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 43:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 44:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt; 45:                   NA                   NA               NA</span></span>
+<span><span class="co">#&gt;     gas_reserve_Bcm_2021 gas_reserve_GWh_2021 gas_cost_USD_kWh</span></span>
 <span><span class="va">gas_reserve</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"gas"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, </span>
 <span>                              variable <span class="op">=</span> <span class="st">"reserve"</span>, agg_fun <span class="op">=</span> <span class="va">sum</span><span class="op">)</span></span>
 <span><span class="co"># gas_sup &lt;- </span></span>
-<span><span class="co">#   # get_ideea_data("oil", nreg = 7, "production") %&gt;%</span></span>
-<span><span class="co">#   gas_reserve %&gt;%</span></span>
+<span><span class="co">#   # get_ideea_data("oil", nreg = 7, "production") |&gt;</span></span>
+<span><span class="co">#   gas_reserve |&gt;</span></span>
 <span><span class="co">#   full_join(</span></span>
 <span><span class="co">#     get_ideea_data("gas", nreg = 7, variable = "cost", </span></span>
 <span><span class="co">#                    agg_fun = mean)</span></span>
-<span><span class="co">#   ) %&gt;%</span></span>
+<span><span class="co">#   ) |&gt;</span></span>
 <span><span class="co">#   filter(gas_reserve_GWh_2021 &gt; 0)</span></span>
 <span></span>
 <span><span class="co"># gas_ava &lt;- get_ideea_data(name = "gas_ava_assumptions", nreg = 7)</span></span>
@@ -512,9 +512,9 @@ code
 <span>  desc <span class="op">=</span> <span class="st">"Domestic natural supply"</span>,</span>
 <span>  commodity <span class="op">=</span> <span class="st">"GAS"</span>,</span>
 <span>  unit <span class="op">=</span> <span class="st">"GWh"</span>,</span>
-<span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">gas_reserve</span><span class="op">$</span><span class="va">reg7</span><span class="op">)</span>,</span>
+<span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">gas_reserve</span><span class="op">$</span><span class="va">region</span><span class="op">)</span>,</span>
 <span>  reserve <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    region <span class="op">=</span> <span class="va">gas_reserve</span><span class="op">$</span><span class="va">reg7</span>,</span>
+<span>    region <span class="op">=</span> <span class="va">gas_reserve</span><span class="op">$</span><span class="va">region</span>,</span>
 <span>    res.up <span class="op">=</span> <span class="va">gas_reserve</span><span class="op">$</span><span class="va">gas_reserve_GWh_2021</span> </span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  availability <span class="op">=</span> <span class="va">ideea_data</span><span class="op">$</span><span class="va">gas_ava_assumption</span></span>
@@ -536,7 +536,7 @@ code
 <span></span>
 <span><span class="co"># saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">GAS</span>, <span class="va">SUP_GAS</span>, <span class="va">IMP_GAS</span>, overwrite <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "COA"     "SUP_COA" "IMP_COA" "OIL"     "SUP_OIL" "IMP_OIL" "GAS"    </span></span>
 <span><span class="co">#&gt; [8] "SUP_GAS" "IMP_GAS"</span></span></code></pre></div>
 </details><div class="figure">
@@ -556,13 +556,13 @@ code
 </summary><div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># loading and processing ccs data</span></span>
 <span><span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"ccs_r5"</span>, raw <span class="op">=</span> <span class="cn">T</span><span class="op">)</span> <span class="co"># check raw data</span></span>
-<span><span class="co">#&gt;    CCS_potential_GtCO2      reg5 offshore</span></span>
-<span><span class="co">#&gt;                  &lt;num&gt;    &lt;char&gt;   &lt;lgcl&gt;</span></span>
-<span><span class="co">#&gt; 1:                7.65      EAST    FALSE</span></span>
-<span><span class="co">#&gt; 2:              388.90     NORTH    FALSE</span></span>
-<span><span class="co">#&gt; 3:               47.20 NORTHEAST    FALSE</span></span>
-<span><span class="co">#&gt; 4:               76.30     SOUTH    FALSE</span></span>
-<span><span class="co">#&gt; 5:               47.20      WEST    FALSE</span></span>
+<span><span class="co">#&gt;         reg5 CCS_potential_GtCO2</span></span>
+<span><span class="co">#&gt;       &lt;char&gt;               &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      EAST                7.65</span></span>
+<span><span class="co">#&gt; 2:     NORTH              388.90</span></span>
+<span><span class="co">#&gt; 3: NORTHEAST               47.20</span></span>
+<span><span class="co">#&gt; 4:     SOUTH               76.30</span></span>
+<span><span class="co">#&gt; 5:      WEST               47.20</span></span>
 <span><span class="va">ccs_reserve</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"ccs_r5"</span>, raw <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Declaration of commodity</span></span>
@@ -613,7 +613,7 @@ code
 <span><span class="co"># Saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">CCSCO2</span>, <span class="va">CO2SINK</span>, <span class="va">GHG</span>, <span class="va">RES_CO2SINK</span>, </span>
 <span>                   overwrite <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "COA"         "SUP_COA"     "IMP_COA"     "OIL"         "SUP_OIL"    </span></span>
 <span><span class="co">#&gt;  [6] "IMP_OIL"     "GAS"         "SUP_GAS"     "IMP_GAS"     "CCSCO2"     </span></span>
 <span><span class="co">#&gt; [11] "CO2SINK"     "GHG"         "RES_CO2SINK"</span></span></code></pre></div>
@@ -647,7 +647,7 @@ code
 </summary><div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># loading and processing data</span></span>
 <span><span class="co"># get_ideea_data(name = "biomass", raw = T) # check raw data</span></span>
-<span><span class="va">bio_sup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"biomass"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, variable <span class="op">=</span> <span class="st">"max_MWe"</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span><span class="va">bio_sup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_data.html">get_ideea_data</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"biomass"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, variable <span class="op">=</span> <span class="st">"max_MWe"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">max_MWe</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">bio_ava</span> <span class="op">&lt;-</span> <span class="va">ideea_data</span><span class="op">$</span><span class="va">biomass_ava_assumption</span> </span>
@@ -678,7 +678,7 @@ code
 <span></span>
 <span><span class="co"># saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">BIO</span>, <span class="va">RES_BIO</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "COA"         "SUP_COA"     "IMP_COA"     "OIL"         "SUP_OIL"    </span></span>
 <span><span class="co">#&gt;  [6] "IMP_OIL"     "GAS"         "SUP_GAS"     "IMP_GAS"     "CCSCO2"     </span></span>
 <span><span class="co">#&gt; [11] "CO2SINK"     "GHG"         "RES_CO2SINK" "BIO"         "RES_BIO"</span></span></code></pre></div>
@@ -750,7 +750,9 @@ INR 5.42 per kWh [<a href="https://energy.economictimes.indiatimes.com/news/powe
 </h2>
 <p>summarize existing and planned projects<br>
 normally not included to optimization<br><a href="https://www.world-nuclear.org/information-library/country-profiles/countries-g-n/india.aspx" class="external-link uri">https://www.world-nuclear.org/information-library/country-profiles/countries-g-n/india.aspx</a></p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<details><summary>
+code
+</summary><div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Declaration of commodity</span></span>
 <span><span class="va">NUC</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/energyRt/man/commodity.html" class="external-link">newCommodity</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"NUC"</span>, </span>
@@ -778,11 +780,12 @@ normally not included to optimization<br><a href="https://www.world-nuclear.org/
 <span></span>
 <span><span class="co"># saving the model objects in repository</span></span>
 <span><span class="va">repo_energy</span> <span class="op">&lt;-</span> <span class="fu">add</span><span class="op">(</span><span class="va">repo_energy</span>, <span class="va">NUC</span>, <span class="va">IMP_NUC</span>, overwrite <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></span>
-<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">repo_energy</span><span class="op">@</span><span class="va">data</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "COA"         "SUP_COA"     "IMP_COA"     "OIL"         "SUP_OIL"    </span></span>
 <span><span class="co">#&gt;  [6] "IMP_OIL"     "GAS"         "SUP_GAS"     "IMP_GAS"     "CCSCO2"     </span></span>
 <span><span class="co">#&gt; [11] "CO2SINK"     "GHG"         "RES_CO2SINK" "BIO"         "RES_BIO"    </span></span>
 <span><span class="co">#&gt; [16] "NUC"         "IMP_NUC"</span></span></code></pre></div>
+</details>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -801,7 +804,7 @@ normally not included to optimization<br><a href="https://www.world-nuclear.org/
 
 <div class="pkgdown-footer-right">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.8.</p>
 </div>
 
     </footer>

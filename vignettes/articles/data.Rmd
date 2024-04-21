@@ -7,10 +7,13 @@ editor_options:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE, 
+  eval = FALSE,
   # fig.retina = T,
   comment = "#>"
 )
 ```
+
+**This page is in progress**
 
 discussion of data sets used in the library
 
@@ -104,7 +107,7 @@ ggplot(load_2019_reg5) +
 
 ### Wind capacity factors
 
-```{r, eval=T, message=FALSE}
+```{r, eval=FALSE, message=FALSE}
 library(merra2ools)
 gis_sf <- get_ideea_map(36, offshore = T, islands = T)
 
@@ -216,7 +219,7 @@ save(win_cf_r7, file = "data-raw/merra/win_cf_r7.RData")
 ### Solar capacity factors
 <details>
 <summary>code</summary>
-```{r, eval=T, message=FALSE}
+```{r, eval=FALSE, message=FALSE}
 library(merra2ools)
 gis_sf <- get_ideea_map(36, offshore = T, islands = T)
 

@@ -38,5 +38,6 @@
 #' @importFrom ggplot2 scale_fill_viridis_d
 #' @importFrom ggplot2 theme_bw
 #' @importFrom glue glue
+#' @importFrom readr write_lines
 ## usethis namespace: end
 NULL

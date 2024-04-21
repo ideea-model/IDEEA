@@ -41,14 +41,14 @@ resolution.
 
 ## Installation
 
-Please refer to the step=by-step installation guide the
+Please refer to the step-by-step installation guide the
 [“Installation”](https://ideea-model.github.io/IDEEA/articles/install.html)
 article. The package itself can be installed from GitHub using the `pak`
 package:
 
 ``` r
 # install.packages("pak")
-pak::pkg_install("ideea-model/IDEEA") # not updated yet!
+pak::pkg_install("ideea-model/IDEEA") 
 library("IDEEA")
 ```
 

@@ -12,11 +12,11 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
     
 
-    <nav class="navbar fixed-top navbar-dark navbar-expand-lg bg-primary"><div class="container">
+    <nav class="navbar fixed-top navbar-dark navbar-expand-lg bg-primary" data-bs-theme="dark"><div class="container">
     
     <a class="navbar-brand me-2" href="../index.html">IDEEA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.22.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.26.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,7 +94,8 @@
 <span>  offshore <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  islands <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  as_DT <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  drop_na <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  drop_na <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  rename <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -137,16 +138,111 @@
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span>  <span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"coal"</span>, raw <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in select(x, -any_of(c("reg1", "reg1_off"))):</span> could not find function "select"</span>
-<span class="r-in"><span>  <span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"reserve"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in select(x, -any_of(c("reg1", "reg1_off"))):</span> could not find function "select"</span>
-<span class="r-in"><span>  <span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"oil"</span>, nreg <span class="op">=</span> <span class="fl">34</span>, <span class="st">"reserve"</span>, islands <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in select(x, -any_of(c("reg1", "reg1_off"))):</span> could not find function "select"</span>
-<span class="r-in"><span>  <span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"cost"</span>, agg_fun <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in select(x, -any_of(c("reg1", "reg1_off"))):</span> could not find function "select"</span>
-<span class="r-in"><span>  <span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"merra_raw_2014"</span>, raw <span class="op">=</span> <span class="cn">T</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in select(x, -any_of(c("reg1", "reg1_off"))):</span> could not find function "select"</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"coal"</span>, raw <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      reg36                 name36 mainland offshore   reg1  name1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;char&gt;                 &lt;char&gt;   &lt;lgcl&gt;   &lt;lgcl&gt; &lt;char&gt; &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1:     AP         Andhra Pradesh     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  2:     AR      Arunachal Pradesh     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3:     AS                  Assam     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4:     BR                  Bihar     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5:     CH             Chandigarh     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6:     CT           Chhattisgarh     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7:     DD          Daman and Diu     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8:     DL                  Delhi     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  9:     DN Dadra and Nagar Haveli     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10:     GA                    Goa     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11:     GJ                Gujarat     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12:     HP       Himachal Pradesh     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13:     HR                Haryana     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14:     JH              Jharkhand     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15:     JK      Jammu and Kashmir     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16:     KA              Karnataka     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17:     KL                 Kerala     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18:     MH            Maharashtra     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19:     ML              Meghalaya     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20:     MN                Manipur     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21:     MP         Madhya Pradesh     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22:     MZ                Mizoram     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23:     NL               Nagaland     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24:     OR                 Odisha     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25:     PB                 Punjab     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26:     PY             Puducherry     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27:     RJ              Rajasthan     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28:     SK                 Sikkim     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29:     TG              Telangana     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30:     TN             Tamil Nadu     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31:     TR                Tripura     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32:     UP          Uttar Pradesh     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33:     UT            Uttarakhand     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34:     WB            West Bengal     TRUE    FALSE    IND  India</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      reg36                 name36 mainland offshore   reg1  name1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     total_reserve_Mt production_2021 cost_USD_t_2020</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                &lt;num&gt;           &lt;num&gt;           &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1:          4141.87              NA              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  2:            90.23              NA              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3:           525.01           0.036              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  4:          4437.18              NA              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  5:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  6:         74191.76         158.409              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  7:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  8:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  9:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14:         86660.10         119.296              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18:         13220.71          47.435              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19:           576.48              NA              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21:         30916.73         132.531              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23:           478.31              NA              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24:         88104.60         154.150              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28:           101.23              NA              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29:         23034.20          52.603              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32:          1061.80          17.016              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33:               NA              NA              NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34:         33871.25          34.596              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     total_reserve_Mt production_2021 cost_USD_t_2020</span>
+<span class="r-in"><span><span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"reserve"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       region total_reserve_Mt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;char&gt;            &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      EAST        213174.36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     NORTH          1061.80</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: NORTHEAST          1670.03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:     SOUTH         27176.07</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:      WEST        118329.20</span>
+<span class="r-in"><span><span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"oil"</span>, nreg <span class="op">=</span> <span class="fl">34</span>, <span class="st">"reserve"</span>, islands <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Cannot automatically aggregate table oil to 34 regions. Most likely a disagregation algorighm is required.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Use 'raw = TRUE' to request unprocessed data.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
+<span class="r-in"><span><span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"coal"</span>, nreg <span class="op">=</span> <span class="fl">7</span>, <span class="st">"cost"</span>, agg_fun <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       region cost_USD_t_2020</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;char&gt;           &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1:      EAST              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2:     NORTH              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: NORTHEAST              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4:     SOUTH              50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5:      WEST              50</span>
+<span class="r-in"><span><span class="fu">get_ideea_data</span><span class="op">(</span><span class="st">"merra_raw_2014"</span>, raw <span class="op">=</span> <span class="cn">T</span><span class="op">)</span> <span class="op"><a href="pipe.html">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Key: &lt;UTC, locid&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    UTC  locid  W10M  W50M SWGDN ALBEDO</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;POSc&gt;  &lt;int&gt; &lt;num&gt; &lt;num&gt; &lt;int&gt;  &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: 2014-01-01 00:30:00 109878   5.6   6.0    63   0.12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: 2014-01-01 00:30:00 109879   4.4   4.7    71   0.12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: 2014-01-01 00:30:00 110453   6.7   7.3    53   0.13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: 2014-01-01 00:30:00 110454   5.6   6.0    61   0.13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: 2014-01-01 00:30:00 110455   4.2   4.5    51   0.12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: 2014-01-01 00:30:00 111028   8.9   9.9    19   0.10</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
@@ -158,7 +254,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.8.</p>
 </div>
 
     </footer></div>

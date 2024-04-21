@@ -85,7 +85,7 @@ coa_reserve <- get_ideea_data(
   agg_fun = sum
   )
 coa_sup <- 
-  get_ideea_data("coal", nreg = 7, "production", agg_fun = sum) %>%
+  get_ideea_data("coal", nreg = 7, "production", agg_fun = sum) |>
   full_join(
     get_ideea_data("coal", nreg = 7, "cost_USD_t_2020", agg_fun = mean)
   )
@@ -97,11 +97,11 @@ SUP_COA <- newSupply(
   commodity = "COA",
   unit = "GWh",
   reserve = data.frame( # maximum 
-    region = coa_reserve$reg7,
+    region = coa_reserve$region,
     res.up = round(convert("Mtce", "GWh", coa_reserve$total_reserve_Mt * .7))
   ),
   availability = data.frame(
-    region = coa_sup$reg7,
+    region = coa_sup$region,
     ava.up = round(convert("Mtce", "GWh", coa_sup$production_2021 * .7), 0),
     cost = signif(convert("USD/tce", "cr.INR/GWh", 
                           coa_sup$cost_USD_t_2020 * .7), 3)
@@ -129,7 +129,7 @@ summary(repo_energy)
 
 ```{r fig.coa, fig.cap="Total coal reserves and production in 2021 by state", echo=FALSE, fig.width=8, fig.height=4, message=FALSE, warning=FALSE}
 
-coal_sf <- gis_sf %>% 
+coal_sf <- gis_sf |> 
   left_join(ideea_data$coal)
   
 fig.coal.reserves <- ggplot(coal_sf) +
@@ -162,14 +162,14 @@ Oil and gas are pivotal within the energy mix, constituting over one-third of th
 oil_sup <- get_ideea_data(name = "oil", nreg = 7, variable = "reserve") |>
   full_join(
     get_ideea_data("oil", nreg = 7, "cost", agg_fun = mean)
-  ) %>%
+  ) |>
   filter(oil_reserve_GWh_2021 > 0)
   
 # oil_sup <- 
-#   oil_reserve %>%
+#   oil_reserve |>
 #   full_join(
 #     get_ideea_data("oil", nreg = 7, "cost", agg_fun = mean)
-#   ) %>%
+#   ) |>
 #   filter(oil_reserve_GWh_2021 > 0)
 
 ```
@@ -199,13 +199,13 @@ SUP_OIL <- newSupply(
   desc = "Domestic oil supply",
   commodity = "OIL",
   unit = "GWh",
-  region = unique(oil_sup$reg7),
+  region = unique(oil_sup$region),
   reserve = data.frame(
-    region = oil_sup$reg7,
+    region = oil_sup$region,
     res.up = oil_sup$oil_reserve_GWh_2021
   ),
   availability = data.frame(
-    region = oil_sup$reg7,
+    region = oil_sup$region,
     ava.up = oil_sup$oil_reserve_GWh_2021 / 30, # assumption
     cost = convert("USD/kWh", "cr.INR/GWh", oil_sup$oil_cost_USD_kWh)
   )
@@ -226,7 +226,7 @@ IMP_OIL <- newImport(
 
 # saving the model objects in repository
 repo_energy <- add(repo_energy, OIL, SUP_OIL, IMP_OIL)
-repo_energy %>% summary()
+repo_energy |> summary()
 repo_energy |> names()
 
 
@@ -234,7 +234,7 @@ repo_energy |> names()
 </details>
 
 ```{r fig.oil, fig.cap="Total oil reserves by region", echo=FALSE, fig.width=8, fig.height=4, message=FALSE, warning=FALSE}
-oil_sf <- get_ideea_map(nreg = 7, rename = F, islands = T) %>% 
+oil_sf <- get_ideea_map(nreg = 7, rename = T, islands = T) |> 
   left_join(oil_sup)
 
 fig.oil.reserves <- ggplot(oil_sf) +
@@ -245,13 +245,13 @@ fig.oil.reserves <- ggplot(oil_sf) +
 # import data for 36 regions, for figures
 oil_reserve_r36 <- get_ideea_data(name = "oil", nreg = 36, variable = "reserve")
 oil_sup_r36 <- 
-  oil_reserve_r36 %>%
+  oil_reserve_r36 |>
   full_join(
     get_ideea_data("oil", nreg = 36, "cost", agg_fun = mean)
-  ) %>%
+  ) |>
   filter(oil_reserve_Mt_2021 > 0)
 
-oil_r36_sf <- get_ideea_map(nreg = 36, rename = F) %>% 
+oil_r36_sf <- get_ideea_map(nreg = 36, rename = TRUE) |> 
   left_join(oil_sup_r36)
   
 fig.oil.reserves.r36 <- ggplot(oil_r36_sf) +
@@ -275,12 +275,12 @@ get_ideea_data(name = "gas", raw = T) # check raw data
 gas_reserve <- get_ideea_data(name = "gas", nreg = 7, 
                               variable = "reserve", agg_fun = sum)
 # gas_sup <- 
-#   # get_ideea_data("oil", nreg = 7, "production") %>%
-#   gas_reserve %>%
+#   # get_ideea_data("oil", nreg = 7, "production") |>
+#   gas_reserve |>
 #   full_join(
 #     get_ideea_data("gas", nreg = 7, variable = "cost", 
 #                    agg_fun = mean)
-#   ) %>%
+#   ) |>
 #   filter(gas_reserve_GWh_2021 > 0)
 
 # gas_ava <- get_ideea_data(name = "gas_ava_assumptions", nreg = 7)
@@ -312,9 +312,9 @@ SUP_GAS <- newSupply(
   desc = "Domestic natural supply",
   commodity = "GAS",
   unit = "GWh",
-  region = unique(gas_reserve$reg7),
+  region = unique(gas_reserve$region),
   reserve = data.frame(
-    region = gas_reserve$reg7,
+    region = gas_reserve$region,
     res.up = gas_reserve$gas_reserve_GWh_2021 
   ) |> unique(),
   availability = ideea_data$gas_ava_assumption
@@ -336,12 +336,12 @@ IMP_GAS <- newImport(
 
 # saving the model objects in repository
 repo_energy <- add(repo_energy, GAS, SUP_GAS, IMP_GAS, overwrite = T)
-repo_energy@data %>% names()
+repo_energy@data |> names()
 ```
 </details>
 
 ```{r fig.gas, fig.cap="Total gas reserves by region", echo=FALSE, fig.width=8, fig.height=4, message=FALSE, warning=FALSE}
-gas_sf <- get_ideea_map(nreg = 7, rename = F, islands = T) %>% 
+gas_sf <- get_ideea_map(nreg = 7, rename = T, islands = T) |> 
   left_join(gas_reserve)
 
 fig.gas.reserves <- ggplot(gas_sf) +
@@ -352,13 +352,13 @@ fig.gas.reserves <- ggplot(gas_sf) +
 # import data for 36 regions, for figures
 gas_reserve_r36 <- get_ideea_data(name = "gas", nreg = 36, variable = "reserve")
 gas_sup_r36 <- 
-  gas_reserve_r36 %>%
+  gas_reserve_r36 |>
   full_join(
     get_ideea_data("gas", nreg = 36, "cost", agg_fun = mean)
-  ) %>%
+  ) |>
   filter(gas_reserve_Bcm_2021 > 0)
 
-gas_r36_sf <- get_ideea_map(nreg = 36, rename = F) %>% 
+gas_r36_sf <- get_ideea_map(nreg = 36, rename = T) |> 
   left_join(gas_sup_r36)
 
 fig.gas.reserves.r36 <- ggplot(gas_r36_sf) +
@@ -430,7 +430,7 @@ RES_CO2SINK <- newSupply(
 # Saving the model objects in repository
 repo_energy <- add(repo_energy, CCSCO2, CO2SINK, GHG, RES_CO2SINK, 
                    overwrite = T)
-repo_energy@data %>% names()
+repo_energy@data |> names()
 ```
 </details>
 
@@ -456,7 +456,7 @@ This surplus biomass could generate an estimated 28.5 GWe of power, with the maj
 ```{r bio_sup, message=FALSE}
 # loading and processing data
 # get_ideea_data(name = "biomass", raw = T) # check raw data
-bio_sup <- get_ideea_data(name = "biomass", nreg = 7, variable = "max_MWe") %>%
+bio_sup <- get_ideea_data(name = "biomass", nreg = 7, variable = "max_MWe") |>
   filter(max_MWe > 0)
 
 bio_ava <- ideea_data$biomass_ava_assumption 
@@ -487,12 +487,12 @@ RES_BIO <- newSupply(
 
 # saving the model objects in repository
 repo_energy <- add(repo_energy, BIO, RES_BIO)
-repo_energy@data %>% names()
+repo_energy@data |> names()
 ```
 </details>
 
 ```{r fig.bio, fig.cap="Total bio reserves by region", echo=FALSE, fig.width=8, fig.height=4, message=FALSE, warning=FALSE}
-bio_sf <- get_ideea_map(nreg = 7, rename = F, islands = T) %>% 
+bio_sf <- get_ideea_map(nreg = 7, rename = T, islands = T) |> 
   left_join(bio_sup)
 
 fig.bio.resource <- ggplot(bio_sf) +
@@ -503,7 +503,7 @@ fig.bio.resource <- ggplot(bio_sf) +
 # import data for 36 regions, for figures
 bio_sup_r36 <- get_ideea_data(name = "biomass", nreg = 36, variable = "max_MWe")
 
-bio_r36_sf <- get_ideea_map(nreg = 36, rename = F) %>% 
+bio_r36_sf <- get_ideea_map(nreg = 36, rename = T) |> 
   left_join(bio_sup_r36)
 
 fig.bio.resource.r36 <- ggplot(bio_r36_sf) +
@@ -543,6 +543,9 @@ In India, hydroelectric plants are categorised as large hydro (\>25MW) and small
 summarize existing and planned projects  
 normally not included to optimization  
 <https://www.world-nuclear.org/information-library/country-profiles/countries-g-n/india.aspx>
+
+<details>
+<summary>code</summary>
 ```{r}
 # Declaration of commodity
 NUC <- newCommodity(
@@ -571,10 +574,10 @@ IMP_NUC <- newImport(
 
 # saving the model objects in repository
 repo_energy <- add(repo_energy, NUC, IMP_NUC, overwrite = F)
-repo_energy@data %>% names()
+repo_energy@data |> names()
 
 ```
-
+</details>
 
 
 

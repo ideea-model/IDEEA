@@ -109,6 +109,9 @@
     <loc>https://ideea-model.github.io/IDEEA/LICENSE.html</loc>
   </url>
   <url>
+    <loc>https://ideea-model.github.io/IDEEA/reference/add_tech_type.html</loc>
+  </url>
+  <url>
     <loc>https://ideea-model.github.io/IDEEA/reference/drop_process_vintage.html</loc>
   </url>
   <url>
@@ -127,7 +130,13 @@
     <loc>https://ideea-model.github.io/IDEEA/reference/ideea_data.html</loc>
   </url>
   <url>
+    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_global_options.html</loc>
+  </url>
+  <url>
     <loc>https://ideea-model.github.io/IDEEA/reference/ideea_modules.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_snapshot.html</loc>
   </url>
   <url>
     <loc>https://ideea-model.github.io/IDEEA/reference/index.html</loc>
