@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 [github link]
 
 ## IDEEA community Discord
-[link to Discord]
+https://discord.com/invite/VYAKGRYaaN  
 
 ## IDEEA in Switch
 [link to Switch]

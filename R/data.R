@@ -21,15 +21,13 @@
 #' gis_sf <- get_ideea_map(nreg = 32, offshore = T, islands = T)
 #' plot(gis_sf[1], key.width = lcm(4))
 get_ideea_map <- function(nreg = 7,
-                    offshore = FALSE,
-                    islands = FALSE,
-                    # ROW = FALSE,
-                    aggregate = (nreg != 46),
-                    rename = TRUE,
-                    reg_off = offshore,
-                    ...
-                    ) {
-
+                          offshore = FALSE,
+                          islands = FALSE,
+                          # ROW = FALSE,
+                          aggregate = (nreg != 46),
+                          rename = TRUE,
+                          reg_off = offshore,
+                          ...) {
   map <- IDEEA:::ideea_map
   nms <- paste0(c("reg", "name"), nreg)
   if (!all(nms %in% names(map))) {
@@ -38,17 +36,22 @@ get_ideea_map <- function(nreg = 7,
   }
 
   if (!offshore) {
-    map <-  map %>% dplyr::filter(!offshore)
+    map <- map %>% dplyr::filter(!offshore)
   }
-  if (!islands) {map <-  map %>% dplyr::filter(mainland)}
+  if (!islands) {
+    map <- map %>% dplyr::filter(mainland)
+  }
   # if (!ROW)
-  {map <- map %>% dplyr::filter(!grepl("ROW", reg1, ignore.case = T))}
+  {
+    map <- map %>% dplyr::filter(!grepl("ROW", reg1, ignore.case = T))
+  }
 
   # browser()
   if (aggregate) {
     map <- map %>%
       dplyr::group_by(across(
-        dplyr::all_of(c(nms, "mainland", "offshore", "reg1", "name1")))) %>%
+        dplyr::all_of(c(nms, "mainland", "offshore", "reg1", "name1"))
+      )) %>%
       dplyr::summarize(.groups = "drop")
   }
 
@@ -58,7 +61,7 @@ get_ideea_map <- function(nreg = 7,
         reg_off = map[[nms[1]]],
         reg_off = dplyr::if_else(offshore, paste0(reg_off, "_off"), reg_off),
         .after = nms[2]
-        )
+      )
   }
 
   nm <- names(map)
@@ -71,7 +74,7 @@ get_ideea_map <- function(nreg = 7,
   names(map) <- nm
   return(map)
 }
-#!!! ToDo !!!
+# !!! ToDo !!!
 # 2. merge merra-grid in offshore
 # 3. provide merra-grid for all regions & offshore
 
@@ -102,12 +105,11 @@ if (F) {
 #' @export
 #'
 #' @examples
-#'   get_ideea_data("coal", raw = T)
-#'   get_ideea_data("coal", nreg = 7, "reserve")
-#'   get_ideea_data("oil", nreg = 34, "reserve", islands = T)
-#'   get_ideea_data("coal", nreg = 7, "cost", agg_fun = mean)
-#'   get_ideea_data("merra_raw_2014", raw = T) %>% head()
-
+#' get_ideea_data("coal", raw = T)
+#' get_ideea_data("coal", nreg = 7, "reserve")
+#' get_ideea_data("oil", nreg = 34, "reserve", islands = T)
+#' get_ideea_data("coal", nreg = 7, "cost", agg_fun = mean)
+#' get_ideea_data("merra_raw_2014", raw = T) %>% head()
 get_ideea_data <- function(
     name,
     nreg = 7,
@@ -118,102 +120,127 @@ get_ideea_data <- function(
     offshore = FALSE,
     islands = FALSE,
     as_DT = TRUE,
-    drop_na = TRUE
+    drop_na = TRUE,
+    rename = TRUE
     # ROW = FALSE
     ) {
   # browser()
   reg <- paste0("reg", nreg)
   # suppressMessages({
-    x <- ideea_data[[name]]
-    reg_in_x <- names(x)[grepl("^reg[0-9]+(|_off)", names(x))]
-    if (nreg != 1) {
-      reg_in_x <- reg_in_x[reg_in_x != "reg1"]
-      x <- select(x, -any_of(c("reg1", "reg1_off")))
-    }
-    variable <- sapply(variable, function(v) names(x)[grepl(v, names(x))])
-    variable <- variable[!grepl(sets, variable)]
-    names(variable) <- NULL
-    ii <- sapply(variable, function(j) inherits(x[[j]], c("numeric", "integer")))
-    sets_in_x <- variable[!ii]
-    variable <- variable[ii]
-    sets_in_x <- c(sets_in_x, names(x)[grepl(sets, names(x))])
-    names(sets_in_x) <- NULL
-    x <- select(x, any_of(variable), matches(sets_in_x))
-    if (is.null(x[["offshore"]])) {
-      # warning("The '", name, "' table doesn't have `offshore` column.\n",
-      #         "   Assuming 'offshore = FALSE'")
-      x$offshore <- FALSE
-    }
-    if (raw) {
-      if (as_DT) x <- data.table::as.data.table(x)
-      return(x)
-    }
-    # sets
-    # browser()
-    y <- ideea_data$reg_tbl |>
-      filter(reg1 != "ROW") |>
-      select(matches(sets_in_x), any_of(c("offshore", "mainland", reg))) |>
-      filter(!is.na(.data[[reg]])) |>
-      unique()
-    # if (!ROW) {
-      # y <- filter(y, reg1 != "ROW") |> unique()
-    # }
-    if (drop_na) join_fun <- dplyr::left_join else join_fun <- dplyr::full_join
-    # browser()
-    cross_cols <- names(x)[names(x) %in% names(y)]
-    x_try <- try({x %>%
+  x <- ideea_data[[name]]
+  if (raw) {
+    if (as_DT) x <- data.table::as.data.table(x)
+    return(x)
+  }
+  reg_in_x <- names(x)[grepl("^reg[0-9]+(|_off)", names(x))]
+  if (nreg != 1) {
+    reg_in_x <- reg_in_x[reg_in_x != "reg1"]
+    x <- select(x, -any_of(c("reg1", "reg1_off")))
+  }
+  variable <- sapply(variable, function(v) names(x)[grepl(v, names(x))])
+  variable <- variable[!grepl(sets, variable)]
+  names(variable) <- NULL
+  ii <- sapply(variable, function(j) inherits(x[[j]], c("numeric", "integer")))
+  sets_in_x <- variable[!ii]
+  variable <- variable[ii]
+  sets_in_x <- c(sets_in_x, names(x)[grepl(sets, names(x))])
+  names(sets_in_x) <- NULL
+  x <- select(x, any_of(variable), matches(sets_in_x))
+  if (is.null(x[["offshore"]])) {
+    # warning("The '", name, "' table doesn't have `offshore` column.\n",
+    #         "   Assuming 'offshore = FALSE'")
+    x$offshore <- FALSE
+  }
+  # if (raw) {
+  #   if (as_DT) x <- data.table::as.data.table(x)
+  #   return(x)
+  # }
+  # sets
+  # browser()
+  y <- ideea_data$reg_tbl |>
+    filter(reg1 != "ROW") |>
+    select(matches(sets_in_x), any_of(c("offshore", "mainland", reg))) |>
+    filter(!is.na(.data[[reg]])) |>
+    unique()
+  # if (!ROW) {
+  # y <- filter(y, reg1 != "ROW") |> unique()
+  # }
+  if (drop_na) join_fun <- dplyr::left_join else join_fun <- dplyr::full_join
+  # browser()
+  cross_cols <- names(x)[names(x) %in% names(y)]
+  x_try <- try(
+    {
+      x %>%
         # dplyr::left_join(ideea_data$reg_tbl) %>%
         join_fun(y, relationship = "many-to-one", by = cross_cols) |>
         dplyr::filter(!is.na(.data[[reg]])) %>%
-        dplyr::group_by(dplyr::across(
-          dplyr::any_of(c(reg, sets_in_x))) # , "offshore", "mainland"
-        )}, silent = T)
-    if (inherits(x_try, "try-error")) {
-      message("Cannot automatically aggregate table ", name, " to ", nreg,
-              " regions. Most likely a disagregation algorighm is required.\n",
-              "Use 'raw = TRUE' to request unprocessed data.")
-      return(NULL)
-    } else {
-      x <- x_try; rm(x_try)
-    }
-    if (offshore) {
-      x <- group_by(x, offshore, .add = T)
-    } else {
-      x <- filter(x, !offshore)
-    }
-    if (islands) {
-      x <- dplyr::group_by(x, mainland, .add = T)
-    } else {
-      x <- dplyr::filter(x, mainland)
-    }
+        dplyr::group_by(
+          dplyr::across(
+            dplyr::any_of(c(reg, sets_in_x))
+          ) # , "offshore", "mainland"
+        )
+    },
+    silent = T
+  )
+  if (inherits(x_try, "try-error")) {
+    message(
+      "Cannot automatically aggregate table ", name, " to ", nreg,
+      " regions. Most likely a disagregation algorighm is required.\n",
+      "Use 'raw = TRUE' to request unprocessed data."
+    )
+    return(NULL)
+  } else {
+    x <- x_try
+    rm(x_try)
+  }
+  if (offshore) {
+    x <- group_by(x, offshore, .add = T)
+  } else {
+    x <- filter(x, !offshore)
+  }
+  if (islands) {
+    x <- dplyr::group_by(x, mainland, .add = T)
+  } else {
+    x <- dplyr::filter(x, mainland)
+  }
 
-    # browser()
+  # browser()
+  x <- x |>
+    ungroup() |>
+    select(-any_of(reg_in_x[reg_in_x != reg])) |>
+    group_by(across(all_of(reg))) |>
+    group_by(across(any_of(sets_in_x)),
+      .add = T
+    )
+
+  # group by non-numeric variables
+  # browser()
+  ii <- sapply(variable, function(i) inherits(x[[i]], c("numeric", "integer")))
+  # exclude non-requested region
+  # grepl()
+  if (length(variable[!ii]) > 0) {
     x <- x |>
-      ungroup() |>
-      select(-any_of(reg_in_x[reg_in_x != reg])) |>
-      group_by(across(all_of(reg))) |>
-      group_by(across(any_of(sets_in_x)),
-               .add = T)
-
-    # group by non-numeric variables
-    # browser()
-    ii <- sapply(variable, function(i) inherits(x[[i]], c("numeric", "integer")))
-    # exclude non-requested region
-    # grepl()
-    if (length(variable[!ii]) > 0) {
-      x <- x |>
-        dplyr::group_by(dplyr::across(dplyr::any_of(variable[!ii])), .add = T)
-    }
-    if (length(variable[ii]) == 0) {
-      # return table without numeric info
-      x <- select(x, all_of(group_vars(x)))
-      if (as_DT) x <- data.table::as.data.table(x)
-      return(x)
-    }
-    x <- x %>%
-      dplyr::summarise_at(dplyr::vars(dplyr::matches(variable[ii])),
-                          agg_fun, na.rm = T) %>% dplyr::ungroup()
+      dplyr::group_by(dplyr::across(dplyr::any_of(variable[!ii])), .add = T)
+  }
+  if (length(variable[ii]) == 0) {
+    # return table without numeric info
+    x <- select(x, all_of(group_vars(x)))
+    if (as_DT) x <- data.table::as.data.table(x)
+    return(x)
+  }
+  x <- x %>%
+    dplyr::summarise_at(dplyr::vars(dplyr::matches(variable[ii])),
+      agg_fun,
+      na.rm = T
+    ) %>%
+    dplyr::ungroup()
   # })
+  if (rename) {
+    # browser()
+    nm <- names(x)
+    nm[nm == reg] <- "region"
+    names(x) <- nm
+  }
   if (as_DT) x <- data.table::as.data.table(x)
   return(x)
 }
@@ -225,8 +252,10 @@ if (F) {
   get_ideea_data("coal", nreg = 7, "reserve", islands = T)
   get_ideea_data("coal", nreg = 7, "cost", agg_fun = mean)
   get_ideea_data("coal", nreg = 32, "cost", agg_fun = mean, offshore = T)
-  get_ideea_data("coal", nreg = 7, "cost", agg_fun = mean, offshore = F,
-                 islands = T)
+  get_ideea_data("coal",
+    nreg = 7, "cost", agg_fun = mean, offshore = F,
+    islands = T
+  )
 
   ideea_data %>% names()
 
@@ -270,3 +299,7 @@ if (F) {
 #' }
 #'
 "ideea_modules"
+
+get_ideea_cf <- function() {
+
+}

@@ -157,11 +157,49 @@ For other Linux systems please refer to the <https://en.wikibooks.org/wiki/GLPK/
 ### Install GAMS
 [General Algebraic Modeling System (GAMS)](https://www.gams.com/products/gams/gams-language/) is a modeling language and proprietary software for mathematical modeling and numeric optimization. IDEEA users who already have GAMS license with powerful linear solvers (like CPLEX), or who plan to solve large-scale models regularly, this might be a good option due to better time performance on the model generation stage. Please follow installation instructions by GAMS and add it to the configuration file (below).
 
-## IDEEA settings file
-tbc.
 
 ## Additional Datasets
-tbc.
+...
+
+
+## IDEEA global options
+Once the installation is done, it is recommended to create a configuration file with specific settings for a system. Location, paths of installed software are computer- and user-specific. This information can be stored locally and loaded with the IDEEA package. 
+
+```{r, eval=FALSE}
+library(IDEEA)
+ideea_global_options(edit = T)
+```
+The initiated file will be opened (if not, open in your IDE  `~\ideea.r`). The nex step is to edit (add paths) and uncomment some or all of the options:
+```{r}
+# IDEEA external dataset
+# set_ideea_extra('...')
+
+# IDEEA solver options
+# energyRt::set_gams_path('C:/GAMS/...')
+# energyRt::set_gdxlib_path('C:/GAMS/...')
+# energyRt::set_gams_path('C:/GAMS/...')
+# energyRt::set_glpk_path()
+# energyRt::set_julia_path()
+# energyRt::set_python_path()
+# energyRt::set_default_solver(solver_options$julia_highs_barrier)
+
+# Use progress bar
+# energyRt::set_progress_bar()
+```
+Once edited, save and try to source it by calling `ideea_global_options()`. If no errors, the file can be closed. It will be sourced every time with IDEEA package load.  
+  
+All done!  
+Check "Getting started" to test the system.
 
 ## References
-...
+[R](https://www.r-project.org/)  
+[RStudio](https://posit.co/products/open-source/rstudio/)  
+[GNU Linear Programming Kit (GLPK)](https://www.gnu.org/software/glpk/)  
+[The Julia Programming Language](https://julialang.org/)  
+[JuMP modeling language](https://jump.dev/)   
+[Python](https://www.python.org/)   
+[Conda Documentation](https://docs.conda.io/en/latest/#)   
+[The General Algebraic Modeling Language (GAMS)](https://www.gams.com/)   
+[A Modeling Language for Mathematical Programming (AMPL)](https://ampl.com/)  
+
+

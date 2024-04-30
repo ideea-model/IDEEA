@@ -7,10 +7,13 @@ editor_options:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE, 
+  eval = FALSE,
   # fig.retina = T,
   comment = "#>"
 )
 ```
+
+**This page is in progress**
 
 discussion of data sets used in the library
 
@@ -60,13 +63,17 @@ ggplot(get_ideea_map(nreg = 36, offshore = T, islands = T, ROW = T)) +
 ### Demand, load curve  
 
 ```{r}
-load_2019_MWh <- ideea_data$load_2019_MWh %>%
-  mutate(
-    datetime = timeslices::tsl2dtm(slice, tmz = "Asia/Kolkata", year = 2019),
-    YDAY = timeslices::tsl2yday(slice),
-    HOUR = timeslices::tsl2hour(slice),
-    .after = "slice"
-  )
+# load_2019_MWh <- ideea_data$load_2019_MWh %>%
+#   mutate(
+#     # datetime = tsl2dtm(slice, tmz = "Asia/Kolkata", year = 2019),
+#     YDAY = tsl2yday(slice),
+#     HOUR = tsl2hour(slice),
+#     .after = "slice"
+#   )
+
+load_2019_MWh <- get_ideea_data("load_2019_MWh", raw = TRUE) 
+kableExtra::kable(head(load_2019_MWh))
+
 
 ggplot(load_2019_MWh) +
   geom_line(aes(HOUR, MWh/1e3, color = YDAY, group = YDAY), alpha = .25) +
@@ -76,8 +83,10 @@ ggplot(load_2019_MWh) +
   theme_bw()
 ggsave("load_2019_reg36.png", width = 7, height = 9, path = "tmp")
 
-load_2019_reg7 <- load_2019_MWh %>% 
-  group_by(reg7, slice, datetime, YDAY, HOUR) %>%
+# get_ideea_data("load_2019_MWh")
+
+load_2019_reg5 <- get_ideea_data("load_2019_MWh", nreg = 5) %>% 
+  group_by(region, slice, datetime, YDAY, HOUR) %>%
   summarise(MWh = sum(MWh, na.rm = T), .groups = "drop")
   # mutate(
   #   datetime = timeslices::tsl2dtm(slice, tmz = "Asia/Kolkata", year = 2019),
@@ -86,11 +95,11 @@ load_2019_reg7 <- load_2019_MWh %>%
   #   .after = "slice"
   # )
 
-ggplot(load_2019_reg7) +
+ggplot(load_2019_reg5) +
   geom_line(aes(HOUR, MWh/1e3, color = YDAY, group = YDAY), alpha = .25) +
-  scale_color_viridis_c(option = "H", limits = c(1, 365)) +
-  facet_wrap(~reg7, ncol = 1, scales = "free_y") +
-  labs(y = "GWh", x = "hour") +
+  scale_color_viridis_c(option = "H", limits = c(1, 365), name = "Day of year") +
+  facet_wrap(~region, ncol = 1, scales = "free_y") +
+  labs(y = "Load, GWh", x = "Hour of a day") +
   theme_bw()
 
 ```
@@ -98,7 +107,7 @@ ggplot(load_2019_reg7) +
 
 ### Wind capacity factors
 
-```{r, eval=T, message=FALSE}
+```{r, eval=FALSE, message=FALSE}
 library(merra2ools)
 gis_sf <- get_ideea_map(36, offshore = T, islands = T)
 
@@ -115,6 +124,8 @@ locid_win_cl_k <- wind_clusters %>%
     filter(k_min) %>% select(-k_min) %>%
     as.data.table()
 
+locid_win_cl_k$k |> as.factor() |> summary()
+
 # Cluster-loss figure
 locid_win_cl_kk <- wind_clusters %>%
   group_by(reg36_off, k) %>%
@@ -123,6 +134,9 @@ locid_win_cl_kk <- wind_clusters %>%
 locid_win_cl_k_i <- locid_win_cl_k %>%
   group_by(reg36_off, k) %>%
   summarise(sd_loss = max(sd_loss), N = max(N), .groups = "drop")
+
+locid_win_cl_k_i$k |> as.factor() |> summary()
+
 
 a <- ggplot(locid_win_cl_kk) +
   geom_line(aes(k, sd_loss), color = "dodgerblue", linewidth = 1.5) +
@@ -205,7 +219,7 @@ save(win_cf_r7, file = "data-raw/merra/win_cf_r7.RData")
 ### Solar capacity factors
 <details>
 <summary>code</summary>
-```{r, eval=T, message=FALSE}
+```{r, eval=FALSE, message=FALSE}
 library(merra2ools)
 gis_sf <- get_ideea_map(36, offshore = T, islands = T)
 
@@ -322,7 +336,6 @@ save(sol_cf_r7, file = "data-raw/merra/sol_cf_r7.RData")
 ```
 
 
-
 ```{r, eval=FALSE, include=FALSE}
 # NREL locations
 nrel_wind_locations <- fst::read_fst(
@@ -336,7 +349,7 @@ usethis::use_data(nrel_wind_locations)
 ```{r, fig.cap="Potential sites to deploy wind power plants, onshore and offshore, and installed capacity (MW)"}
 ggplot() +
   # geom_sf(data = ideea_maps$ROW$ROW$sf, inherit.aes = F) +
-  geom_sf(fill = "wheat", data = ideea_maps$r34$land$sf, inherit.aes = F) +
+  geom_sf(fill = "wheat", data = get_ideea_map(nreg = 34), inherit.aes = F) +
   geom_point(aes(Longitude, Latitude, color = as.logical(`Is Offshore`)), 
              size = .1, data = nrel_wind_locations, alpha = .15, show.legend = F) +
   scale_color_brewer(palette = "Set1") +

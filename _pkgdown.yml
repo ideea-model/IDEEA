@@ -1,8 +1,19 @@
-url: https://ideea-model.github.io/IDEEA/index.html
+url: https://ideea-model.github.io/IDEEA
 template:
   bootstrap: 5
   bootswatch: minty
-  ganalytics: G-1FN9MK20PS
+  # ganalytics: G-1FN9MK20PS
+  includes:
+    in_header: |
+      <!-- Google tag (gtag.js) -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-1FN9MK20PS"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-1FN9MK20PS');
+      </script>
 navbar:
  components:
    articles:

@@ -187,9 +187,9 @@ For the electricity-only model, the electricity is considered as the final produ
 
 ```{r}
 # call the load curve by region in 2019 from IDDEA datasets
-load_BY <- get_ideea_data("load_2019_MWh", nreg = 7, variable = "MWh_clean") |>
-  mutate(GWh = MWh_clean / 1e3) |>
-  rename(region = {{regN}})
+load_BY <- get_ideea_data("load_2019_MWh", nreg = 7, variable = "MWh") |>
+  mutate(GWh = MWh / 1e3) 
+  # rename(region = {{regN}})
 
 # define `demand` object with the historical load curve
 DEMELC_BY <- newDemand(
@@ -370,8 +370,7 @@ cap_0 <- get_ideea_data(
   # sets = ,
   variable = c("primary_fuel", "capacity_mw"),
   nreg = nreg, offshore = F, islands = T) |>
-  filter(capacity_mw > 0) |>
-  rename(region = {{regN}})
+  filter(capacity_mw > 0) 
 
 cap_1 <- get_ideea_data(
   name = "generators_2020", 
@@ -379,8 +378,7 @@ cap_1 <- get_ideea_data(
   nreg = nreg, 
   variable = c("Solar", "Wind", "Biomass", "Small Hydro"), 
   # offshore = T, # not working properly - bug
-  islands = T) |>
-  rename(region = {{regN}}) 
+  islands = T)
 
 cap <- bind_rows(
   filter(cap_0, !grepl("Solar|Wind|Biomass", primary_fuel)),
