@@ -10,6 +10,11 @@ knitr::opts_chunk$set(
 # usethis::use_article("help", "Getting help")
 ```
 
+## Convenstions
+Due to the multi-lingual nature of the IDEEA repository with scripts written in R, Python, Julia, and GAMS, we have adopted the following conventions for naming objects and functions:
+- Names of functions and data objects
+- Names of the model objects ('technologies', 'regions', 'commodities', etc.)
+
 ## IDEEA R-package help
 - functions  
 - data  
@@ -20,7 +25,7 @@ knitr::opts_chunk$set(
 ## Suggest features
 [github link]
 
-## IDEEA community Discord
+## IDEEA community Discord chanel
 https://discord.com/invite/zygvAZjt 
 
 ## IDEEA in Switch
