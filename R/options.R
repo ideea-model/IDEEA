@@ -1,15 +1,3 @@
-.onLoad <- function(libname, pkgname) {
-  if (file.exists("~/.ideea.R")) {
-    ideea_global_options(load = TRUE)
-  } else {
-    # warning("... data directory is not found.\n
-    #         Use '?...' for help")
-  }
-  # options(...)
-  # options(...)
-
-}
-
 #' Save, load, edit, or remove IDEEA global options
 #'
 #' @param load logical, if TRUE load the global options from the file
@@ -21,7 +9,7 @@
 #'
 #' @examples
 ideea_global_options <- function(load = TRUE, edit = !load, remove = FALSE) {
-  fl <- "~/ideea.R" # hardwired ideea options file in the system home folder
+  fl <- "~/.ideea.R" # hardwired ideea options file in the system home folder
   if (!file.exists(fl)) {
     message("Creating IDEEA global options: '", fl, "'")
     success <- file.create(fl)
@@ -41,12 +29,13 @@ ideea_global_options <- function(load = TRUE, edit = !load, remove = FALSE) {
     write_lines("# energyRt::set_glpk_path()", fl, append = T)
     write_lines("# energyRt::set_julia_path()", fl, append = T)
     write_lines("# energyRt::set_python_path()", fl, append = T)
-    write_lines("# energyRt::set_default_solver(solver_options$julia_highs_barrier)",
-                fl, append = T)
-    write_lines('', fl, append = T)
-    write_lines("# Use progress bar", fl, append = T)
-    write_lines("# energyRt::set_progress_bar()", fl, append = T)
-    write_lines("# ", fl, append = T)
+    write_lines("# energyRt::set_default_solver(solver_options$julia_highs_barrier)", fl, append = T)
+    write_lines(" ", fl, append = T)
+    write_lines("# IDEEA external data folder (IDEEA.extra):", fl, append = T)
+    write_lines("options(IDEEA.extra = '...')", fl, append = T)
+    write_lines(" ", fl, append = T)
+    file.edit(fl)
+    return(invisible(TRUE))
   } else if (remove) {
     message('Deleting IDEEA global options: "', fl, '"')
     success <- file.remove(fl)
@@ -63,3 +52,5 @@ ideea_global_options <- function(load = TRUE, edit = !load, remove = FALSE) {
   }
   invisible(TRUE)
 }
+
+

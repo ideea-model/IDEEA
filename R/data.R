@@ -300,6 +300,6 @@ if (F) {
 #'
 "ideea_modules"
 
-get_ideea_cf <- function() {
-
-}
+# get_ideea_cf <- function(nreg = 5, YEAR = 2019, ) {
+#
+# }
