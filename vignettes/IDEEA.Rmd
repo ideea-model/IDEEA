@@ -35,6 +35,13 @@ ideea_sf <- get_ideea_map(nreg = 7, offshore = FALSE)
 # select the pre-defined model
 ideea_elc <- ideea_modules$electricity$reg7_base
 
+ideea_elc$repo_ccstechs$ECOA_CCS_FL@input$group
+ideea_elc$repo_ccstechs$ECOA_CCS_FL@input$group <- "a"
+
+ideea_elc$repo_ccstechs$EGAS_CCS_FL@input$group
+ideea_elc$repo_ccstechs$EGAS_CCS_FL@input$group <- "a"
+
+
 # create repository for the model
 repo_elc <- newRepository("repo_electricity") |>
   add(
@@ -83,8 +90,14 @@ scen_BY <- solve(mod, horizon = newHorizon(2020, rep(1, 1)))
 summary(scen_BY)
 
 # reference scenario (40 years) with subset of the calendar
-scen_REF <- solve_model(mod, name = "REF", 
-                        calendar = ideea_elc$partial_calendar_1day_per_month)
+scen_REF <- solve_model(
+  mod, name = "REF", 
+  solver = solver_options$pyomo_cplex_barrier,
+  # solver = solver_options$gams_gdx_cplex_parallel,
+  tmp.del = FALSE,
+  calendar = ideea_elc$partial_calendar_1day_per_month,
+  wait = F
+  )
 summary(scen_REF)
 ```
 

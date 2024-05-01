@@ -118,6 +118,12 @@
     <loc>https://ideea-model.github.io/IDEEA/reference/drop_vintage.html</loc>
   </url>
   <url>
+    <loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_cf.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_cl_sf.html</loc>
+  </url>
+  <url>
     <loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_data.html</loc>
   </url>
   <url>
@@ -128,6 +134,9 @@
   </url>
   <url>
     <loc>https://ideea-model.github.io/IDEEA/reference/ideea_data.html</loc>
+  </url>
+  <url>
+    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_extra.html</loc>
   </url>
   <url>
     <loc>https://ideea-model.github.io/IDEEA/reference/ideea_global_options.html</loc>
