@@ -1,5 +1,9 @@
 ---
-title: "IDEEA: open datasets"
+title: "IDEEA datasets"
+resource_files:
+  # - data/mydata.csv
+  - images/sol.gif
+  - images/win.gif
 editor_options: 
   chunk_output_type: console
 ---
@@ -11,6 +15,7 @@ knitr::opts_chunk$set(
   # fig.retina = T,
   comment = "#>"
 )
+# library(here)
 ```
 
 **This page is in progress**
@@ -19,8 +24,7 @@ This document describes the process of creation of used in the project IDEEA ext
 
 
 ```{r setup, warning=FALSE, message=FALSE}
-# library(IDEEA)
-devtools::load_all()
+library(IDEEA)
 library(tidyverse)
 library(data.table)
 # pak::pkg_install("energyRt/merra2ools")
@@ -61,7 +65,6 @@ if (F) {
   # ideea_locid_sf
   save(ideea_locid_sf, 
        file = ideea_extra(subdir = "merra2", filename = "ideea_locid_sf.RData"))
-  
 }
 
 ```
@@ -73,6 +76,7 @@ if (F) {
 
 ideea_sf <- get_ideea_map(nreg = 32, offshore = T, islands = T)
 (load(ideea_extra("merra2", "ideea_locid.RData")))
+n_locid <- unique(ideea_locid) |> length()
 (load(ideea_extra("merra2", "ideea_locid_sf.RData")))
 
 ```
@@ -165,7 +169,6 @@ for (nreg in c(5, 32)) {
   rm(fname)
 }
 
-# installr::os.sleep(first_turn_hibernate_off = F)
 ggplot() +
   geom_sf(color = "grey30", fill = "grey", data = ideea_sf) +
   geom_sf(aes(fill = eq), color = NA, data = gwa_iec2_r5_sf) +
@@ -461,9 +464,8 @@ for (nreg in c(5, 32)) {
 
 ```
 
-
-```{r}
-
+## Getting capacity factors
+```{r, eval=F}
 # default tol
 get_ideea_cf(resource = "sol", nreg = 5, year = 2019)
 get_ideea_cf(resource = "sol", nreg = 32, year = 2019)
@@ -480,3 +482,62 @@ get_ideea_cf(resource = "win", nreg = 32, tol = 0.01, year = 2019)
 
 ```
 
+## Visualizing
+Functions `ideea_snapshot_cf` and `ideea_gif_sf` designed to visualize capacity factors for wind and solar generators. The first function allows to plot an instance of potential generation for a given hour (timslice) for a particular cluster. The second function creates a gif-file with a sequence of timeslices.
+
+### Solar
+```{r, eval=FALSE}
+resource <- "sol"; cf_name <- "scf_tl"
+nreg <- 5
+tol <- 0.01
+
+ideea_sf <- get_ideea_map(nreg = nreg, offshore = T, islands = T)
+ideea_cl_sf <- get_ideea_cl_sf(resource = resource, tol = tol)
+ideea_cl_sf$cluster |> unique()
+plot(ideea_cl_sf["cluster"])
+
+x <- get_ideea_cf(resource, tol = tol)
+# to plot a snapshot for a slice
+ideea_snapshot_cf(x, ideea_cl_sf, ideea_sf, cf_name = cf_name)
+# to create a gif-file
+# pull slices from partial calendar
+calendar_1day_per_month <-
+  deea_modules$electricity$reg7_base$partial_calendar_1day_per_month
+slices_1day_per_month <- calendar_1day_per_month@timetable$slice
+
+# make a gif
+ideea_gif_cf(x, ideea_cl_sf, ideea_sf, cf_name = cf_name,
+             slice = slices_1day_per_month,
+             fps = 5,
+             filename = glue("{resource}.gif"))
+```
+
+```{r sol_cf_gif, echo=FALSE, fig.cap="Solar capacity factors, animated", out.width = '100%', eval=TRUE}
+knitr::include_graphics("images/sol.gif")
+```
+
+### Wind
+Similarly, we can visualize capacity factors for wind generators.
+```{r, eval=FALSE}
+resource <- "win"; cf_name <- "wcf_100m"
+nreg <- 5
+tol <- 0.05
+
+# ideea_sf <- get_ideea_map(nreg = nreg, offshore = T, islands = T)
+ideea_cl_sf <- get_ideea_cl_sf(resource = resource, tol = tol)
+x <- get_ideea_cf(resource, tol = tol)
+# plot
+ideea_snapshot_cf(x, ideea_cl_sf, ideea_sf, cf_name = cf_name)
+# gif
+ideea_gif_cf(x, ideea_cl_sf, ideea_sf, cf_name = cf_name,
+             slice = slices_1day_per_month,
+             fps = 5,
+             filename = glue("{resource}.gif"))
+
+```
+
+```{r win_cf_gif, echo=FALSE, fig.cap="Wind capacity factors, animated", out.width = '100%', eval=TRUE}
+knitr::include_graphics("images/win.gif")
+```
+
+tbc...

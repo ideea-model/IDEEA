@@ -274,14 +274,30 @@ get_ideea_cf <- function(
             "'. Allowed values: 'win' and 'sol'")
     return(invisible())
   }
+  if (is.factor(merra_cf_cl[["cluster"]])) {
+    merra_cf_cl <- merra_cf_cl |>
+      mutate(
+        cluster = as.integer(as.character(cluster))
+      )
+  } else if (!is.integer(merra_cf_cl[["cluster"]])) {
+    merra_cf_cl <- merra_cf_cl |>
+      mutate(
+        cluster = as.integer(cluster)
+      )
+  }
   cat("   Maximum number of clusters per region:",
       max(merra_cf_cl$cluster), "\n")
   merra_cf_cl
 }
 
 pick_tolerance <- function(x, tol = .05, nreg = NULL) {
+  # browser()
   if (is.null(nreg)) {
-    names(x)
+    nreg <- str_extract(names(x), "(?<=reg)\\d+") |>
+      as.integer() |> max(na.rm = T)
+    if (!is.numeric(nreg) || is.null(nreg) || is.na(nreg) || nreg == 0) {
+      stop("Cannot identify number of regions. `nreg` is not set.")
+    }
   }
   x <- x |>
     filter(sd_loss <= tol) |>
@@ -319,11 +335,12 @@ get_ideea_cl_sf <- function(
     data = "merra2",
     clusters_sf_file = "locid_{resource}_cl_r{nreg}_sf.RData"
 ) {
+  # browser()
   fl <- ideea_extra(data, glue("locid_{resource}_cl_r{nreg}_sf.RData"))
   if (!file.exists(fl)) {
     stop("file doesn't exist\n   ", fl)
   }
-  x <- load(fl) |> get() |> pick_tolerance()
+  x <- load(fl) |> get() |> pick_tolerance(nreg = nreg, tol = tol)
   nms <- names(x)[str_detect(names(x), pattern = "cf_")]
 
   x |> group_by(across(any_of(c(
@@ -335,6 +352,7 @@ get_ideea_cl_sf <- function(
       across(all_of(nms), ~ mean(.x, na.rm = TRUE)),
       geometry = st_union(geometry),
       .groups = "drop") |>
+    mutate(cluster = as.integer(cluster)) |>
     st_as_sf()
 
 }

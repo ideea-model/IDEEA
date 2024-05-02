@@ -12,5 +12,4 @@ ideea_merra$ideea_locid <- ideea_locid
 ideea_merra$ideea_locid_sf <- ideea_locid_sf
 
 
-
 # usethis::use_data(MERRA2, overwrite = TRUE)
