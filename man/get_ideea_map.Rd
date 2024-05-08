@@ -5,11 +5,11 @@
 \title{Get IDEEA map with custom number of regions}
 \usage{
 get_ideea_map(
-  nreg = 7,
+  nreg = 5,
   offshore = FALSE,
   islands = FALSE,
   aggregate = (nreg != 46),
-  rename = TRUE,
+  rename = FALSE,
   reg_off = offshore,
   ...
 )

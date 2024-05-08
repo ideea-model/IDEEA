@@ -71,7 +71,8 @@ ideea_snapshot_cf <- function(
     a <- a + geom_sf(data = ideea_sf, fill = "grey")
   }
 
-  a <- a + geom_sf(aes(fill = .data[[cf_name]]), inherit.aes = F, data = d)
+  a <- a + geom_sf(aes(fill = .data[[cf_name]]), inherit.aes = F, data = d,
+                   color = alpha("grey25", .25))
 
   if (is.numeric(d[[cf_name]])) {
     a <- a + scale_fill_viridis_c(option = "H", limits = range(x[[cf_name]]))

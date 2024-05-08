@@ -51,7 +51,7 @@ ideea_gif_cf <- function(
     fill_scale_lims = range(x[[cf_name]]),
     fps = 12,
     gif.width = 576, gif.height = 576,
-    filename = "ideea_cf.gif"
+    filename = "ideea_cl.gif"
     ) {
 
   verbose <- TRUE

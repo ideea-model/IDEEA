@@ -2,11 +2,11 @@
 % Please edit documentation in R/data.R
 \name{get_ideea_data}
 \alias{get_ideea_data}
-\title{Get data from IDEEA database}
+\title{Get data from IDEEA package embedded dataset}
 \usage{
 get_ideea_data(
   name,
-  nreg = 7,
+  nreg = 5,
   variable = ".",
   sets = "^reg[0-9]+$|^slice$|^date$|^datetime|^MONTH$|^YDAY$|^HOUR$",
   agg_fun = sum,
@@ -15,7 +15,9 @@ get_ideea_data(
   islands = FALSE,
   as_DT = TRUE,
   drop_na = TRUE,
-  rename = TRUE
+  rename = TRUE,
+  reg_tbl = ideea_data$reg_tbl,
+  weight = "km2"
 )
 }
 \arguments{
@@ -25,6 +27,8 @@ get_ideea_data(
 
 \item{variable}{character, regular expression for the name of variable(s) to return.}
 
+\item{sets}{character, a regular expression to identify key-columns in the datasets, used for groupping.}
+
 \item{agg_fun}{character, function to aggregate data by region, default "sum" (for volumes), "mean" is advised for costs variable.}
 
 \item{raw}{logical, should the raw table be returned, FALSE by default}
@@ -32,17 +36,25 @@ get_ideea_data(
 \item{offshore}{logical, should the data for offshore areas be returned, FALSE by default}
 
 \item{islands}{logical, should the data for remote islands be returned, FALSE by default}
+
+\item{as_DT}{logical, results will be returned in \code{data.table} format if TRUE (default)}
+
+\item{drop_na}{logical, should \code{NA} values be dropped from the data}
+
+\item{reg_tbl}{data.frame with regional mapping (for custom weights or regions)}
+
+\item{weight}{character name of column to use as disaggregating weights, the default value (an currently the only one) is the area of the region (km^2).}
 }
 \value{
 returns the requested table or NULL.
 }
 \description{
-Get data from IDEEA database
+Get data from IDEEA package embedded dataset
 }
 \examples{
 get_ideea_data("coal", raw = T)
 get_ideea_data("coal", nreg = 7, "reserve")
 get_ideea_data("oil", nreg = 34, "reserve", islands = T)
 get_ideea_data("coal", nreg = 7, "cost", agg_fun = mean)
-get_ideea_data("merra_raw_2014", raw = T) \%>\% head()
+get_ideea_data("merra_raw_2014", raw = T) |> head()
 }

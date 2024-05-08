@@ -8,7 +8,7 @@
 #' @export
 #'
 #' @examples
-ideea_global_options <- function(load = TRUE, edit = !load, remove = FALSE) {
+ideea_global_options <- function(edit = FALSE, load = !edit, remove = FALSE) {
   fl <- "~/.ideea.R" # hardwired ideea options file in the system home folder
   if (!file.exists(fl)) {
     message("Creating IDEEA global options: '", fl, "'")
@@ -17,7 +17,8 @@ ideea_global_options <- function(load = TRUE, edit = !load, remove = FALSE) {
       message("Cannot create file '", fl, "'")
       return(invisible(success))
     }
-    write_lines('message("Loading IDEEA global options")', fl, append = T)
+    write_lines("message('Loading IDEEA global options.')", fl, append = T)
+    write_lines("message(\"(use 'ideea_global_options(edit = TRUE)' to edit)\"", fl, append = T)
     write_lines('', fl, append = T)
     write_lines("# IDEEA external dataset", fl, append = T)
     write_lines("# set_ideea_extra('...')", fl, append = T)
@@ -29,7 +30,8 @@ ideea_global_options <- function(load = TRUE, edit = !load, remove = FALSE) {
     write_lines("# energyRt::set_glpk_path()", fl, append = T)
     write_lines("# energyRt::set_julia_path()", fl, append = T)
     write_lines("# energyRt::set_python_path()", fl, append = T)
-    write_lines("# energyRt::set_default_solver(solver_options$julia_highs_barrier)", fl, append = T)
+    write_lines("# energyRt::set_default_solver(solver_options$julia_highs_barrier)",
+                fl, append = T)
     write_lines(" ", fl, append = T)
     write_lines("# IDEEA external data folder (IDEEA.extra):", fl, append = T)
     write_lines("options(IDEEA.extra = '...')", fl, append = T)
