@@ -7,7 +7,7 @@
 get_ideea_map(
   nreg = 5,
   offshore = FALSE,
-  islands = FALSE,
+  islands = TRUE,
   aggregate = (nreg != 46),
   rename = FALSE,
   reg_off = offshore,

@@ -157,7 +157,7 @@ EGAS_CCS_FX <- newTechnology(
     comm = "GAS", 
     unit = "GWh", 
     combustion = .1 # 10% of emissions are not captured by CCS
-    ),
+  ),
   output = data.frame(
     comm = "ELC",
     unit = c("GWh")

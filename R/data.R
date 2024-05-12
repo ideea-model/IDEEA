@@ -23,7 +23,7 @@
 get_ideea_map <- function(
     nreg = 5,
     offshore = FALSE,
-    islands = FALSE,
+    islands = TRUE,
     # ROW = FALSE,
     aggregate = (nreg != 46),
     rename = FALSE,
@@ -107,12 +107,12 @@ if (F) {
 #' @param raw logical, should the raw table be returned, FALSE by default
 #' @param offshore logical, should the data for offshore areas be returned, FALSE by default
 #' @param islands logical, should the data for remote islands be returned, FALSE by default
-#' @param sets character, a regular expression to identify key-columns in the datasets, used for grouping.
+#' @param sets character, a regular expression to identify key-columns in the datasets, used for grouping. The default value (`IDEEA:::.ideea_sets_pattern`) covers all sets in the embedded to the package data. If new datasets added with different names of sets, the default value has to be reviewed.
 #' @param as_DT logical, results will be returned in `data.table` format if TRUE (default)
 #' @param drop_na logical, should `NA` values be dropped from the data
 #' @param rename
 #' @param reg_tbl data.frame with regional mapping (for custom weights or regions)
-#' @param weight character name of column to use as disaggregating weights, the default value (an currently the only one) is the area of the region (km^2).
+#' @param weight character name of column to use as disaggregating weights if the disaggregation of the data is required, for example the saved data is by 5 regions, but the requested data is for 32 regions. In general, it is not recommended to disaggregate due to the strong assumptions. But the algorithm is also used to convert data from 36 to 32 regions because of not exact match of regions' shapes (see [Regions](https://ideea-model.github.io/IDEEA/articles/regions.html) article). The default value is the area of the region (`"km^2"`) for `agg_fun = sum` and it is equal to `1` (no weights) for `agg_fun = mean` and all other functions.
 #'
 #' @return returns the requested table or NULL.
 #' @export
@@ -127,29 +127,51 @@ get_ideea_data <- function(
     name,
     nreg = 5,
     variable = ".",
-    sets = "^reg[0-9]+$|^slice$|^date$|^datetime|^MONTH$|^YDAY$|^HOUR$",
+    sets = .ideea_sets_mask,
     agg_fun = sum,
     raw = FALSE,
     offshore = FALSE,
-    islands = FALSE,
+    islands = TRUE,
     as_DT = TRUE,
     drop_na = TRUE,
-    rename = TRUE,
+    rename = FALSE,
     reg_tbl = ideea_data$reg_tbl,
-    weight = "km2"
+    weight = ifelse(identical(agg_fun, sum), "km2", 1)
     # ROW = FALSE
     ) {
   # browser()
   regN <- paste0("reg", nreg)
-  # suppressMessages({
+
   x <- ideea_data[[name]]
   if (raw) {
     if (as_DT) x <- data.table::as.data.table(x)
     return(x)
   }
+
+  if (offshore) {
+    if (is.null(x[["offshore"]])) x$offshore <- FALSE # default
+  } else if (!offshore) {
+    if (!is.null(x[["offshore"]])) x <- filter(x, !offshore)
+  }
+
+  if (!is.null(x[["mainland"]]) && !islands) {
+    x <- filter(x, mainland)
+  }
+
   reg_in_x <- names(x)[grepl("^reg[0-9]+(|_off)", names(x))]
-  if (nreg != 1) {
-    reg_in_x <- reg_in_x[reg_in_x != "reg1"]
+
+  if (length(reg_in_x) == 0) {
+    region_in_x <- names(x)[grepl("^reg(|ion)(|_off)$", names(x),
+                                  ignore.case = T)]
+    if (length(region_in_x) > 0) {
+      stop("Region column must have numeric index (aka 'reg5', 'reg36' etc.)",
+           "\n", "Columns in data: " , paste(region_in_x, sep = ", "))
+    }
+    stop("Cannot identify region")
+  }
+
+  if (nreg != 1 && length(reg_in_x) > 1) {
+    reg_in_x <- reg_in_x[reg_in_x != "reg1" & reg_in_x != "reg1_off"]
     x <- select(x, -any_of(c("reg1", "reg1_off")))
   }
   # find matching names
@@ -159,27 +181,24 @@ get_ideea_data <- function(
   names(variable) <- NULL
   # filter out non-numeric
   ii <- sapply(variable, function(j) inherits(x[[j]], c("numeric", "integer")))
-  sets_in_x <- variable[!ii]
+  sets_in_x <- variable[!ii] # add all non-numeric columns to sets
   variable <- variable[ii]
   sets_in_x <- c(sets_in_x, names(x)[grepl(sets, names(x))])
   names(sets_in_x) <- NULL
+  sets_in_x_noReg <- sets_in_x[!grepl("^reg[0-9]+(|_off)$", sets_in_x)] |>
+    unique()
   x <- select(x, any_of(variable), matches(sets_in_x))
-  if (is.null(x[["offshore"]])) {
-    # warning("The '", name, "' table doesn't have `offshore` column.\n",
-    #         "   Assuming 'offshore = FALSE'")
-    x$offshore <- FALSE
-  }
 
   x_regN <- x |>
     select(matches("^reg[0-9]+$")) |>
     colnames()
   x_nreg <- str_extract(x_regN, "[0-9]+") |> as.integer()
 
-  if (regN %in% x_regN) {
-    # nor aggregation is needed
-    warning("unfinished #172")
-    # ii <- grepl("^reg[0-9]+$", sets_in_x) & !(sets_in_x %in% regN)
-  }
+  # if (regN %in% x_regN) {
+  #   # exact match, no (dis)aggregation is needed
+  #   warning("dev/ToDo: skip excessive (dis)aggregation for exact match data")
+  #   # ii <- grepl("^reg[0-9]+$", sets_in_x) & !(sets_in_x %in% regN)
+  # }
 
   # sets
   # browser()
@@ -188,6 +207,8 @@ get_ideea_data <- function(
     filter(reg1 != "ROW") |>
     select(
       matches(sets_in_x),
+      # matches(sets),
+      matches("reg46"),
       any_of(c("offshore", "mainland", regN))
       # any_of(weight, "reg46")
     ) |>
@@ -210,168 +231,114 @@ get_ideea_data <- function(
 
   # browser()
 
-  n_regN_per_xregN <- y |>
-    select(any_of(c(regN, x_regN))) |>
-    unique() |>
-    group_by(across(any_of(x_regN))) |>
-    summarize(cn = dplyr::n()) |>
-    as.data.table()
+  sets_in_y <- select(y, matches(sets)) |> colnames()
+  sets_in_y_noReg <- sets_in_y[!grepl("^reg[0-9]+(|_off)$", sets_in_y)] |>
+    unique()
+  sets_in_y <- c(sets_in_y_noReg, regN, x_regN, "reg46") |> unique()
 
-  # if (nrow_x < nrow_y) { # better metrics?
-  if (any(n_regN_per_xregN$cn > 1) && identical(agg_fun, sum)) {
-    if (!is.null(weight) && !all(is.na(weight))) {
-      if (is.numeric(weight)) {
-        if (length(weight) != 1) {
-          stop(
-            "'weight' parameters accepts either a column name in 'reg_tbl'\n",
-            " (such as 'km2') or a numeric value (1) for equal weights."
-          )
-        }
-        # create unit variable
-        y |> mutate(weight_1 = 1)
-      }
-    }
-    message(
-      "Disagregation is required for some data points, using '",
-      weight, "' weights"
-    )
+  # y |> filter(!(reg32 == reg36))
 
-    y <- reg_tbl |>
-      filter(reg1 != "ROW") |>
-      select(
-        matches(sets_in_x),
-        any_of(c("offshore", "mainland", regN)),
-        any_of(c(weight, "reg46"))
-      ) |>
-      filter(!is.na(.data[[regN]])) |>
-      unique() |>
-      group_by(
-        # across(any_of(c("offshore", "mainland", regN, x_regN)))
-        across(any_of(c("offshore", "mainland")))
-      )
 
-    yy <- y |>
-      group_by(across(all_of(regN)), .add = TRUE) |>
-      summarise(wy = sum(get(weight)), .groups = "drop")
+  regN_vs_xregN <- y |> ungroup() |> filter(get(regN) != get(x_regN))
 
-    yx <- y |>
-      group_by(across(all_of(x_regN)), .add = TRUE) |>
-      summarise(wx = sum(get(weight)), .groups = "drop")
+  if (nrow(regN_vs_xregN) == 0) {
+    # exact match, no (dis-)aggregation required
 
-    y <- y |>
-      select(-any_of(c(weight, "reg46"))) |>
-      unique() |>
-      left_join(yy, by = intersect(colnames(y), colnames(yy))) |>
-      left_join(yx, by = intersect(colnames(y), colnames(yx))) |>
-      unique() |>
-      mutate(w = wx / wy) |>
-      select(-wx, -wy) |>
+  } else {
+    # if (identical(agg_fun, sum))
+    regY_in_regX <- regN_vs_xregN |>
+      select(-any_of("reg46")) |>
+      unique() |> select(-any_of(regN)) |>
+      group_by(across(any_of(c(sets_in_x)))) |>
+      summarize(cn = dplyr::n()) |>
       as.data.table()
 
-    cross_cols <- names(x)[names(x) %in% names(y)]
+    regX_in_regY <- regN_vs_xregN |>
+      select(-any_of("reg46")) |>
+      unique() |> select(-any_of(x_regN)) |>
+      group_by(across(any_of(c(sets_in_y)))) |>
+      summarize(cn = dplyr::n()) |>
+      as.data.table()
 
-    x_try <- try(
-      {
-        x |>
-          # dplyr::left_join(ideea_data$reg_tbl)|>
-          join_fun(y, relationship = "many-to-many", by = cross_cols) |>
-          mutate(across(variable, ~ (.x * w))) |>
-          select(-w) |>
-          dplyr::filter(!is.na(.data[[regN]])) |>
-          dplyr::group_by(
-            dplyr::across(
-              # dplyr::any_of(c(regN, sets_in_x))
-              dplyr::any_of(c(regN, "offshore", "mainland"))
-            ) # , "offshore", "mainland"
-          ) |>
-          as.data.table()
-      },
-      silent = T
-    )
-  } else { # no aggregation
-    cross_cols <- names(x)[names(x) %in% names(y)]
+    # if (any(regX_in_regY$cn > 1) & any(regY_in_regX$cn > 1)) {
+    if (any(regY_in_regX$cn > 1)) {
+    # dis-aggregation and aggregation 'regX' -> 'reg46' -> 'regN' required
+      x <- disagg_to_reg46(x, variable, from = x_regN, weight = weight)
+      # dx <- dx |>
+      #   join_fun(y, by = intersect(names(dx), names(y))) |>
+      #   filter(!is.na(get(regN))) |>
+      #   group_by(across(all_of(c(regN, sets_in_y_noReg))))
+        # summarise(across(variable, agg_fun)) |>
+        # as.data.table()
+    # } else if (any(regX_in_regY$cn > 1)) {
+      # disaggregation regX -> regN
+    # } else if (any(regY_in_regX$cn > 1)) {
+    #   # aggregation regX -> regN
+    #   dx <- x |>
+    #     group_by()
+    # } else {
+    #   # should not be here - possible error in data
+    #   stop("(Dis)aggregation is not supported for the data,",
+    #        " use raw = TRUE for unmodified dataset")
+    }
 
-    x_try <- try(
-      {
-        x |>
-          # dplyr::left_join(ideea_data$reg_tbl)|>
-          join_fun(y, relationship = "one-to-many", by = cross_cols) |>
-          # mutate(w = 1) |>
-          dplyr::filter(!is.na(.data[[regN]])) |>
-          dplyr::group_by(
-            dplyr::across(
-              dplyr::any_of(c(regN, sets_in_x))
-            ) # , "offshore", "mainland"
-          )
-      },
-      silent = T
-    )
-  }
-  # if (!ROW) {
-  # y <- filter(y, reg1 != "ROW") |> unique()
-  # }
-  # browser()
-  if (inherits(x_try, "try-error")) {
-    message(
-      "Cannot automatically aggregate table ", name, " to ", nreg,
-      " regions. Most likely a disagregation algorighm is required.\n",
-      "Use 'raw = TRUE' to request unprocessed data."
-    )
-    return(NULL)
-  } else {
-    x <- x_try
-    rm(x_try)
-  }
-  if (offshore) {
-    x <- group_by(x, offshore, .add = T)
-  } else {
-    x <- filter(x, !offshore)
-  }
-  if (islands) {
-    x <- dplyr::group_by(x, mainland, .add = T)
-  } else {
-    x <- dplyr::filter(x, mainland)
+    # if (offshore) {
+    #   x <- group_by(x,across(any_of("offshore")), .add = T)
+    # } else {
+    #   gcol <- group_vars(x); gcol <- gcol[!(gcol == "offshore")]
+    #   x <- x |> ungroup() |> filter(!offshore) |>
+    #     group_by(across(any_of(gcol)))
+    # }
+    # if (islands) {
+    #   x <- dplyr::group_by(x, across(any_of("mainland")), .add = T)
+    # } else {
+    #   gcol <- group_vars(x); gcol <- gcol[!(gcol == "mainland")]
+    #   x <- x |> ungroup() |> filter(!offshore) |>
+    #     group_by(across(any_of(gcol)))
+    # }
+
+    # aggregate
+    x <- x |>
+      join_fun(y, by = intersect(names(x), names(y))) |>
+      filter(!is.na(get(regN)))
+      # group_by(across(all_of(c(regN, sets_in_y_noReg)))) |>
+      # summarise(across(variable, agg_fun, na.rm = TRUE)) |>
+      # as.data.table()
   }
 
-  # browser()
-  x <- x |>
-    ungroup() |>
-    select(-any_of(reg_in_x[reg_in_x != regN])) |>
-    group_by(across(all_of(regN))) |>
-    group_by(across(any_of(sets_in_x)),
-      .add = T
-    )
-
-  # group by non-numeric variables
-  # browser()
-  ii <- sapply(variable, function(i) inherits(x[[i]], c("numeric", "integer")))
-  # exclude non-requested region
-  # grepl()
   if (drop_na) {
     rr <- ungroup(x) |>
-      select(any_of(variable[ii])) |>
+      select(any_of(variable)) |>
       as.matrix() |>
       apply(1, function(r) all(is.na(r) | is.nan(r)))
     x <- x[!rr,]
   }
 
-  if (length(variable[!ii]) > 0) {
+  if (offshore) {
+    x <- group_by(x,across(any_of("offshore")), .add = T)
+  } else {
+    gcol <- group_vars(x); gcol <- gcol[!(gcol == "offshore")]
+    x <- x |> ungroup() |> filter(!offshore) |>
+      group_by(across(any_of(gcol)))
+  }
+
+  if (islands) {
+    x <- dplyr::group_by(x, across(any_of("mainland")), .add = T)
+  } else {
+    gcol <- group_vars(x); gcol <- gcol[!(gcol == "mainland")]
+    x <- x |> ungroup() |> filter(!offshore) |>
+      group_by(across(any_of(gcol)))
+  }
+
+  # browser()
+  if (nrow(regN_vs_xregN) > 0) {
+    # aggregate
     x <- x |>
-      dplyr::group_by(dplyr::across(dplyr::any_of(variable[!ii])), .add = T)
+      group_by(across(any_of(c(regN, sets_in_y_noReg, sets_in_x_noReg)))) |>
+      summarise(across(variable, agg_fun, na.rm = drop_na)) |>
+      as.data.table()
   }
-  if (length(variable[ii]) == 0) {
-    # return table without numeric info
-    x <- select(x, all_of(group_vars(x)))
-    if (as_DT) x <- data.table::as.data.table(x)
-    return(x)
-  }
-  x <- x |>
-    dplyr::summarise_at(dplyr::vars(dplyr::matches(variable[ii])),
-      agg_fun,
-      na.rm = T
-    ) |>
-    dplyr::ungroup()
-  # })
+  # sets_in_x_noReg
 
   if (rename) {
     # browser()
@@ -384,6 +351,7 @@ get_ideea_data <- function(
 }
 
 if (F) {
+  # tests ####
   # library(data.table)
   get_ideea_data("coal", raw = T)
   get_ideea_data("coal", nreg = 5, "reserve")
@@ -396,10 +364,64 @@ if (F) {
     islands = T
   )
 
+  get_ideea_data(name = "ccs_r5", nreg = 32)
+  get_ideea_data(name = "ccs_r5", raw = T)$CCS_potential_GtCO2 |> sum()
+  get_ideea_data(name = "ccs_r5", nreg = 32, islands = F)$CCS_potential_GtCO2 |>
+    sum()
+  get_ideea_data(name = "ccs_r5", nreg = 32, islands = T)$CCS_potential_GtCO2 |>
+    sum()
+
   ideea_data |> names()
 
   get_ideea_data("merra_raw_2014", raw = T) |> head()
 }
+
+
+disagg_to_reg46 <- function(x, varname, from = "reg5", weight = "km2") {
+  # browser()
+  to <- "reg46"
+
+  # disaggregation table
+  wt <- ideea_data$reg_tbl
+  if (isTRUE(weight == 1)) {
+    weight1 <- TRUE
+    weight <- ".WEIGHT"
+    wt[[weight]] <- 1
+  } else {
+    weight1 <- FALSE
+  }
+
+  wt <- wt |>
+    select(all_of(c(from, to, weight))) |>
+    filter(!is.na(get(to)), !is.na(get(from)))
+
+  wt_from <- wt |>
+    group_by(across(all_of(from))) |>
+    summarise(across(weight, sum), .groups = "drop") |>
+    rename(wx = weight)
+
+  wt <- wt |>
+    full_join(wt_from, by = from)
+
+  if (weight1) {
+    wt <- wt |>
+      mutate(w = 1) |>
+      select(-any_of(c(weight, "wx")))
+  } else {
+    wt <- wt |>
+      mutate(w = get(weight) / wx) |>
+      select(-any_of(c(weight, "wx")))
+  }
+
+  wt |>
+    full_join(x, by = from) |>
+    mutate(
+      across(all_of(varname), ~ .x * w)
+    ) |>
+    select(-w)
+}
+
+
 
 #' IDEEA datasets
 #'
@@ -442,3 +464,5 @@ if (F) {
 # get_ideea_cf <- function(nreg = 5, YEAR = 2019, ) {
 #
 # }
+
+.ideea_sets_mask <- "^reg[0-9]+$|^slice$|^date$|^datetime|^MONTH$|^YDAY$|^HOUR$|^year$|^mainland$|^offshore$"

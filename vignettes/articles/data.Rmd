@@ -24,14 +24,14 @@ This document describes the process of creation of used in the project IDEEA ext
 
 
 ```{r setup, warning=FALSE, message=FALSE}
-library(IDEEA)
+# library(IDEEA)
+devtools::load_all(".")
 library(tidyverse)
 library(data.table)
 # pak::pkg_install("energyRt/merra2ools")
 library(merra2ools)
 library(ggthemes)
 library(glue)
-
 ```
 
 
@@ -491,24 +491,27 @@ resource <- "sol"; cf_name <- "scf_tl"
 nreg <- 5
 tol <- 0.01
 
+# shape files
 ideea_sf <- get_ideea_map(nreg = nreg, offshore = T, islands = T)
 ideea_cl_sf <- get_ideea_cl_sf(resource = resource, tol = tol)
+# total clusters (maximum across regions)
 ideea_cl_sf$cluster |> unique()
+# clusters' plot
 plot(ideea_cl_sf["cluster"])
-
-x <- get_ideea_cf(resource, tol = tol)
-# to plot a snapshot for a slice
+# capacity factors
+x <- get_ideea_cf(resource, tol = tol, nreg = nreg, year = 2019)
+# plot a snapshot for a (random) slice
 ideea_snapshot_cf(x, ideea_cl_sf, ideea_sf, cf_name = cf_name)
-# to create a gif-file
+# create a gif-file
 # pull slices from partial calendar
 calendar_1day_per_month <-
-  deea_modules$electricity$reg7_base$partial_calendar_1day_per_month
+  ideea_modules$electricity$reg7_base$partial_calendar_1day_per_month
 slices_1day_per_month <- calendar_1day_per_month@timetable$slice
 
 # make a gif
 ideea_gif_cf(x, ideea_cl_sf, ideea_sf, cf_name = cf_name,
              slice = slices_1day_per_month,
-             fps = 5,
+             fps = 5, gif.width = 864, gif.height = 864,
              filename = glue("{resource}.gif"))
 ```
 
@@ -531,7 +534,7 @@ ideea_snapshot_cf(x, ideea_cl_sf, ideea_sf, cf_name = cf_name)
 # gif
 ideea_gif_cf(x, ideea_cl_sf, ideea_sf, cf_name = cf_name,
              slice = slices_1day_per_month,
-             fps = 5,
+             fps = 5, gif.width = 864, gif.height = 864,
              filename = glue("{resource}.gif"))
 
 ```

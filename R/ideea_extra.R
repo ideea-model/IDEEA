@@ -346,7 +346,7 @@ get_ideea_cl_sf <- function(
   x |> group_by(across(any_of(c(
     glue("reg{nreg}"),
     glue("reg{nreg}_off"),
-    "mainland", "offshore", "cluster"
+    "mainland", "offshore", "cluster", "area", "MW_max"
     )))) |>
     summarise(
       across(all_of(nms), ~ mean(.x, na.rm = TRUE)),

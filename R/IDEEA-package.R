@@ -14,6 +14,7 @@
 #' @importFrom dplyr filter
 #' @importFrom dplyr full_join
 #' @importFrom dplyr group_by
+#' @importFrom dplyr group_vars
 #' @importFrom dplyr if_all
 #' @importFrom dplyr if_else
 #' @importFrom dplyr inner_join

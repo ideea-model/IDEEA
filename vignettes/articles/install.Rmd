@@ -46,12 +46,18 @@ pkg_install("data.table", upgrade = TRUE) # memory and time-efficient data-frame
 pkg_install("sf", upgrade = TRUE) # working with GIS/maps
 pkg_install("reticulate", upgrade = TRUE) # running Python from R
 # install energyRt and merra2ools
-pkg_install("energyRt/energyRt@dev") # (fix version later)
 pkg_install("energyRt/merra2ools") # (fix version later)
+pkg_install("energyRt/energyRt@dev") # (fix version later)
 # install IDEEA
 pkg_install("ideea-model/IDEEA") 
 # GAMS users may want to install `gdxtools` (see GAMS section)
 # pkg_install("lolow/gdxtools") # Manipulate GDX-files for data exchange
+# additional packages for visualization and reporting
+pkg_install("cowplot")
+pkg_install("ggthemes")
+pkg_install("kableExtra")
+pkg_install("shiny")
+pkg_install("shinyWidgets")
 ```
 The script in the chunk above can be run by pressing `Ctrl+Enter` or `Cmd+Enter` in the RStudio editor. It will install all required R-packages for IDEEA model.
 
@@ -165,6 +171,11 @@ For other Linux systems please refer to the <https://en.wikibooks.org/wiki/GLPK/
 
 ### Install GAMS
 [General Algebraic Modeling System (GAMS)](https://www.gams.com/products/gams/gams-language/) is a modeling language and proprietary software for mathematical modeling and numeric optimization. IDEEA users who already have GAMS license with powerful linear solvers (like CPLEX), or who plan to solve large-scale models regularly, this might be a good option due to better time performance on the model generation stage. Please follow installation instructions by GAMS and add it to the configuration file (below).
+Also IDEEA and `energyRt` depend on `gdxtools` to work with GAMS Data Exchange (GDX) files. This is not required but essential for time performance of large datasets.
+```{r, eval=FALSE}
+pak::pkg_install("lolow/gdxtools") # Manipulate GDX-files for data exchange
+```
+
 
 
 ## Additional Datasets

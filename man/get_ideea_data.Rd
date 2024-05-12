@@ -8,16 +8,16 @@ get_ideea_data(
   name,
   nreg = 5,
   variable = ".",
-  sets = "^reg[0-9]+$|^slice$|^date$|^datetime|^MONTH$|^YDAY$|^HOUR$",
+  sets = .ideea_sets_mask,
   agg_fun = sum,
   raw = FALSE,
   offshore = FALSE,
-  islands = FALSE,
+  islands = TRUE,
   as_DT = TRUE,
   drop_na = TRUE,
-  rename = TRUE,
+  rename = FALSE,
   reg_tbl = ideea_data$reg_tbl,
-  weight = "km2"
+  weight = ifelse(identical(agg_fun, sum), "km2", 1)
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ get_ideea_data(
 
 \item{variable}{character, regular expression for the name of variable(s) to return.}
 
-\item{sets}{character, a regular expression to identify key-columns in the datasets, used for groupping.}
+\item{sets}{character, a regular expression to identify key-columns in the datasets, used for grouping. The default value (\code{IDEEA:::.ideea_sets_pattern}) covers all sets in the embedded to the package data. If new datasets added with different names of sets, the default value has to be reviewed.}
 
 \item{agg_fun}{character, function to aggregate data by region, default "sum" (for volumes), "mean" is advised for costs variable.}
 
@@ -43,7 +43,7 @@ get_ideea_data(
 
 \item{reg_tbl}{data.frame with regional mapping (for custom weights or regions)}
 
-\item{weight}{character name of column to use as disaggregating weights, the default value (an currently the only one) is the area of the region (km^2).}
+\item{weight}{character name of column to use as disaggregating weights if the disaggregation of the data is required, for example the saved data is by 5 regions, but the requested data is for 32 regions. In general, it is not recommended to disaggregate due to the strong assumptions. But the algorithm is also used to convert data from 36 to 32 regions because of not exact match of regions' shapes (see \href{https://ideea-model.github.io/IDEEA/articles/regions.html}{Regions} article). The default value is the area of the region (\code{"km^2"}) for \code{agg_fun = sum} and it is equal to \code{1} (no weights) for \code{agg_fun = mean} and all other functions.}
 }
 \value{
 returns the requested table or NULL.
