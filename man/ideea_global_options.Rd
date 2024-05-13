@@ -4,12 +4,12 @@
 \alias{ideea_global_options}
 \title{Save, load, edit, or remove IDEEA global options}
 \usage{
-ideea_global_options(load = TRUE, edit = !load, remove = FALSE)
+ideea_global_options(edit = FALSE, load = !edit, remove = FALSE)
 }
 \arguments{
-\item{load}{logical, if TRUE load the global options from the file}
-
 \item{edit}{logical, if TRUE open the file in the IDE or default text editor}
+
+\item{load}{logical, if TRUE load the global options from the file}
 
 \item{remove}{logical, if TRUE remove the global options file}
 }

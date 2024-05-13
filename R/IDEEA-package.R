@@ -14,6 +14,7 @@
 #' @importFrom dplyr filter
 #' @importFrom dplyr full_join
 #' @importFrom dplyr group_by
+#' @importFrom dplyr group_vars
 #' @importFrom dplyr if_all
 #' @importFrom dplyr if_else
 #' @importFrom dplyr inner_join
@@ -39,5 +40,7 @@
 #' @importFrom ggplot2 theme_bw
 #' @importFrom glue glue
 #' @importFrom readr write_lines
+#' @importFrom stringr str_extract
+#' @importFrom units set_units
 ## usethis namespace: end
 NULL

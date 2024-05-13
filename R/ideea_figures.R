@@ -79,7 +79,7 @@ ideea_snapshot <- function(scen, YEAR, SLICE, return_data = FALSE) {
 
   # browser()
   vTechOut_ELC <- getData(
-    list(scen_CAP), "vTechOut", process = T, merge = T,
+    list(scen), "vTechOut", process = T, merge = T,
     year = YEAR, slice = SLICE,
     comm = "ELC", tech_ = "^E", drop.zeros = T, digits = 1) |>
     drop_process_vintage() |>
