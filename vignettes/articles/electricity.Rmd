@@ -34,10 +34,16 @@ knitr::opts_chunk$set(
 
 ```{r, echo=FALSE, fig.cap="Schematic representation of IDEEA electricity model"}
 try(knitr::include_graphics("images/elc_schematic.jpg"), silent = T)
-if (packageVersion("energyRt") < '0.11.32') {
+if (packageVersion("energyRt") < '0.11.33') {
   stop('Please update energyRt.
        pak::pkg_install("energyRt/energyRt@dev")')
 }
+if (packageVersion("IDEEA") < '0.0.32') {
+  stop('Please update IDEEA
+       pak::pkg_install("ideea-model/IDEEA@dev")')
+}
+stopifnot(packageVersion("IDEEA") >= '0.0.32')
+
 ```
 
 # Configuration
@@ -45,7 +51,7 @@ if (packageVersion("energyRt") < '0.11.32') {
 # Set number of regions, currently '5' is the only option
 nreg <- 5
 offshore <- TRUE # should offshore regions be included
-islands <- FALSE # should islands be included 
+islands <- TRUE # should islands be included 
 base_year <- 2019 # the first year of the model (base year or `BY`)
 
 # region variable name to use in functions (e.g. `get_ideea_data`)
@@ -66,8 +72,6 @@ library(here)
 library(IDEEA)
 # if running from the IDEEA folder without installation
 # devtools::load_all(".")
-stopifnot(packageVersion("IDEEA") >= '0.0.09')
-
 set_progress_bar()
 # show_progress_bar(F)
 ```
@@ -80,9 +84,9 @@ ideea_global_options(edit = TRUE)
 ## Regions
 <!-- A short desc of alternative regional division and how it affects the modeling results/accuracy and computational burden. reference to the `maps` article. -->
 ```{r regions}
-gis_sf <- get_ideea_map(nreg, offshore = offshore, islands = islands,
-                        rename = FALSE)
-plot(gis_sf[regN_off], key.width = lcm(4.5))
+ideea_sf <- get_ideea_map(nreg, offshore = offshore, islands = islands,
+                          rename = FALSE)
+plot(ideea_sf[regN_off], key.width = lcm(4.5))
 ```
 
 ## Time resolution  
@@ -113,8 +117,7 @@ timetable_subset <- timetable_full_year |>
 timetable_subset
 unique(timetable_subset$HOUR)
 unique(timetable_subset$YDAY)
-
-# tsl2dtm(timetable_subset$slice, year = 2050) |> mday()
+unique(timetable_subset$YDAY) |> tsl2dtm(year = 2019, tmz = "Asia/Kolkata")
 
 SUBSET_HOURS <- nrow(timetable_subset) # total hours in the subset
 FRACT_YEAR <- SUBSET_HOURS / 8760 # fraction in a year
@@ -193,7 +196,7 @@ For the electricity-only model, the electricity is considered as the final produ
 ```{r}
 # call the load curve by region in 2019 from IDDEA datasets
 load_BY <- get_ideea_data("load_2019_MWh", nreg = 5, variable = "MWh") |>
-  mutate(GWh = MWh / 1e3) 
+  mutate(GWh = MWh / 1e3) |> select(-MWh)
   # rename(region = {{regN}})
 
 # define `demand` object with the historical load curve
@@ -203,12 +206,25 @@ DEMELC_BY <- newDemand(
   commodity = "ELC",
   unit = ELC@unit,
   dem = data.frame(
-    region = load_BY$region,
+    region = load_BY[[regN]],
     # year = load_BY$year, # assign to all years
     slice = load_BY$slice, 
     dem = load_BY$GWh # * dem_adj
   )
 )
+```
+
+
+```{r, fig.cap="Hourly load by region, 2019"}
+ggplot(load_BY) +
+  geom_line(aes(HOUR, GWh, color = YDAY, group = YDAY), alpha = .25) +
+  scale_color_viridis_c(option = "H", limits = c(1, 365)) +
+  scale_x_continuous(limits = c(0, 23)) +
+  facet_wrap(~ get(regN), ncol = floor(nreg/2), scales = "free_y") +
+  labs(y = "GWh", x = "hour") +
+  theme_bw()
+ggsave(glue("load_2019_{regN}.png"), width = 7, height = 9, path = "tmp")
+
 ```
 
 The demand growth is set by another demand-object with linear growth of the demand in every region, time-slice from zero to 2x the base-year level by 2050, and 3x by 2070. If the model horizon is longer, the demand can be extrapolated further.
@@ -232,7 +248,7 @@ DEMELC_2X <- newDemand(
   commodity = "ELC",
   unit = ELC@unit,
   dem = data.frame(
-    region = load_2x_2050$region,
+    region = load_2x_2050[[regN]],
     year = load_2x_2050$year,
     slice = load_2x_2050$slice, # comment to assign to all hours
     dem = load_2x_2050$GWh # * dem_adj
@@ -307,20 +323,18 @@ The availability of renewable energy sources (solar, wind, hydro) is defined by 
 This example implements the solar capacity factors for the regions of India, based on the MERRA2 dataset. The capacity factors are defined for the tilted tracking system (`tl`), estimated with `merra2ools` package.
 
 ```{r}
-merra_solar <- ideea_data$merra_solar_cf_reg7 |>
-  rename(region = reg7_off) |>
-  filter(region %in% gis_sf$region)
+solar_cf <- get_ideea_cf("sol", nreg = nreg, year = 2019, tol = .05)
 
 WSOL <- newWeather(
   name = "WSOL",
   desc = "Solar capacity factors, tilted tracking system (tl)",
-  region = unique(merra_solar$region),
+  region = unique(solar_cf[[regN]]),
   timeframe = "HOUR",
   weather = data.frame(
-    region = merra_solar$region,
-    slice = merra_solar$slice,
+    region = solar_cf[[regN]],
+    slice = solar_cf$slice,
     # year = NA # all years
-    wval = merra_solar$scf_tl
+    wval = solar_cf$scf_tl
   )
 )
 ```
@@ -329,20 +343,22 @@ WSOL <- newWeather(
 The wind capacity factors are defined for the regions of India, based on the MERRA2 dataset. The capacity factors are estimated for the 100m height (`wcf100m`) with `merra2ools` package, the data for 5 regions is saved in `ideea_data`.  
 
 ```{r}
-merra_wind <- ideea_data$merra_wind_cf_reg7 |>
-  rename(region = reg7_off) |>
-  filter(region %in% gis_sf$region)
+# merra_wind <- ideea_data$merra_wind_cf_reg7 |>
+#   rename(region = reg7_off) |>
+#   filter(region %in% ideea_sf$region)
+
+wind_cf <- get_ideea_cf("win", nreg = nreg, year = 2019, tol = .1)
 
 WWIN <- newWeather(
   name = "WWIN",
   desc = "Onshore wind 100m height",
-  region = unique(merra_wind$region),
+  region = unique(wind_cf[[regN]]),
   timeframe = "HOUR",
   weather = data.frame(
-    region = merra_wind$region,
-    slice = merra_wind$slice,
+    region = wind_cf[[regN]],
+    slice = wind_cf$slice,
     # year = NA # same for all years
-    wval = merra_wind$wcf100m
+    wval = wind_cf$wcf_100m
   )
 )
 ```
@@ -351,16 +367,19 @@ WWIN <- newWeather(
 The hydro capacity factors are based on the official hourly data for India in 2013. This simplification is used to demonstrate the model's capabilities and can be replaced with more detailed data if available.
 
 ```{r}
+# ideea_data$hydro_hourly_cf_2013 or
+hydro_cf <- get_ideea_data("hydro_hourly_cf_2013", raw = TRUE) |>
+  mutate(slice = dtm2tsl(datetime), .after = "datetime")
+
 WHYD <- newWeather(
   name = "WHYD",
   desc = "Hydro CUF",
-  # region = c(unique(merra_wind$region),"NORTHEAST"),
   timeframe = "HOUR",
   weather = data.frame(
     # region = NA, # same for all regions
-    slice = timeslices::dtm2tsl(ideea_data$hydro_hourly_cf_2013$datetime),
+    slice = hydro_cf$slice,
     # year = NA # same for all years
-    wval = ideea_data$hydro_hourly_cf_2013$cf
+    wval = hydro_cf$cf
   )
 )
 
@@ -395,14 +414,22 @@ cap <- bind_rows(
     )
   ) |>
   mutate(offshore = FALSE, .after = "capacity_mw") |>
+  group_by(across(any_of(
+    c(regN, regN_off, "offshore", "primary_fuel"))
+    )) |>
+  summarize(capacity_mw = sum(capacity_mw, na.rm = T), .groups = "drop") |>
+  mutate(
+    {{regN_off}} := if_else(offshore, paste0(get(regN), "_off"), get(regN)),
+    .after = regN
+    ) |>
   as.data.table()
 
-cap_sf <- gis_sf |>
+cap_sf <- ideea_sf |>
   right_join(cap) |>
   filter(!is.na(primary_fuel), capacity_mw > 10)
 
 a <- ggplot() +
-  geom_sf(data = gis_sf, fill = "grey") +
+  geom_sf(data = ideea_sf, fill = "grey") +
   geom_sf(aes(fill = capacity_mw / 1e3), data = cap_sf) +
   scale_fill_viridis_c(option = "H", name = "GW", trans = "identity") +
   facet_wrap(~primary_fuel) +
@@ -454,7 +481,7 @@ class(ECOASUP_2020)
 # update base-year technology with preexisting capacity
 ECOASUP_2020 <- ECOASUP_2020 |>
   update(capacity = data.frame(
-    region = cap_coa$region,
+    region = cap_coa[[regN]],
     year = cap_coa$year,
     stock = cap_coa$capacity_mw / 1e3 # in GW
   ))
@@ -498,7 +525,7 @@ ENGCC_2020 <- ideea_modules$techs$ENGCC@data$ENGCC_2020
 # update base-year technology with preexisting capacity
 ENGCC_2020 <- ENGCC_2020 |>
   update(capacity = data.frame(
-    region = cap_gas$region,
+    region = cap_gas[[regN]],
     year = cap_gas$year,
     stock = cap_gas$capacity_mw / 1e3 # in GW
   ))
@@ -544,7 +571,7 @@ names(ESOL@data)
 # update base-year technology with preexisting capacity
 ESOL@data$ESOL_2020 <- ESOL@data$ESOL_2020 |>
   update(capacity = data.frame(
-    region = cap_sol$region,
+    region = cap_sol[[regN]],
     year = cap_sol$year,
     stock = cap_sol$capacity_mw / 1e3 # in GW
   ))
@@ -595,7 +622,7 @@ names(EWIN@data)
 # update base-year technology with preexisting capacity
 EWIN@data$EWIN_2020 <- EWIN@data$EWIN_2020 |>
   update(capacity = data.frame(
-    region = cap_win$region,
+    region = cap_win[[regN]],
     year = cap_win$year,
     stock = cap_win$capacity_mw / 1e3 # in GW
   ))
@@ -803,7 +830,7 @@ transmission_existing <- ideea_data$transmission_5x5 |>
   rename(dst = destination) |>
   filter(!duplicated(MW)) # temporary solution
 
-gis_mainland_sf <- filter(gis_sf, offshore == F, mainland == T)
+gis_mainland_sf <- filter(ideea_sf, offshore == F, mainland == T)
 points_coord <- st_centroid(gis_mainland_sf) |>
   st_coordinates() |>
   as.data.frame() |>
@@ -817,7 +844,7 @@ a <- transmission_existing |>
   mutate(GW = MW / 1000)
 
 ggplot() +
-  geom_sf(data = gis_sf, fill = "wheat") +
+  geom_sf(data = ideea_sf, fill = "wheat") +
   geom_segment(
     aes(
       x = lon.x, y = lat.x, xend = lon.y, yend = lat.y,
@@ -1127,7 +1154,7 @@ horizon_2020_2060_by_10
 mod <- newModel(
   name = "IDEEA_r7_base",
   desc = "IDEEA example model",
-  region = unique(gis_sf$region),
+  region = unique(ideea_sf$region),
   discount = 0.05,
   calendar = full_calendar_d365_h24,
   horizon = horizon_2020_2060_by_10,

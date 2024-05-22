@@ -31,7 +31,7 @@ if (F) {
 
 if (F) {
   # patch: renaming region -> reg5 in "biomass_ava_assumption" (2024-05-08) ####
-  ideea_data <- ideea_data
+  ideea_data <- IDEEA::ideea_data
   ideea_data$biomass_ava_assumption
   ideea_data$biomass_ava_assumption <- rename(
     ideea_data$biomass_ava_assumption,
@@ -42,5 +42,18 @@ if (F) {
   usethis::use_data(ideea_data, internal = F, overwrite = T)
 }
 
+if (F) {
+  # patch: "generators_wri" (2024-05-15) ####
+  # drop excessive "reg*" from "generators_wri"
+  # the regionalization is made for 46 regions, based on given lon/lat
+  ideea_data$generators_wri |> names()
+  ideea_data <- IDEEA::ideea_data
+  generators_wri <- ideea_data$generators_wri |>
+    select(-(matches("reg") & !matches("reg46")))
+  ideea_data$generators_wri <- generators_wri
+  names(ideea_data$generators_wri)
+  # save to the package data
+  usethis::use_data(ideea_data, internal = F, overwrite = T)
+}
 
-# usethis::use_data(DATASET, overwrite = TRUE)
+

@@ -24,8 +24,8 @@ This document describes the process of creation of used in the project IDEEA ext
 
 
 ```{r setup, warning=FALSE, message=FALSE}
-# library(IDEEA)
-devtools::load_all(".")
+library(IDEEA)
+# devtools::load_all(".")
 library(tidyverse)
 library(data.table)
 # pak::pkg_install("energyRt/merra2ools")
