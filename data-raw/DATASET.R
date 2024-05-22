@@ -1,8 +1,8 @@
 ## The script reads "raw" data pre-saved in /data-raw and
 ## creates the package embedded dataset
 
-## IDEEA modules
-## from energy.Rmd
+## IDEEA modules ####
+### from energy.Rmd ####
 if (F) { # run manually
   # read the package data and replace modules
   library(IDEEA)
@@ -19,11 +19,30 @@ if (F) { # run manually
   names(energy_r32)
   # combine
   energy <- list(
-    reg5 = energy_r32,
+    reg5 = energy_r5,
     reg32 = energy_r32
   )
   ideea_modules$energy <- energy
   names(ideea_modules$energy)
+  # save to 'data/ideea_modules.rda'
+  usethis::use_data(ideea_modules, internal = F, overwrite = T)
+  # rebuild the package
+}
+
+### from ccus.Rmd ####
+if (F) { # run manually
+  # read the package data and replace modules
+  library(IDEEA)
+  ideea_modules <- IDEEA::ideea_modules
+  names(ideea_modules)
+  names(ideea_modules$CCUS)
+  # 5-region version
+  ccus_techs <- load("data-raw/repo_CCUS.RData")
+  ccus_techs <- get(ccus_techs)
+  names(ccus_techs)
+  # update/replace
+  ideea_modules$CCUS <- ccus_techs
+  names(ideea_modules$CCUS)
   # save to 'data/ideea_modules.rda'
   usethis::use_data(ideea_modules, internal = F, overwrite = T)
 }

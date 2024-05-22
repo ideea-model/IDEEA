@@ -38,11 +38,11 @@ if (packageVersion("energyRt") < '0.11.33') {
   stop('Please update energyRt.
        pak::pkg_install("energyRt/energyRt@dev")')
 }
-if (packageVersion("IDEEA") < '0.0.32') {
+if (packageVersion("IDEEA") < '0.0.33') {
   stop('Please update IDEEA
        pak::pkg_install("ideea-model/IDEEA@dev")')
 }
-stopifnot(packageVersion("IDEEA") >= '0.0.32')
+stopifnot(packageVersion("IDEEA") >= '0.0.33')
 
 ```
 
@@ -265,6 +265,14 @@ Another way to introduce a supply of a commodity to the model is `import` from a
 ### Primary energy
 
 ```{r}
+# import energy supply module
+energy_module <- ideea_modules$energy[[regN]]
+
+# check if the module is available for the requested number of regions
+if (is_empty(energy_module)) {
+  stop("ideea_modules$energy is not available for ", nreg, " regions")
+}
+
 # define repository for energy supply and resources
 repo_supply <- newRepository(
   name = "repo_supply",
@@ -272,46 +280,67 @@ repo_supply <- newRepository(
 ) |>
   add( # import objects from energy module
     # coal
-    ideea_modules$energy$COA, # coal commodity
-    ideea_modules$energy$SUP_COA, # coal domestic supply
-    ideea_modules$energy$IMP_COA, # coal import
+    energy_module$COA, # coal commodity
+    energy_module$SUP_COA, # coal domestic supply
+    energy_module$IMP_COA, # coal import
     # natural gas
-    ideea_modules$energy$GAS, # natural gas commodity
-    ideea_modules$energy$SUP_GAS, # natural gas domestic supply
-    ideea_modules$energy$IMP_GAS, # natural gas import
+    energy_module$GAS, # natural gas commodity
+    energy_module$SUP_GAS, # natural gas domestic supply
+    energy_module$IMP_GAS, # natural gas import
     # oil
-    ideea_modules$energy$OIL, # oil commodity
-    ideea_modules$energy$SUP_OIL, # oil domestic supply by region
-    ideea_modules$energy$IMP_OIL, # oil import
+    energy_module$OIL, # oil commodity
+    energy_module$SUP_OIL, # oil domestic supply by region
+    energy_module$IMP_OIL, # oil import
     # biomass
-    ideea_modules$energy$BIO, # biomass commodity
-    ideea_modules$energy$RES_BIO, # domestic resource of biomass
-     # nuclear
-    ideea_modules$energy$NUC, # nuclear fuel commodity
-    ideea_modules$energy$IMP_NUC, # Nuclear fuel international market
+    energy_module$BIO, # biomass commodity
+    energy_module$RES_BIO, # domestic resource of biomass
+    # nuclear
+    energy_module$NUC, # nuclear fuel commodity
+    energy_module$IMP_NUC, # Nuclear fuel international market
+    # CCS storage potential
+    energy_module$CO2SINK, # stored CO2 commodity 
+    energy_module$RES_CO2SINK, # CO2 storage potential
     #
     REN, # all type of non-fuel (renewable) energy
     newSupply(
       name = "RES_REN", 
       commodity = "REN", 
-      desc = "An artificial commodity to represent all renewable energy resources"
+      desc = "An artificial commodity to represent all renewable energy"
       ),
-    overwrite = F
+    overwrite = F # restrict duplicate objects
   )
+
+# check
 summary(repo_supply)
 names(repo_supply)
+
+# clean-up
+rm(energy_module) 
 ```
 
 ### Carbon storage
 The geological potential for carbon storage by region is defined in `CCUS` document, stored in IDEEA modules. 
 
 ```{r}
+# import energy supply module
+ccus_module <- ideea_modules$CCUS
+
 # from ideea_modules
 repo_geoccs <- newRepository(
   name = "repo_ccs",
   desc = "Carbon storage geo-potential",
-  ideea_modules$CCUS$CO2SINK, # commodity to represent stored CO2
-  ideea_modules$CCUS$RES_CO2SINK # domestic resource of CO2 storage
+  ccus_module$CCSCO2, # commodity to represent captured CO2
+  ccus_module$GHG, # composite commodity--all GHGs
+  # option 1: Fixed CCS technology (see CCUS description) 
+  ccus_module$ECOA_CCS_FX, # Coal plant with CCS
+  ccus_module$EGAS_CCS_FX, # Natural gas plant with CCS
+  # option 2: Variable CCS technology
+  ccus_module$COA0, # coal commodity with captured CO2
+  ccus_module$ALIAS_COA, # alias name COA == COA0 for supply
+  ccus_module$ECOA_CCS_FL, # Coal power plant with variable CCS tech
+  ccus_module$GAS0, # gas commodity with captured CO2
+  ccus_module$ALIAS_GAS, # alias name GAS0 == CAS for supply
+  ccus_module$EGAS_CCS_FL # gas power plant with variable CCS tech
 )
 summary(repo_geoccs)
 ```
@@ -325,18 +354,41 @@ This example implements the solar capacity factors for the regions of India, bas
 ```{r}
 solar_cf <- get_ideea_cf("sol", nreg = nreg, year = 2019, tol = .05)
 
-WSOL <- newWeather(
-  name = "WSOL",
-  desc = "Solar capacity factors, tilted tracking system (tl)",
-  region = unique(solar_cf[[regN]]),
-  timeframe = "HOUR",
-  weather = data.frame(
-    region = solar_cf[[regN]],
-    slice = solar_cf$slice,
-    # year = NA # all years
-    wval = solar_cf$scf_tl
+name_with_cluster <- function(name, cluster, ndigits = 2) {
+  glue(
+    name,
+    formatC(cluster, digits = ndigits, width = ndigits, 
+            flag = "0", mode = "integer")
+    )
+}
+name_with_cluster("", 0)
+name_with_cluster("SOL", 1)
+name_with_cluster("WIN_CL", 99)
+
+WSOL <- newRepository(name = "Solar capacity factors")
+
+for (i in unique(solar_cf$cluster)) {
+  x <- filter(solar_cf, cluster == i)
+  WSOL_i <- newWeather(
+    name = name_with_cluster("WSOL", i),
+    desc = name_with_cluster(
+      "Solar capacity factors, tilted tracking system (tl), cluster ",
+      i
+    ),
+    region = unique(x[[regN]]),
+    timeframe = "HOUR",
+    weather = data.frame(
+      region = x[[regN]],
+      slice = x$slice,
+      # year = NA # all years
+      wval = x$scf_tl
+    )
   )
-)
+  WSOL <- add(WSOL, WSOL_i)
+  rm(x, WSOL_i)
+}
+summary(WSOL)
+names(WSOL)
 ```
 
 ### Wind
@@ -349,18 +401,31 @@ The wind capacity factors are defined for the regions of India, based on the MER
 
 wind_cf <- get_ideea_cf("win", nreg = nreg, year = 2019, tol = .1)
 
-WWIN <- newWeather(
-  name = "WWIN",
-  desc = "Onshore wind 100m height",
-  region = unique(wind_cf[[regN]]),
-  timeframe = "HOUR",
-  weather = data.frame(
-    region = wind_cf[[regN]],
-    slice = wind_cf$slice,
-    # year = NA # same for all years
-    wval = wind_cf$wcf_100m
+# repository to store capacity factors (weather objects)
+WWIN <- newRepository(name = "Wind capacity factors")
+
+for (i in unique(wind_cf$cluster)) {
+  x <- filter(wind_cf, cluster == i)
+  WWIN_i <- newWeather(
+    name = name_with_cluster("WWIN", i),
+    desc = name_with_cluster(
+      "Onshore wind 100m height capacity factors, cluster ", i
+    ),
+    region = unique(x[[regN]]),
+    timeframe = "HOUR",
+    weather = data.frame(
+      region = x[[regN]],
+      slice = x$slice,
+      # year = NA # all years
+      wval = x$wcf_100m 
+    )
   )
-)
+  WWIN <- add(WWIN, WWIN_i)
+  rm(x, WWIN_i)
+}
+summary(WWIN)
+names(WWIN)
+
 ```
 
 ### Hydro  

@@ -3,7 +3,7 @@ title: "Primary energy sources"
 fig_caption: yes
 params:
   nreg: 5 # number of regions
-  # nreg: 32 
+  # nreg: 32 # number of regions
 editor_options: 
   chunk_output_type: console
 ---
@@ -385,59 +385,38 @@ Source:
 <details>
   <summary>code</summary>
 ```{r ccus, message=FALSE}
-# loading and processing ccs data
-get_ideea_data(name = "ccs_r5", raw = T) # check raw data
-ccs_reserve <- get_ideea_data(name = "ccs_r5", raw = T)
-get_ideea_data(name = "ccs_r5", nreg = 32)
-
-# Declaration of commodity
-CCSCO2 <- newCommodity(
-  name = "CCSCO2", 
-  desc = "Captured CO2, kt",
-  unit = "kt", 
-  #slice = "ANNUAL", deprecated
-  timeframe = "ANNUAL"
-)
-
-CO2SINK <- newCommodity(
-  name = "CO2SINK", 
-  desc = "Stored CO2, kt",
-  unit = "kt", 
-  #slice = "ANNUAL", deprecated
-  timeframe = "ANNUAL"
-)
-
-GHG <- newCommodity(
-  name = "GHG",
-  desc = "Greenhouse gas emissions, Mt",
-  unit = "Mt",
-  agg = data.frame(
-    comm = c("CO2", "CCSCO2"),
-    unit = "kt",
-    agg = c(1e3, -1e3)
-  ),
-  misc = list(
-    info = c("GHG is a composite commodity that aggregates CO2 and CCSCO2 with",
-             "specified weights (in @agg$agg)")
-  )
-)
+# Data on the potential of CO2 storage in geological formations
+# NOTE: the original data is by 5 regions, disaggregation is used for higher nreg
+ccs_reserve <- get_ideea_data(name = "ccs_r5", nreg = nreg)
 
 # Declaration of domestic supply
+# A commodity to represent the storage of CO2
+CO2SINK <- newCommodity(
+  name = "CO2SINK", 
+  desc = "Stored CO2 in geological formations",
+  unit = "kt", 
+  timeframe = "ANNUAL"
+)
+
+# Declaration of domestic carbon sink resources
 RES_CO2SINK <- newSupply(
   name = "RES_CO2SINK",
   desc = "Permanent geological carbon storage (saline aquifers and basalt).",
-  commodity = "CO2",
+  commodity = "CO2SINK",
   unit = "kt",
-  region = unique(ccs_reserve$reg5),
+  region = unique(ccs_reserve[[regN]]),
   reserve = data.frame(
-    region = ccs_reserve$reg5,
+    region = ccs_reserve[[regN]],
     res.up = ccs_reserve$CCS_potential_GtCO2 * 1e6
-  ) |> unique()
+  ) |> unique(),
+  availability = list(
+    # represent injection costs per unit of stored CO2
+    cost = convert(12.1, "USD/t", "cr.₹/kt") # ~0.1 cr.₹/kt, assumption
+  )
 )
 
 # Saving the model objects in repository
-repo_energy <- add(repo_energy, CCSCO2, CO2SINK, GHG, RES_CO2SINK, 
-                   overwrite = T)
+repo_energy <- add(repo_energy, CO2SINK, RES_CO2SINK, overwrite = F)
 repo_energy@data |> names()
 ```
 </details>

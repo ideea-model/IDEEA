@@ -1,7 +1,8 @@
 ---
 title: "Carbon capture, utilisation and storage"
 params:
-  nreg: [7, 36]
+  # nreg: [5, 32]
+  nreg: 5
   save_ccus_objects: false
 editor_options: 
   chunk_output_type: console
@@ -24,6 +25,26 @@ library(here)
 library(IDEEA)
 # devtools::load_all(".")
 library(tidyverse)
+library(glue)
+library(kableExtra)
+```
+
+## Settings
+```{r, eval=FALSE}
+nreg <- 5 
+# nreg <- 32 # alternative number of regions
+```
+
+```{r, include=FALSE, echo=FALSE}
+# using nreg parameter from YAML preamble of the file
+nreg <- params$nreg
+```
+
+```{r}
+# region names where offshore regions (if any) associated with closest land-region:
+regN <- glue("reg{nreg}") 
+# offshore regions have distinct names:
+regN_off <- glue("reg{nreg}_off") 
 ```
 
 The goal of carbon capture, utilization and storage (CCS or CCUS)  technologies is to reduce carbon emissions from fuels combustion and industrial processes. The emissions are captured, transported, and stored in geological formations, or used in other industrial processes. The captured CO2 potentially can be used in enhanced oil recovery (EOR), or in the production of chemicals, fuels, and materials. However, the current status of utilization is limited and the main focus is on the storage of CO2 in geological formations.  
@@ -32,31 +53,42 @@ The goal of carbon capture, utilization and storage (CCS or CCUS)  technologies 
 The potential of geological storage varies by region and depends on the availability of suitable geological formations, the distance to the sources of CO2, and the existing infrastructure. Here we use an estimated value [LINK] of CCS storage potential in saline aquifers and basalt formations by region.
 
 ```{r}
+# Data on the potential of CO2 storage in geological formations
+# NOTE: the original data is by 5 regions, disaggregation is used for higher nreg
+ccs_reserve <- get_ideea_data(name = "ccs_r5", nreg = nreg)
+
+# Declaration of domestic carbon sink resources
+# the objects is declared in `energy` document and saved in ideea_modules$energy
+# here we import saved objects for the requested number of regions
+
 # A commodity to represent the storage of CO2
-CO2SINK <- newCommodity(
-  name = "CO2SINK", 
-  desc = "Stored CO2 in geological formations",
+CO2SINK <- ideea_modules$energy[[regN]]$CO2SINK
+
+# Permanent geological carbon storage (saline aquifers and basalt) potential
+RES_CO2SINK <- ideea_modules$energy[[regN]]$RES_CO2SINK
+  
+# Declaration of captured CO2 "commodity" 
+CCSCO2 <- newCommodity(
+  name = "CCSCO2", 
+  desc = "Captured CO2, kt",
   unit = "kt", 
+  #slice = "ANNUAL", deprecated
   timeframe = "ANNUAL"
 )
 
-# Data on the potential of CO2 storage in geological formations
-ccs_reserve <- get_ideea_data(name = "ccs_r5", raw = T)
-
-# Declaration of domestic carbon sink resources
-RES_CO2SINK <- newSupply(
-  name = "RES_CO2SINK",
-  desc = "Permanent geological carbon storage (saline aquifers and basalt).",
-  commodity = "CO2SINK",
-  unit = "kt",
-  region = unique(ccs_reserve$reg5),
-  reserve = data.frame(
-    region = ccs_reserve$reg5,
-    res.up = ccs_reserve$CCS_potential_GtCO2 * 1e6
-  ) |> unique(),
-  availability = list(
-    # represent injection costs per unit of stored CO2
-    cost = convert(12.1, "USD/t", "cr.₹/kt") # ~0.1 cr.₹/kt, assumption
+# Declaration of composite GHG
+GHG <- newCommodity(
+  name = "GHG",
+  desc = "Greenhouse gas emissions, Mt",
+  unit = "Mt",
+  agg = data.frame(
+    comm = c("CO2", "CCSCO2"),
+    unit = "kt",
+    agg = c(1e3, -1e3)
+  ),
+  misc = list(
+    info = c("GHG is a composite commodity that aggregates CO2 and CCSCO2 with",
+             "specified weights (in @agg$agg)")
   )
 )
 
@@ -64,12 +96,12 @@ RES_CO2SINK <- newSupply(
 
 The implementation of CCS technologies in energy models can be done in many ways with different levels of detail. CO2 emissions in electric power sector in IDEEA model are linked to the fuels use (combustion) by power plants. The emission factor is set for every fuel in `@emis` slot of every commodity. For example, the `emis` slot of coal commodity `COA@emis` is set to:
 ```{r, echo=FALSE}
-kableExtra::kable(ideea_modules$energy$COA@emis) |>
+kableExtra::kable(ideea_modules$energy[[regN]]$COA@emis) |>
   kableExtra::kable_styling(full_width = F)
 ```
 and for natural gas (`GAS@emis`):
 ```{r, echo=FALSE}
-kableExtra::kable(ideea_modules$energy$GAS@emis) |>
+kableExtra::kable(ideea_modules$energy[[regN]]$GAS@emis) |>
   kableExtra::kable_styling(full_width = F)
 ```
 
@@ -82,7 +114,7 @@ The simplest way to reduce CO2 emissions of a power generation in the model is n
 ### Coal power plant with CCS
 
 ```{r}
-COA <- ideea_modules$energy$COA
+COA <- ideea_modules$energy[[regN]]$COA
 ECOA_prototype <- ideea_modules$techs$ECOAULT@data$ECOAULT_2030
 ECOA_prototype@input
 ```
@@ -100,11 +132,14 @@ ECOA_CCS_FX <- update(
   )
 
 # Efficiency, no CCS
-ECOA_prototype@ceff$cinp2use
-# Efficiency, with CCS
+kableExtra::kable(
+  select(ECOA_prototype@ceff, region, year, comm, cinp2use)
+)
+
+# Efficiency, with CCS (~10% loss)
 ECOA_CCS_FX@ceff$cinp2use <- ECOA_prototype@ceff$cinp2use * 0.9
 
-# Costs
+# Costs (~50% up)
 ECOA_CCS_FX@invcost$invcost <- ECOA_prototype@invcost$invcost * 1.5
 ECOA_CCS_FX@fixom$fixom <- ECOA_prototype@fixom$fixom * 1.5
 ECOA_CCS_FX@varom$varom <- ECOA_prototype@varom$varom * 1.5
@@ -147,7 +182,7 @@ If `CO2SINK` is used, the commodity and it's resource must be added to the model
 Similarly we can add CCS to natural gas and biomass-powered plants. Instead of updating the existing technology without CCS, we design the technology from scratch to demonstrate a technology-building process. 
 
 ```{r, eval=TRUE}
-GAS <- ideea_modules$energy$GAS
+GAS <- ideea_modules$energy[[regN]]$GAS
 EGAS_prototype <- ideea_modules$techs$ENGCC$ENGCC_2030
 
 EGAS_CCS_FX <- newTechnology(
@@ -328,22 +363,29 @@ draw(EGAS_CCS_FL)
    
  
 ```{r, eval=TRUE, include=FALSE}
+# saving the module
+# !!! Important: building of the module depends on output from energy.Rmd
+# !!! When updating after energy.Rmd, make sure that the results have been
+# !!! saved to the package data: run the 'energy' chunk of DATASET.R 
+# !!! and rebuild the package before processing the CCUS.
 repo_CCUS <- newRepository(
   name = "CCS Technologies",
   desc = "Repository for CC(U)S technologies",
-  CO2SINK, RES_CO2SINK, # CO2 sink commodity and resource
+  # CO2SINK, RES_CO2SINK, # saved in energy.Rmd by regN
+  CCSCO2, GHG,
   ECOA_CCS_FX, ECOA_CCS_FL, COA0, ALIAS_COA, # coal technologies
   EGAS_CCS_FX, EGAS_CCS_FL, GAS0, ALIAS_GAS # gas technologies
 )
 if (isTRUE(params$save_ccus_objects)) {
-  save(repo_CCUS, file = file.path(
-    here(), "data-raw/repo_CCUS.RData"
-  ))
+  fname <- glue("data-raw/repo_CCUS.RData")
+  message("Saving: ", fname)
+  save(repo_CCUS, file = here(fname))
 }
 
 ```
 
 ```{r, eval=FALSE, include=FALSE}
+# testing - old version, not updated
 library(data.table)
 # test CCUS on minimal model
 gis_sf <- get_ideea_map(7, offshore = F, reg_off = F)
