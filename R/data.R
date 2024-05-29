@@ -85,7 +85,7 @@ get_ideea_map <- function(
   names(map) <- nm
   map <- select(
     map,
-    any_of(c("region", "reg_off", "name")),
+    any_of(c("region", "reg_off", "name", "mainland", "offshore")),
     any_of(c(glue("reg{nreg}"), glue("reg{nreg}_off"), glue("name{nreg}")))
     # any_of(c("reg1", "reg1_off", "name1"))
   )

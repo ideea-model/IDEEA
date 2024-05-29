@@ -10,7 +10,7 @@ resource_files:
 params:
   save_repo: false
   solve: false
-  # nreg: 5
+  nreg: 5
   # offshore: FALSE
   # islands: FALSE
   # base_year: 2020
@@ -77,7 +77,7 @@ set_progress_bar()
 ```
 
 If not done yet, configure your system, editing and saving global options:
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 ideea_global_options(edit = TRUE)
 ```
 
@@ -181,7 +181,7 @@ REN <- newCommodity(
   timeframe = "ANNUAL"
 )
 
-# storing all commodities in a repository
+# storing commodities in a repository
 repo_comm <- newRepository(
   name = "repo_comm",
   desc = "Electricity & emissions commodities"
@@ -194,7 +194,7 @@ repo_comm <- newRepository(
 For the electricity-only model, the electricity is considered as the final product, and the final demand can be set exogenously via the `demand` class. The `newDemand` function creates an object of class `demand` with detailed representation of the demanded electricity by region, time-slice, and year. The values of demand without information on the parameter dimension, such as the region, time-slice, or year are considered default for the non-specified dimensions, and will be filled-in on the interpolation step of the model along with the missing years. Therefore it is enough to set values for the base-year and the last year, if the demand is expected to grow linearly. The load curve by region in India for 2019 is stored in the `load_2019_MWh` dataset, and used in this example as the base-year demand, extrapolated through the model's horizon. 
 
 ```{r}
-# call the load curve by region in 2019 from IDDEA datasets
+# call the load curve by region in 2019 from IDDEA dataset
 load_BY <- get_ideea_data("load_2019_MWh", nreg = 5, variable = "MWh") |>
   mutate(GWh = MWh / 1e3) |> select(-MWh)
   # rename(region = {{regN}})
@@ -297,9 +297,9 @@ repo_supply <- newRepository(
     # nuclear
     energy_module$NUC, # nuclear fuel commodity
     energy_module$IMP_NUC, # Nuclear fuel international market
-    # CCS storage potential
-    energy_module$CO2SINK, # stored CO2 commodity 
-    energy_module$RES_CO2SINK, # CO2 storage potential
+    # CCS storage potential (separate repo, see below)
+    # energy_module$CO2SINK, # stored CO2 commodity 
+    # energy_module$RES_CO2SINK, # CO2 storage potential
     #
     REN, # all type of non-fuel (renewable) energy
     newSupply(
@@ -314,8 +314,6 @@ repo_supply <- newRepository(
 summary(repo_supply)
 names(repo_supply)
 
-# clean-up
-rm(energy_module) 
 ```
 
 ### Carbon storage
@@ -323,26 +321,31 @@ The geological potential for carbon storage by region is defined in `CCUS` docum
 
 ```{r}
 # import energy supply module
-ccus_module <- ideea_modules$CCUS
+# ccus_module <- ideea_modules$CCUS
 
 # from ideea_modules
 repo_geoccs <- newRepository(
   name = "repo_ccs",
-  desc = "Carbon storage geo-potential",
-  ccus_module$CCSCO2, # commodity to represent captured CO2
-  ccus_module$GHG, # composite commodity--all GHGs
-  # option 1: Fixed CCS technology (see CCUS description) 
-  ccus_module$ECOA_CCS_FX, # Coal plant with CCS
-  ccus_module$EGAS_CCS_FX, # Natural gas plant with CCS
-  # option 2: Variable CCS technology
-  ccus_module$COA0, # coal commodity with captured CO2
-  ccus_module$ALIAS_COA, # alias name COA == COA0 for supply
-  ccus_module$ECOA_CCS_FL, # Coal power plant with variable CCS tech
-  ccus_module$GAS0, # gas commodity with captured CO2
-  ccus_module$ALIAS_GAS, # alias name GAS0 == CAS for supply
-  ccus_module$EGAS_CCS_FL # gas power plant with variable CCS tech
+  desc = "Carbon storage potential",
+  # CCS storage potential
+  energy_module$CO2SINK, # stored CO2 commodity 
+  energy_module$RES_CO2SINK # CO2 storage potential
+  # ccus_module$CCSCO2, # commodity to represent captured CO2
+  # ccus_module$GHG, # composite commodity--all GHGs
+  # # option 1: Fixed CCS technology (see CCUS description) 
+  # ccus_module$ECOA_CCS_FX, # Coal plant with CCS
+  # ccus_module$EGAS_CCS_FX, # Natural gas plant with CCS
+  # # option 2: Variable CCS technology
+  # ccus_module$COA0, # coal commodity with captured CO2
+  # ccus_module$ALIAS_COA, # alias name COA == COA0 for supply
+  # ccus_module$ECOA_CCS_FL, # Coal power plant with variable CCS tech
+  # ccus_module$GAS0, # gas commodity with captured CO2
+  # ccus_module$ALIAS_GAS, # alias name GAS0 == CAS for supply
+  # ccus_module$EGAS_CCS_FL # gas power plant with variable CCS tech
 )
 summary(repo_geoccs)
+# clean-up
+rm(energy_module) 
 ```
 
 ## Capacity factors  
@@ -352,10 +355,11 @@ The availability of renewable energy sources (solar, wind, hydro) is defined by 
 This example implements the solar capacity factors for the regions of India, based on the MERRA2 dataset. The capacity factors are defined for the tilted tracking system (`tl`), estimated with `merra2ools` package.
 
 ```{r}
-solar_cf <- get_ideea_cf("sol", nreg = nreg, year = 2019, tol = .05)
+solar_cf <- get_ideea_cf("sol", nreg = nreg, year = 2019, tol = .03)
+solar_cf$cluster |> unique()
 
 name_with_cluster <- function(name, cluster, ndigits = 2) {
-  glue(
+  paste0(
     name,
     formatC(cluster, digits = ndigits, width = ndigits, 
             flag = "0", mode = "integer")
@@ -480,8 +484,8 @@ cap <- bind_rows(
   ) |>
   mutate(offshore = FALSE, .after = "capacity_mw") |>
   group_by(across(any_of(
-    c(regN, regN_off, "offshore", "primary_fuel"))
-    )) |>
+    c(regN, regN_off, "offshore", "primary_fuel")
+    ))) |>
   summarize(capacity_mw = sum(capacity_mw, na.rm = T), .groups = "drop") |>
   mutate(
     {{regN_off}} := if_else(offshore, paste0(get(regN), "_off"), get(regN)),
@@ -629,12 +633,35 @@ cap_sol <- cap_sol |>
 # cap = 0 after 2040
 
 # load repository with solar technologies
-ESOL <- ideea_modules$techs$ESOL
-class(ESOL) # repository with solar techs
-names(ESOL@data)
+ESOL <- newRepository("solar_techs")
+class(ideea_modules$techs$ESOL) # repository with solar techs
+names(ideea_modules$techs$ESOL)
+names(WSOL@data)
+
+# Create technology for every cluster and every vintage
+for (tec in ideea_modules$techs$ESOL@data) { # vintages
+  for (w in WSOL@data) { # CF by clusters
+    # stop() # use for debug
+    cl <- str_extract(w@name, "[0-9]+$") |> as.integer()
+    # update prototype technology
+    tec_w <- update(
+      tec,
+      name = name_with_cluster(paste0(tec@name, "_"), cl),
+      weather = list(
+        weather = w@name,
+        waf.fx = 1
+      ),
+      input = list(comm = "REN", unit = "GWh", combustion = 0)
+    )
+    # add to repository
+    ESOL <- add(ESOL, tec_w)
+  }
+}
+
+ESOL
 
 # update base-year technology with preexisting capacity
-ESOL@data$ESOL_2020 <- ESOL@data$ESOL_2020 |>
+ESOL@data$ESOL_2020_01 <- ESOL@data$ESOL_2020_01 |>
   update(capacity = data.frame(
     region = cap_sol[[regN]],
     year = cap_sol$year,
@@ -642,17 +669,22 @@ ESOL@data$ESOL_2020 <- ESOL@data$ESOL_2020 |>
   ))
 
 # add weather factor name and parameter for each technology
-ESOL@data <- lapply(ESOL@data, function(tech) {
-  update(
-    tech,
-    weather = data.frame(weather = "WSOL", waf.fx = 1),
-    input = list(comm = "REN", combustion = 0)
-  )
-})
-names(ESOL@data)
-ESOL@data$ESOL_2020@weather
+# ESOL@data <- lapply(ESOL@data, function(tech) {
+#   update(
+#     tech,
+#     weather = data.frame(
+#       # assuming that the location is in the first cluster
+#       # (can be changed later using geo-location of existing plants)
+#       weather = name_with_cluster("WSOL", 1), 
+#       waf.fx = 1
+#       ),
+#     input = list(comm = "REN", combustion = 0)
+#   )
+# })
+# names(ESOL@data)
+# ESOL@data$ESOL_2020@weather
 
-ESOL@data$ESOL_2020 |> draw()
+ESOL@data$ESOL_2020_01 |> draw()
 ```
 
 ### Wind
@@ -680,12 +712,35 @@ cap_win <- cap_win |>
 # cap = 0 after 2040
 
 # load repository with wind technologies
-EWIN <- ideea_modules$techs$EWIN
-class(EWIN) # repository with wind techs
-names(EWIN@data)
+EWIN <- newRepository("wind_turbines")
+class(ideea_modules$techs$EWIN) # repository with wind techs
+names(ideea_modules$techs$EWIN)
+
+# Create technology for every cluster and every vintage
+# (similar to solar above)
+for (tec in ideea_modules$techs$EWIN@data) { # vintages
+  for (w in WWIN@data) { # CF by clusters
+    # stop() # use for debug
+    cl <- str_extract(w@name, "[0-9]+$") |> as.integer()
+    # update prototype technology
+    tec_w <- update(
+      tec,
+      name = name_with_cluster(paste0(tec@name, "_"), cl),
+      weather = list(
+        weather = w@name,
+        waf.fx = 1
+      ),
+      input = list(comm = "REN", unit = "GWh", combustion = 0)
+    )
+    # add to repository
+    EWIN <- add(EWIN, tec_w)
+  }
+}
+EWIN
 
 # update base-year technology with preexisting capacity
-EWIN@data$EWIN_2020 <- EWIN@data$EWIN_2020 |>
+# (assigning to the first cluster, geo-location can be matched later)
+EWIN@data$EWIN_2020_01 <- EWIN@data$EWIN_2020_01 |>
   update(capacity = data.frame(
     region = cap_win[[regN]],
     year = cap_win$year,
@@ -693,17 +748,16 @@ EWIN@data$EWIN_2020 <- EWIN@data$EWIN_2020 |>
   ))
 
 # add weather factor name and parameter for each technology
-EWIN@data <- lapply(EWIN@data, function(tech) {
-  update(
-    tech,
-    weather = data.frame(weather = "WWIN", waf.fx = 1),
-    input = list(comm = "REN", combustion = 0)
-  )
-})
-names(EWIN@data)
-EWIN@data$EWIN_2020@weather
-
-EWIN@data$EWIN_2020 |> draw()
+# EWIN@data <- lapply(EWIN@data, function(tech) {
+#   update(
+#     tech,
+#     weather = data.frame(weather = "WWIN", waf.fx = 1),
+#     input = list(comm = "REN", combustion = 0)
+#   )
+# })
+names(EWIN)
+EWIN@data$EWIN_2020_01@weather
+EWIN@data$EWIN_2020_01 |> draw()
 ```
 
 ### Hydro
@@ -714,7 +768,9 @@ cap_hyd <- cap |>
   filter(grepl("Hydro", primary_fuel)) |>
   mutate(primary_fuel = "Hydro") |> # combining Small with other - assumption (!)
   # filter(!offshore) |>
-  group_by(region, primary_fuel) |>
+  group_by(across(any_of(
+    c(regN, regN_off, "offshore", "primary_fuel")
+    ))) |>
   summarise(capacity_mw = sum(capacity_mw, na.rm = T), .groups = "drop") |>
   filter(capacity_mw > 0) |>
   mutate(year = 2020, .before = 1)
@@ -742,7 +798,7 @@ class(EHYD_2020)
 EHYD_2020 <- EHYD_2020 |>
   update(
     capacity = data.frame(
-      region = cap_hyd$region,
+      region = cap_hyd[[regN]],
       year = cap_hyd$year,
       stock = cap_hyd$capacity_mw / 1e3 # in GW
     ),
@@ -796,7 +852,7 @@ class(ENUC_2020)
 ENUC_2020 <- ENUC_2020 |>
   update(
     capacity = data.frame(
-      region = cap_nuc$region,
+      region = cap_nuc[[regN]],
       year = cap_nuc$year,
       stock = cap_nuc$capacity_mw / 1e3 # in GW
     ),
@@ -814,20 +870,26 @@ draw(ENUC@data$ENUC_2020)
 Coal- and gas-fired power plants with carbon capture and storage (CCS) technologies has been defined in "ccus" article and stored in the `ideea_modules$CCUS` repository. There are two types of CCS technologies: with fixed and flexible capture rates. The fixed capture rate is assumed to be used any time the technology produces electricity, while the flexible capture rate can be adjusted depending on the policy and carbon market conditions. Here we add the flexible CCS technologies.  
 ```{r}
 # add coal and gas CCS techs from `ideea_modules$CCUS`
+ccus_module <- ideea_modules$CCUS
+
 repo_ccstechs <- newRepository(
   name = "CCS Technologies",
   desc = "Repository for CCS technologies",
-  # # Fixed CCS capture rate
-  # ideea_modules$CCUS$ECOA_CCS_FX, # coal plant with fixed capture rate
-  # ideea_modules$CCUS$EGAS_CCS_FX # gas plant with fixed capture rate
-  # Flexible CCS capture rate
-  ideea_modules$CCUS$COA0, # alias for COA commodity to be associated with CCS
-  ideea_modules$CCUS$ALIAS_COA, # a technology to equalize COA and COA0
-  ideea_modules$CCUS$ECOA_CCS_FL, # coal plant with flexible capture rate
-  ideea_modules$CCUS$GAS0, # alias for GAS commodity to be associated with CCS
-  ideea_modules$CCUS$ALIAS_GAS, # gas plant with flexible capture rate
-  ideea_modules$CCUS$EGAS_CCS_FL # a technology to equalize GAS and GAS0
+  ccus_module$CCSCO2, # commodity to represent captured CO2
+  ccus_module$GHG, # composite commodity--all GHGs
+  ## option 1: Fixed CCS technology (see CCUS description)
+  # ccus_module$ECOA_CCS_FX, # Coal plant with CCS
+  # ccus_module$EGAS_CCS_FX, # Natural gas plant with CCS
+  ## option 2: Variable CCS technology
+  ccus_module$COA0, # coal commodity with captured CO2
+  ccus_module$ALIAS_COA, # alias name COA == COA0 for supply
+  ccus_module$ECOA_CCS_FL, # Coal power plant with variable CCS tech
+  ccus_module$GAS0, # gas commodity with captured CO2
+  ccus_module$ALIAS_GAS, # alias name GAS0 == CAS for supply
+  ccus_module$EGAS_CCS_FL # gas power plant with variable CCS tech
 )
+
+rm(ccus_module) 
 ```
 
 ### Bio energy
@@ -858,7 +920,7 @@ class(EBIO_2020)
 # update base-year technology with preexisting capacity
 EBIO_2020 <- EBIO_2020 |>
   update(capacity = data.frame(
-    region = cap_bio$region,
+    region = cap_bio[[regN]],
     year = cap_bio$year,
     stock = cap_bio$capacity_mw / 1e3 # in GW
   ))
@@ -895,11 +957,11 @@ transmission_existing <- ideea_data$transmission_5x5 |>
   rename(dst = destination) |>
   filter(!duplicated(MW)) # temporary solution
 
-gis_mainland_sf <- filter(ideea_sf, offshore == F, mainland == T)
+gis_mainland_sf <- filter(ideea_sf, offshore == F)
 points_coord <- st_centroid(gis_mainland_sf) |>
   st_coordinates() |>
   as.data.frame() |>
-  cbind(data.frame(region = gis_mainland_sf$region)) |>
+  cbind(data.frame(region = gis_mainland_sf[[regN]])) |>
   rename(lon = X, lat = Y)
 
 a <- transmission_existing |>
@@ -1219,7 +1281,7 @@ horizon_2020_2060_by_10
 mod <- newModel(
   name = "IDEEA_r7_base",
   desc = "IDEEA example model",
-  region = unique(ideea_sf$region),
+  region = unique(ideea_sf[[regN]]),
   discount = 0.05,
   calendar = full_calendar_d365_h24,
   horizon = horizon_2020_2060_by_10,
@@ -1230,6 +1292,8 @@ mod <- newModel(
 ```
 
 ```{r, eval=params$save_repo, include=FALSE}
+# Save the module to data-raw
+# !!! DO NOT RUN - IN PROGRESS
 electricity <- list(
   # commodities
   repo_comm = repo_comm,
@@ -1289,7 +1353,7 @@ Quick way to have a glimpse of the results
 # set_progress_bar("progress")
 # set_scenarios_path("D:/Dropbox/Xeon_link/IDEEA-xeon/scenarios")
 # Reference case
-scen_base_sub <- interpolate(
+scen_base_sub <- interpolate_model(
   mod,
   name = "BASE_sub",
   STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
@@ -1298,10 +1362,11 @@ scen_base_sub <- interpolate(
 
 scen_base_sub <- write_sc(
   scen_base_sub,
+  solver = solver_options$gams_gdx_cplex_barrier
   # solver = solver_options$gams_gdx_cplex_parallel
   # solver = solver_options$julia_highs_barrier
   # solver = solver_options$julia_highs_simplex
-  solver = solver_options$julia_highs_parallel
+  # solver = solver_options$julia_highs_parallel
 )
 scen_base_sub@status
 scen_base_sub@misc$tmp.dir
@@ -1326,3 +1391,28 @@ getData(scen_base_sub, "vTechNewCap", drop.zeros = T,
   as.data.table()
 ```
 
+### Policy scenarios
+```{r, eval=params$solve}
+# CO2 cap
+scen_CAP <- interpolate(
+  mod, name = "CAP", 
+  # here we can add policy objects
+  STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
+  CO2_CAP,
+  partial_calendar # add partial calendar to the interpolate function
+  )
+
+scen_CAP <- write_sc(
+  scen_CAP,
+  solver = solver_options$gams_gdx_cplex_barrier
+  # solver = solver_options$gams_gdx_cplex_parallel
+  # solver = solver_options$julia_highs_barrier
+  # solver = solver_options$julia_highs_simplex
+  # solver = solver_options$julia_highs_parallel
+)
+scen_CAP@status
+scen_CAP@misc$tmp.dir
+
+solve_scenario(scen_CAP, wait = F, force = F)
+
+```
