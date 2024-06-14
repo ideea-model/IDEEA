@@ -2,8 +2,8 @@
 title: "Primary energy sources"
 fig_caption: yes
 params:
-  nreg: 5 # number of regions
-  # nreg: 32 # number of regions
+  # nreg: 5 # number of regions
+  nreg: 32 # number of regions
 editor_options: 
   chunk_output_type: console
 ---
@@ -293,6 +293,14 @@ Government of India is determined to promote usage of natural gas, as a fuel and
 get_ideea_data(name = "gas", raw = T) # check raw data
 gas_reserve <- get_ideea_data(name = "gas", nreg = nreg, 
                               variable = "reserve", agg_fun = sum)
+gas_ava_assumption <- get_ideea_data(name = "gas_ava_assumption", 
+                                     nreg = nreg, 
+                                     variable = "ava.up", agg_fun = sum) |>
+  left_join(
+    get_ideea_data(name = "gas_ava_assumption", 
+                   nreg = nreg, 
+                   variable = "cost", agg_fun = mean)
+  ) 
 
 # Declaration of commodity
 GAS <- newCommodity(
@@ -318,12 +326,17 @@ SUP_GAS <- newSupply(
   desc = "Domestic natural supply",
   commodity = "GAS",
   unit = "GWh",
-  region = unique(gas_reserve[[regN]]),
+  region = unique(gas_ava_assumption[[regN]]),
   reserve = data.frame(
     region = gas_reserve[[regN]],
     res.up = gas_reserve$gas_reserve_GWh_2021 
   ) |> unique(),
-  availability = ideea_data$gas_ava_assumption
+  availability = data.frame(
+    region = gas_ava_assumption[[regN]],
+    year = gas_ava_assumption$year,
+    ava.up = gas_ava_assumption$ava.up,
+    cost = gas_ava_assumption$cost
+  )
 )
 
 # Declaration of import from other countries,
@@ -441,16 +454,13 @@ bio_sup <- get_ideea_data(name = "biomass", nreg = nreg,
                           variable = "max_MWe") |>
   filter(max_MWe > 0)
 
-
-# bio_ava <- ideea_data$biomass_ava_assumption 
-
-bio_ava <- 
-  get_ideea_data("biomass_ava_assumption", nreg = nreg, 
-                 variable = "ava.up", agg_fun = sum) |>
-  full_join(
-    get_ideea_data("biomass_ava_assumption", nreg = nreg, 
-                   variable = "cost", agg_fun = mean)
-    )
+# bio_ava <- 
+#   get_ideea_data("biomass_ava_assumption", nreg = nreg, 
+#                  variable = "ava.up", agg_fun = sum) |>
+#   full_join(
+#     get_ideea_data("biomass_ava_assumption", nreg = nreg, 
+#                    variable = "cost", agg_fun = mean)
+#     )
 
 # Declaration of commodity
 BIO <- newCommodity(
@@ -473,11 +483,18 @@ RES_BIO <- newSupply(
   commodity = "BIO",
   unit = "GWh",
   availability = data.frame(
-    region = bio_ava[[regN]],
-    ava.up = bio_ava$ava.up,
-    cost = bio_ava$cost
+    region = bio_sup[[regN]],
+    # year = bio_sup$year,
+    ava.up = bio_sup$max_MWe / 1e3 * 8760 * 0.5, # assume 50% CF
+    cost = 0.247934 # assumption convert(0.247934, "cr.INR/GWh", "USD/kWh")
   ),
-  region = unique(bio_ava[[regN]])
+  # availability = data.frame(
+  #   region = bio_ava[[regN]],
+  #   year = bio_ava$year,
+  #   ava.up = bio_ava$ava.up,
+  #   cost = bio_ava$cost
+  # ),
+  region = unique(bio_sup[[regN]])
 )
 
 # saving the model objects in repository
@@ -489,21 +506,28 @@ repo_energy@data |> names()
 ```{r fig.bio, fig.cap="Total bio reserves by region", echo=FALSE, fig.width=8, fig.height=4, message=FALSE, warning=FALSE}
 bio_sf <- get_ideea_map(nreg = nreg, rename = F, islands = T) |> 
   left_join(bio_sup)
+  # left_join(filter(bio_ava, year == 2050)) 
 
 fig.bio.resource <- ggplot(bio_sf) +
   geom_sf(aes(fill = max_MWe/1e3)) +
-  scale_fill_viridis_c(option = "H", name = "GWe") +
+  # geom_sf(aes(fill = ava.up)) +
+  scale_fill_viridis_c(option = "H", name = "GW") +
   theme_map()
 
 # import data for 32 regions, for figures
 bio_sup_r32 <- get_ideea_data(name = "biomass", nreg = 32, variable = "max_MWe")
+# bio_ava_r32 <- get_ideea_data(name = "biomass_ava_assumption", nreg = 32,
+#                               variable = "ava.up") |>
+#   filter(year == 2050)
 
 bio_r32_sf <- get_ideea_map(nreg = 32) |> 
   left_join(bio_sup_r32)
+  # left_join(bio_ava_r32)
 
 fig.bio.resource.r32 <- ggplot(bio_r32_sf) +
   geom_sf(aes(fill = max_MWe/1e3)) +
-  scale_fill_viridis_c(option = "H", name = "GWe") +
+  # geom_sf(aes(fill = ava.up)) +
+  scale_fill_viridis_c(option = "H", name = "GW") +
   theme_map()
 
 cowplot::plot_grid(fig.bio.resource.r32, fig.bio.resource, ncol = 2,
@@ -528,7 +552,7 @@ ideea_cl_sf <- get_ideea_cl_sf(resource = "win", tol = 0.05) |>
   )
 
 ggplot() +
-  geom_sf(data = gis_sf) +
+  geom_sf(data = ideea_sf) +
   geom_sf(aes(fill = MW_max/1e3), data = ideea_cl_sf) +
   scale_fill_viridis_c(option = "H", name = "GW") +
   theme_map()
@@ -596,7 +620,6 @@ repo_energy@data |> names()
 # after re-running `data-raw/dataset.R`
 names(repo_energy@data)
 save(repo_energy, file = glue("data-raw/repo_energy_{regN}.RData"))
-
 ```
 
 ## References

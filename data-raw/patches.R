@@ -56,4 +56,22 @@ if (F) {
   usethis::use_data(ideea_data, internal = F, overwrite = T)
 }
 
+if (F) {
+  library(tidyverse)
+  ideea_data <- IDEEA::ideea_data
+  ideea_data$gas_ava_assumption <- ideea_data$gas_ava_assumption |>
+    rename(reg5 = "region")
+  names(ideea_data$gas_ava_assumption)
+  # save to the package data
+  usethis::use_data(ideea_data, internal = F, overwrite = T)
 
+}
+
+if (F) {
+  # transmission
+  tra_5x5 <- ideea_data$transmission_5x5 |>
+    rename(region1 = destination, case = scenario)
+
+  fwrite(tra_5x5, file = glue("data-raw/trade_matrix_r5_v01.csv"))
+
+}

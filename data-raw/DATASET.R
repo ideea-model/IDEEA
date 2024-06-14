@@ -22,12 +22,32 @@ if (F) { # run manually
     reg5 = energy_r5,
     reg32 = energy_r32
   )
+  # energy$reg32$SUP_GAS
   ideea_modules$energy <- energy
   names(ideea_modules$energy)
   # save to 'data/ideea_modules.rda'
   usethis::use_data(ideea_modules, internal = F, overwrite = T)
   # rebuild the package
 }
+
+### calendars.rmd
+# update calendars
+if (F) {
+  library(IDEEA)
+  ideea_modules <- IDEEA::ideea_modules
+  names(ideea_modules)
+  names(ideea_modules$calendars)
+  cld <- load("data-raw/calendars.RData")
+  calendars <- get(cld)
+  names(calendars)
+  ideea_modules$calendars <- calendars
+  names(ideea_modules$calendars)
+  # save to 'data/ideea_modules.rda'
+  usethis::use_data(ideea_modules, internal = F, overwrite = T)
+  # rebuild the package
+
+}
+
 
 ### from ccus.Rmd ####
 if (F) { # run manually
@@ -48,3 +68,31 @@ if (F) { # run manually
 }
 
 # usethis::use_data(DATASET, overwrite = TRUE)
+
+
+### Calendars ####
+if (F) {
+  timetable_full_year <- ideea_modules$time_tables$d365_h24
+  full_calendar_d365_h24 <- newCalendar(timetable = timetable_full_year)
+  calendars <- list(
+
+  )
+}
+
+### Transmission ####
+if (F) {
+  library(IDEEA)
+  ideea_data <- ideea_data
+  transmission <- list(
+    reg5 = list(),
+    reg32 = list()
+  )
+  if (!is.null(ideea_data$transmission_5x5)) {
+    ideea_data$transmission_5x5 <- NULL
+  }
+  transmission$reg5 <- fread("data-raw/trade_matrix_r5_v01.csv")
+  transmission$reg32 <- fread("data-raw/trade_matrix_r32_v01.csv")
+  ideea_data$transmission <- transmission
+  usethis::use_data(ideea_data, internal = F, overwrite = T)
+}
+

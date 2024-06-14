@@ -10,7 +10,7 @@ resource_files:
 params:
   save_repo: false
   solve: false
-  nreg: 5
+  nreg: 32
   # offshore: FALSE
   # islands: FALSE
   # base_year: 2020
@@ -22,8 +22,8 @@ editor_options:
 knitr::opts_chunk$set(
   collapse = TRUE,
   eval = TRUE,
-  fig.width = 6, 
-  fig.height = 5,  
+  fig.width = 6,
+  fig.height = 5,
   fig.align = "center",
   fig.retina = TRUE,
   comment = "#>"
@@ -34,29 +34,32 @@ knitr::opts_chunk$set(
 
 ```{r, echo=FALSE, fig.cap="Schematic representation of IDEEA electricity model"}
 try(knitr::include_graphics("images/elc_schematic.jpg"), silent = T)
-if (packageVersion("energyRt") < '0.11.33') {
+if (packageVersion("energyRt") < "0.11.33") {
   stop('Please update energyRt.
        pak::pkg_install("energyRt/energyRt@dev")')
 }
-if (packageVersion("IDEEA") < '0.0.33') {
+if (packageVersion("IDEEA") < "0.0.33") {
   stop('Please update IDEEA
        pak::pkg_install("ideea-model/IDEEA@dev")')
 }
-stopifnot(packageVersion("IDEEA") >= '0.0.33')
-
+stopifnot(packageVersion("IDEEA") >= "0.0.33")
 ```
 
 # Configuration
 ```{r, eval = T}
 # Set number of regions, currently '5' is the only option
-nreg <- 5
+nreg <- 32
 offshore <- TRUE # should offshore regions be included
-islands <- TRUE # should islands be included 
+islands <- TRUE # should islands be included
 base_year <- 2019 # the first year of the model (base year or `BY`)
 
 # region variable name to use in functions (e.g. `get_ideea_data`)
-regN <- paste0("reg", nreg) 
+regN <- paste0("reg", nreg)
 regN_off <- paste0(regN, "_off")
+
+# wind and solar clustering tolerance
+tol_win_cl <- 0.10
+tol_sol_cl <- 0.05
 ```
 
 
@@ -84,8 +87,10 @@ ideea_global_options(edit = TRUE)
 ## Regions
 <!-- A short desc of alternative regional division and how it affects the modeling results/accuracy and computational burden. reference to the `maps` article. -->
 ```{r regions}
-ideea_sf <- get_ideea_map(nreg, offshore = offshore, islands = islands,
-                          rename = FALSE)
+ideea_sf <- get_ideea_map(nreg,
+  offshore = offshore, islands = islands,
+  rename = FALSE
+)
 plot(ideea_sf[regN_off], key.width = lcm(4.5))
 ```
 
@@ -127,7 +132,7 @@ print(paste("   Total number of hours per year:", SUBSET_HOURS))
 
 # Partial calendar
 partial_calendar <- newCalendar(
-  timetable = timetable_subset, 
+  timetable = timetable_subset,
   year_fraction = sum(timetable_subset$share)
 )
 ```
@@ -195,9 +200,10 @@ For the electricity-only model, the electricity is considered as the final produ
 
 ```{r}
 # call the load curve by region in 2019 from IDDEA dataset
-load_BY <- get_ideea_data("load_2019_MWh", nreg = 5, variable = "MWh") |>
-  mutate(GWh = MWh / 1e3) |> select(-MWh)
-  # rename(region = {{regN}})
+load_BY <- get_ideea_data("load_2019_MWh", nreg = nreg, variable = "MWh") |>
+  mutate(GWh = MWh / 1e3) |>
+  select(-MWh)
+# rename(region = {{regN}})
 
 # define `demand` object with the historical load curve
 DEMELC_BY <- newDemand(
@@ -208,7 +214,7 @@ DEMELC_BY <- newDemand(
   dem = data.frame(
     region = load_BY[[regN]],
     # year = load_BY$year, # assign to all years
-    slice = load_BY$slice, 
+    slice = load_BY$slice,
     dem = load_BY$GWh # * dem_adj
   )
 )
@@ -220,17 +226,16 @@ ggplot(load_BY) +
   geom_line(aes(HOUR, GWh, color = YDAY, group = YDAY), alpha = .25) +
   scale_color_viridis_c(option = "H", limits = c(1, 365)) +
   scale_x_continuous(limits = c(0, 23)) +
-  facet_wrap(~ get(regN), ncol = floor(nreg/2), scales = "free_y") +
+  facet_wrap(~ get(regN), ncol = floor(nreg / 2), scales = "free_y") +
   labs(y = "GWh", x = "hour") +
   theme_bw()
 ggsave(glue("load_2019_{regN}.png"), width = 7, height = 9, path = "tmp")
-
 ```
 
 The demand growth is set by another demand-object with linear growth of the demand in every region, time-slice from zero to 2x the base-year level by 2050, and 3x by 2070. If the model horizon is longer, the demand can be extrapolated further.
 
 ```{r}
-# define demand in several years, e.g. 2020, 2050, 2070, 
+# define demand in several years, e.g. 2020, 2050, 2070,
 # which will be interpolated before solving the model ('interpolation' step)
 load_2x_2050 <-
   rbind(
@@ -298,22 +303,21 @@ repo_supply <- newRepository(
     energy_module$NUC, # nuclear fuel commodity
     energy_module$IMP_NUC, # Nuclear fuel international market
     # CCS storage potential (separate repo, see below)
-    # energy_module$CO2SINK, # stored CO2 commodity 
+    # energy_module$CO2SINK, # stored CO2 commodity
     # energy_module$RES_CO2SINK, # CO2 storage potential
     #
     REN, # all type of non-fuel (renewable) energy
     newSupply(
-      name = "RES_REN", 
-      commodity = "REN", 
+      name = "RES_REN",
+      commodity = "REN",
       desc = "An artificial commodity to represent all renewable energy"
-      ),
+    ),
     overwrite = F # restrict duplicate objects
   )
 
 # check
 summary(repo_supply)
 names(repo_supply)
-
 ```
 
 ### Carbon storage
@@ -328,11 +332,11 @@ repo_geoccs <- newRepository(
   name = "repo_ccs",
   desc = "Carbon storage potential",
   # CCS storage potential
-  energy_module$CO2SINK, # stored CO2 commodity 
+  energy_module$CO2SINK, # stored CO2 commodity
   energy_module$RES_CO2SINK # CO2 storage potential
   # ccus_module$CCSCO2, # commodity to represent captured CO2
   # ccus_module$GHG, # composite commodity--all GHGs
-  # # option 1: Fixed CCS technology (see CCUS description) 
+  # # option 1: Fixed CCS technology (see CCUS description)
   # ccus_module$ECOA_CCS_FX, # Coal plant with CCS
   # ccus_module$EGAS_CCS_FX, # Natural gas plant with CCS
   # # option 2: Variable CCS technology
@@ -345,7 +349,7 @@ repo_geoccs <- newRepository(
 )
 summary(repo_geoccs)
 # clean-up
-rm(energy_module) 
+rm(energy_module)
 ```
 
 ## Capacity factors  
@@ -355,29 +359,69 @@ The availability of renewable energy sources (solar, wind, hydro) is defined by 
 This example implements the solar capacity factors for the regions of India, based on the MERRA2 dataset. The capacity factors are defined for the tilted tracking system (`tl`), estimated with `merra2ools` package.
 
 ```{r}
-solar_cf <- get_ideea_cf("sol", nreg = nreg, year = 2019, tol = .03)
+# get clustered capacity factors
+solar_cf <- get_ideea_cf("sol", nreg = nreg, year = 2019, tol = tol_sol_cl)
+# get map of solar clusters
+ideea_sol_cl_sf <- get_ideea_cl_sf("sol", nreg = nreg, tol = tol_sol_cl)
+
+# filter out offshore regions
+solar_cf <- solar_cf |>  
+  filter(!grepl("_off$", solar_cf[[regN_off]])) |>
+  unique()
 solar_cf$cluster |> unique()
 
-name_with_cluster <- function(name, cluster, ndigits = 2) {
-  paste0(
-    name,
-    formatC(cluster, digits = ndigits, width = ndigits, 
-            flag = "0", mode = "integer")
-    )
+# maximum number of clusters:
+sol_clust_max <- max(solar_cf$cluster) 
+if (sol_clust_max < 100) {
+  sol_clust_digits <- 2 # parameter used in functions
+} else if (sol_clust_max < 1000) {
+  sol_clust_digits <- 3 # parameter used in functions
+} else {
+  stopifnot(sol_clust_max < 10000) # maximum clusters per region
+sol_clust_digits <- 4 # parameter used in functions
 }
-name_with_cluster("", 0)
-name_with_cluster("SOL", 1)
-name_with_cluster("WIN_CL", 99)
+# rm(sol_clust_max)
+
+# name_with_cluster <- function(name, cluster, ndigits = 2) {
+#   paste0(
+#     name,
+#     formatC(cluster,
+#       digits = ndigits, width = ndigits,
+#       flag = "0", mode = "integer"
+#     )
+#   )
+# }
+# name_with_cluster("", 0)
+# name_with_cluster("SOL", 1)
+# name_with_cluster("WIN_CL", 99)
+# 
+# get_cluster <- function(name, digits = 2, cluster_flag = "CL") {
+#   # pattern1 <- paste0("(?:CL)?(\\d{", digits,"})(?!\\d)")
+#   pattern1 <- paste0("(?:", cluster_flag,")?(?<!\\d)(\\d{", digits,"})(?!\\d)")
+#   pattern2 <- paste0("\\d{", digits,"}")
+#   # browser()
+#   str_extract(name, pattern1) |> str_extract(pattern2)
+# }
+# 
+# get_cluster(c("ESOL_2030_47", "ESOL_21_2030"))
+# get_cluster(c("ESOL_2030_471", "ESOL_21_2030"), digits = 2)
+# get_cluster(c("ESOL_CL2030_471", "ESOL_21_2030"), digits = 2)
+# get_cluster(c("ESOL_CL2030_471", "ESOL_21_2030"), digits = 3)
+# get_cluster(c("ESOL_2030_47", "ESOL_21_2030"), digits = 4)
+# get_cluster(c("ESOL_2030_CL47", "ESOL_21_2030"))
+# get_cluster(c("ESOL_V2030_CL47", "ESOL_CL21_V2030", 
+#               "ESOL_2030_47", "ESOL_21_2030"))
+# get_cluster(c("ESOL_2030_471", "ESOL_21_2030", "ESOL_V2030_CL47",
+#               "ESOL_CL21_V2030"))
 
 WSOL <- newRepository(name = "Solar capacity factors")
 
 for (i in unique(solar_cf$cluster)) {
   x <- filter(solar_cf, cluster == i)
   WSOL_i <- newWeather(
-    name = name_with_cluster("WSOL", i),
+    name = name_with_cluster("WSOL_CL", i, ndigits = sol_clust_digits),
     desc = name_with_cluster(
-      "Solar capacity factors, tilted tracking system (tl), cluster ",
-      i
+      "Solar capacity factors, tilted tracking system (tl), cluster ", i
     ),
     region = unique(x[[regN]]),
     timeframe = "HOUR",
@@ -399,19 +443,40 @@ names(WSOL)
 The wind capacity factors are defined for the regions of India, based on the MERRA2 dataset. The capacity factors are estimated for the 100m height (`wcf100m`) with `merra2ools` package, the data for 5 regions is saved in `ideea_data`.  
 
 ```{r}
-# merra_wind <- ideea_data$merra_wind_cf_reg7 |>
-#   rename(region = reg7_off) |>
-#   filter(region %in% ideea_sf$region)
+wind_cf <- get_ideea_cf("win", nreg = nreg, year = 2019, tol = tol_win_cl)
+# get map of wind clusters
+ideea_win_cl_sf <- get_ideea_cl_sf("win", nreg = nreg, tol = tol_win_cl)
 
-wind_cf <- get_ideea_cf("win", nreg = nreg, year = 2019, tol = .1)
+# maximum number of clusters:
+win_clust_max <- max(wind_cf$cluster) 
+if (win_clust_max < 100) {
+  win_clust_digits <- 2 # parameter used in functions
+} else if (sol_clust_max < 1000) {
+  win_clust_digits <- 3 # parameter used in functions
+} else {
+  stopifnot(sol_clust_max < 10000) # maximum clusters per region
+win_clust_digits <- 4 # parameter used in functions
+}
+# rm(win_clust_max)
 
-# repository to store capacity factors (weather objects)
-WWIN <- newRepository(name = "Wind capacity factors")
+```
+Notation:
+WIN - onshore wind
+WIF - offshore wind
+WIND - both, onshore and offshore wind 
+
+
+#### Onshore
+```{r}
+# repository to store onshore wind capacity factors (weather objects)
+WWIN <- newRepository(name = "Onshore wind capacity factors")
 
 for (i in unique(wind_cf$cluster)) {
-  x <- filter(wind_cf, cluster == i)
+  x <- filter(wind_cf, cluster == i, !grepl("_off", wind_cf[[regN_off]]))
+  # stop()
+  if (nrow(x) == 0) next
   WWIN_i <- newWeather(
-    name = name_with_cluster("WWIN", i),
+    name = name_with_cluster("WWIN_CL", i, ndigits = win_clust_digits),
     desc = name_with_cluster(
       "Onshore wind 100m height capacity factors, cluster ", i
     ),
@@ -421,7 +486,7 @@ for (i in unique(wind_cf$cluster)) {
       region = x[[regN]],
       slice = x$slice,
       # year = NA # all years
-      wval = x$wcf_100m 
+      wval = x$wcf_100m
     )
   )
   WWIN <- add(WWIN, WWIN_i)
@@ -429,7 +494,38 @@ for (i in unique(wind_cf$cluster)) {
 }
 summary(WWIN)
 names(WWIN)
+```
 
+#### Offshore
+```{r}
+# repository to store offshore wind capacity factors (weather objects)
+WWIF <- newRepository(name = "Offshore wind capacity factors")
+
+for (i in unique(wind_cf$cluster)) {
+  x <- filter(wind_cf, cluster == i, grepl("_off", wind_cf[[regN_off]]))
+  if (nrow(x) == 0) next
+  # stop()
+  WWIF_i <- newWeather(
+    name = name_with_cluster("WWIF_CL", i, ndigits = win_clust_digits),
+    desc = name_with_cluster(
+      "Offshore wind 100m height capacity factors, cluster ", i, 
+      ndigits = win_clust_digits
+    ),
+    region = unique(x[[regN]]),
+    timeframe = "HOUR",
+    weather = data.frame(
+      region = x[[regN]],
+      slice = x$slice,
+      # year = NA # all years
+      wval = x$wcf_100m
+    )
+  )
+  WWIF <- add(WWIF, WWIF_i)
+  rm(x, WWIF_i)
+}
+summary(WWIF)
+names(WWIF)
+WWIF@data$WWIF_CL01
 ```
 
 ### Hydro  
@@ -451,46 +547,47 @@ WHYD <- newWeather(
     wval = hydro_cf$cf
   )
 )
-
 ```
 
 ## Generating technologies
 The pre-existing capacity of power generation can be defined as groups of technologies, aggregated by the primary fuel type and other technological features, such as the efficiency, the costs, the lifetime, emissions, etc. In this example we use open-source datasets from WRI with some up-to-date corrections to represent the existing capacity of the power plants in India by the model regions and primary fuels. While the capacity is taken from the open WRI dataset, the technology parameters are collected by the IDEEA group, and have been used to define technology objects in the `techs` module (`ideea_modules$techs`).
 
-```{r, fig.height=7, fig.width=6}
+```{r, fig.height=7, fig.width=6, fig.cap="Existing capacity maps (WRI, 2021)"}
 cap_0 <- get_ideea_data(
-  name = "generators_wri", 
+  name = "generators_wri",
   # sets = ,
   variable = c("primary_fuel", "capacity_mw"),
-  nreg = nreg, offshore = F, islands = T) |>
-  filter(capacity_mw > 0) 
+  nreg = nreg, offshore = F, islands = T
+) |>
+  filter(capacity_mw > 0)
 
 cap_1 <- get_ideea_data(
-  name = "generators_2020", 
-  # nreg = 36, 
-  nreg = nreg, 
-  variable = c("Solar", "Wind", "Biomass", "Small Hydro"), 
+  name = "generators_2020",
+  # nreg = 36,
+  nreg = nreg,
+  variable = c("Solar", "Wind", "Biomass", "Small Hydro"),
   # offshore = T, # not working properly - bug
-  islands = T)
+  islands = T
+)
 
 cap <- bind_rows(
   filter(cap_0, !grepl("Solar|Wind|Biomass", primary_fuel)),
   pivot_longer(
-    cap_1, 
-    cols = any_of(c("Solar", "Wind", "Biomass", "Small Hydro")), 
-    names_to = "primary_fuel", 
+    cap_1,
+    cols = any_of(c("Solar", "Wind", "Biomass", "Small Hydro")),
+    names_to = "primary_fuel",
     values_to = "capacity_mw"
-    )
-  ) |>
+  )
+) |>
   mutate(offshore = FALSE, .after = "capacity_mw") |>
   group_by(across(any_of(
     c(regN, regN_off, "offshore", "primary_fuel")
-    ))) |>
+  ))) |>
   summarize(capacity_mw = sum(capacity_mw, na.rm = T), .groups = "drop") |>
   mutate(
-    {{regN_off}} := if_else(offshore, paste0(get(regN), "_off"), get(regN)),
+    {{ regN_off }} := if_else(offshore, paste0(get(regN), "_off"), get(regN)),
     .after = regN
-    ) |>
+  ) |>
   as.data.table()
 
 cap_sf <- ideea_sf |>
@@ -639,56 +736,83 @@ names(ideea_modules$techs$ESOL)
 names(WSOL@data)
 
 # Create technology for every cluster and every vintage
-for (tec in ideea_modules$techs$ESOL@data) { # vintages
-  for (w in WSOL@data) { # CF by clusters
+for (w in WSOL@data) { # CF by clusters
+  cl <- get_cluster(w@name)
+  stopifnot(!is.na(cl))
+  lst_cl <- list() # temporary list
+  for (tec in ideea_modules$techs$ESOL@data) { # vintages
     # stop() # use for debug
-    cl <- str_extract(w@name, "[0-9]+$") |> as.integer()
     # update prototype technology
     tec_w <- update(
       tec,
-      name = name_with_cluster(paste0(tec@name, "_"), cl),
+      name = paste0(tec@name, "_CL", cl),
       weather = list(
         weather = w@name,
         waf.fx = 1
       ),
       input = list(comm = "REN", unit = "GWh", combustion = 0)
     )
-    # add to repository
-    ESOL <- add(ESOL, tec_w)
+    # store in list
+    lst_cl[[tec_w@name]] <- tec_w; rm(tec, tec_w)
   }
+  # stop()
+  # make a capacity constraint for each cluster
+  cluster_GW_max <- ideea_sol_cl_sf |>
+    st_drop_geometry() |>
+    # ungroup() |>
+    filter(cluster %in% as.integer(cl)) |>
+    filter(!offshore) |>
+    select(all_of(c(regN, "cluster", "MW_max"))) |>
+    group_by(across(c(regN, "cluster"))) |>
+    summarise(GW = sum(MW_max, na.rm = T) / 1e3, .groups = "drop") |>
+    as.data.table()
+  
+  # check data consistency
+  stopifnot(all(cluster_GW_max[[regN]] %in% w@region))
+  
+  CT_ESOL_cl <- newConstraint(
+    name = paste0("CT_ESOL_CL", cl),
+    # desc = "Constraint on total solar plants by cluster",
+    eq = "<=",
+    for.each = list(
+      year = NA,
+      region = w@region
+    ),
+    variable = list(
+      variable = "vTechCap",
+      for.sum = list(
+        tech = names(lst_cl),
+        years = NULL
+      )
+    ),
+    rhs = data.frame(
+      year = as.numeric(NA),
+      region = cluster_GW_max[[regN]],
+      rhs = cluster_GW_max$GW
+    ),
+    defVal = Inf,
+    interpolation = "back.inter.forth"
+  )
+  ESOL <- add(ESOL, lst_cl, CT_ESOL_cl); rm(lst_cl, CT_ESOL_cl)
 }
 
-ESOL
-
 # update base-year technology with preexisting capacity
-ESOL@data$ESOL_2020_01 <- ESOL@data$ESOL_2020_01 |>
+ESOL@data$ESOL_2020_CL01 <- ESOL@data$ESOL_2020_CL01 |>
   update(capacity = data.frame(
     region = cap_sol[[regN]],
     year = cap_sol$year,
     stock = cap_sol$capacity_mw / 1e3 # in GW
   ))
 
-# add weather factor name and parameter for each technology
-# ESOL@data <- lapply(ESOL@data, function(tech) {
-#   update(
-#     tech,
-#     weather = data.frame(
-#       # assuming that the location is in the first cluster
-#       # (can be changed later using geo-location of existing plants)
-#       weather = name_with_cluster("WSOL", 1), 
-#       waf.fx = 1
-#       ),
-#     input = list(comm = "REN", combustion = 0)
-#   )
-# })
-# names(ESOL@data)
-# ESOL@data$ESOL_2020@weather
-
-ESOL@data$ESOL_2020_01 |> draw()
+ESOL@data[[1]] |> draw()
+ESOL
+summary(ESOL)
 ```
 
 ### Wind
 Similarly, the wind technologies are defined for the base-year of the model with pre-existing capacity from WRI datasets; the new technologies available for investment are represented by vintages.
+
+#### Onshore
 ```{r}
 # existing capacity
 cap_win <- cap |>
@@ -718,47 +842,188 @@ names(ideea_modules$techs$EWIN)
 
 # Create technology for every cluster and every vintage
 # (similar to solar above)
-for (tec in ideea_modules$techs$EWIN@data) { # vintages
-  for (w in WWIN@data) { # CF by clusters
+for (w in WWIN@data) { # CF by clusters
+  cl <- get_cluster(w@name)
+  stopifnot(!is.na(cl))
+  lst_cl <- list() # temporary list
+  for (tec in ideea_modules$techs$EWIN@data) { # vintages
     # stop() # use for debug
-    cl <- str_extract(w@name, "[0-9]+$") |> as.integer()
     # update prototype technology
     tec_w <- update(
       tec,
-      name = name_with_cluster(paste0(tec@name, "_"), cl),
+      name = name_with_cluster(paste0(tec@name, "_CL"), cl),
       weather = list(
         weather = w@name,
         waf.fx = 1
       ),
       input = list(comm = "REN", unit = "GWh", combustion = 0)
     )
-    # add to repository
-    EWIN <- add(EWIN, tec_w)
+    # store in list
+    lst_cl[[tec_w@name]] <- tec_w; rm(tec, tec_w)
   }
+  # stop()
+  # make a capacity constraint for each cluster
+  cluster_GW_max <- ideea_win_cl_sf |>
+    st_drop_geometry() |>
+    # ungroup() |>
+    filter(cluster %in% as.integer(cl)) |>
+    filter(!offshore) |>
+    select(all_of(c(regN, "cluster", "MW_max"))) |>
+    group_by(across(c(regN, "cluster"))) |>
+    summarise(GW = sum(MW_max, na.rm = T) / 1e3, .groups = "drop") |>
+    as.data.table()
+  
+  # check data consistency
+  stopifnot(all(cluster_GW_max[[regN]] %in% w@region))
+  
+  # create capacity constraint
+  CT_EWIN_CL <- newConstraint(
+    name = paste0("CT_EWIN_CL", cl),
+    # desc = "Constraint on total solar plants by cluster",
+    eq = "<=",
+    for.each = list(
+      year = NA,
+      region = w@region
+    ),
+    variable = list(
+      variable = "vTechCap",
+      for.sum = list(
+        tech = names(lst_cl),
+        years = NULL
+      )
+    ),
+    rhs = data.frame(
+      year = as.numeric(NA),
+      region = cluster_GW_max[[regN]],
+      rhs = cluster_GW_max$GW
+    ),
+    defVal = Inf,
+    interpolation = "back.inter.forth"
+  )
+  EWIN <- add(EWIN, lst_cl, CT_EWIN_CL); rm(lst_cl, CT_EWIN_CL)
 }
 EWIN
 
 # update base-year technology with preexisting capacity
-# (assigning to the first cluster, geo-location can be matched later)
-EWIN@data$EWIN_2020_01 <- EWIN@data$EWIN_2020_01 |>
-  update(capacity = data.frame(
-    region = cap_win[[regN]],
-    year = cap_win$year,
-    stock = cap_win$capacity_mw / 1e3 # in GW
-  ))
+# (assigning to first clusters, geo-location can be matched later)
+cap_win_exist <- cap_win |>
+  group_by(across(all_of(regN))) |>
+  summarise(GW_exist = max(capacity_mw) / 1e3, .groups = "drop") |>
+  rename(region = regN)
 
-# add weather factor name and parameter for each technology
-# EWIN@data <- lapply(EWIN@data, function(tech) {
-#   update(
-#     tech,
-#     weather = data.frame(weather = "WWIN", waf.fx = 1),
-#     input = list(comm = "REN", combustion = 0)
-#   )
-# })
+cap_win_exist_to_cluster <- EWIN$CT_EWIN_CL01@rhs |> 
+  right_join(cap_win_exist, by = "region") |>
+  filter(!is.na(rhs))
+
+for (cl in 1:win_clust_max) {
+  
+  tname <- name_with_cluster("EWIN_2020_CL", cl, ndigits = win_clust_digits)
+  cap_win_exist_to_cluster[[tname]] <- cap_win_exist_to_cluster[["GW_exist"]]
+  
+  cap_win_exist_to_cluster[["diff"]] <-
+    cap_win_exist_to_cluster[["rhs"]] - cap_win_exist_to_cluster[[tname]]
+  
+  if (any(cap_win_exist_to_cluster[["diff"]] < 0)) {
+    ii <- cap_win_exist_to_cluster[["diff"]] >= 0
+    cap_win_exist_to_cluster[[tname]][!ii] <- 
+      cap_win_exist_to_cluster[["rhs"]][!ii]
+    cap_win_exist_to_cluster <-
+      cap_win_exist_to_cluster |>
+      mutate(
+        GW_exist = if_else(get("diff") >= 0, 0,
+                           -get("diff"))
+      )
+  }
+  capacity_cl = data.frame(
+      region = cap_win_exist_to_cluster$region,
+      year = cap_win_exist_to_cluster$year,
+      stock = cap_win_exist_to_cluster[[tname]] # in GW
+    ) |>
+    filter(stock > 0)
+  
+  EWIN@data[[tname]] <- EWIN@data[[tname]] |>
+    update(capacity = capacity_cl)
+
+  if (!any(cap_win_exist_to_cluster$GW_exist > 0)) break 
+}
+
 names(EWIN)
-EWIN@data$EWIN_2020_01@weather
-EWIN@data$EWIN_2020_01 |> draw()
+EWIN@data$EWIN_2020_CL01@weather
+EWIN@data$EWIN_2020_CL01 |> draw()
 ```
+
+#### Offshore
+```{r}
+EWIF <- newRepository("offshore_wind_turbines")
+class(ideea_modules$techs$EWIF) # repository with wind techs
+names(ideea_modules$techs$EWIF)
+
+# Create technology for every cluster and every vintage
+# (similar to solar above)
+for (w in WWIF@data) { # CF by clusters
+  cl <- get_cluster(w@name)
+  stopifnot(!is.na(cl))
+  lst_cl <- list() # temporary list
+  for (tec in ideea_modules$techs$EWIF@data) { # vintages
+    # stop() # use for debug
+    # update prototype technology
+    tec_w <- update(
+      tec,
+      name = name_with_cluster(paste0(tec@name, "_CL"), cl),
+      weather = list(
+        weather = w@name,
+        waf.fx = 1
+      ),
+      input = list(comm = "REN", unit = "GWh", combustion = 0)
+    )
+    # store in list
+    lst_cl[[tec_w@name]] <- tec_w; rm(tec, tec_w)
+  }
+  # stop()
+  # make a capacity constraint for each cluster
+  cluster_GW_max <- ideea_win_cl_sf |>
+    st_drop_geometry() |>
+    # ungroup() |>
+    filter(cluster %in% as.integer(cl)) |>
+    filter(offshore) |>
+    select(all_of(c(regN, "cluster", "MW_max"))) |>
+    group_by(across(c(regN, "cluster"))) |>
+    summarise(GW = sum(MW_max, na.rm = T) / 1e3, .groups = "drop") |>
+    as.data.table()
+  
+  # check data consistency
+  stopifnot(all(cluster_GW_max[[regN]] %in% w@region))
+  
+  # create capacity constraint
+  CT_EWIF_CL <- newConstraint(
+    name = paste0("CT_EWIF_CL", cl),
+    # desc = "Constraint on total solar plants by cluster",
+    eq = "<=",
+    for.each = list(
+      year = NA,
+      region = w@region
+    ),
+    variable = list(
+      variable = "vTechCap",
+      for.sum = list(
+        tech = names(lst_cl),
+        years = NULL
+      )
+    ),
+    rhs = data.frame(
+      year = as.numeric(NA),
+      region = cluster_GW_max[[regN]],
+      rhs = cluster_GW_max$GW
+    ),
+    defVal = Inf,
+    interpolation = "back.inter.forth"
+  )
+  EWIF <- add(EWIF, lst_cl, CT_EWIF_CL); rm(lst_cl, CT_EWIF_CL)
+}
+summary(EWIF)
+names(EWIF)
+```
+
 
 ### Hydro
 The decision on development of hydro-power plants normally goes beyond the optimization of costs, and takes into account the environmental and social impacts, as well as the availability of the water resources. The development of hydro-power may take a decade, and the operational lifetime can go beyond a century. Here we assume that the existing capacity of hydro-power plants do not retire (until 2100), the new investments are not available, such projects can be added to the model as a separate scenario.  
@@ -770,7 +1035,7 @@ cap_hyd <- cap |>
   # filter(!offshore) |>
   group_by(across(any_of(
     c(regN, regN_off, "offshore", "primary_fuel")
-    ))) |>
+  ))) |>
   summarise(capacity_mw = sum(capacity_mw, na.rm = T), .groups = "drop") |>
   filter(capacity_mw > 0) |>
   mutate(year = 2020, .before = 1)
@@ -809,7 +1074,7 @@ EHYD <- ideea_modules$techs$EHYD |> #
   add(EHYD_2020, overwrite = T) # add tech with existing capacity
 names(EHYD@data)
 
-#add weather factor name and parameter for each technology
+# add weather factor name and parameter for each technology
 EHYD@data <- lapply(EHYD@data, function(tech) {
   update(
     tech,
@@ -889,7 +1154,7 @@ repo_ccstechs <- newRepository(
   ccus_module$EGAS_CCS_FL # gas power plant with variable CCS tech
 )
 
-rm(ccus_module) 
+rm(ccus_module)
 ```
 
 ### Bio energy
@@ -939,23 +1204,22 @@ draw(EBIO@data$EBIO_2020)
 STG_BTR <- ideea_modules$techs$STG_BTR
 STG_BTR$STG_BTR_2020@fullYear # storage cycle over year or withing YDAY
 
-# clreate daily storage
+# create daily storage (optional)
 STG_BTR_daily <- STG_BTR
 STG_BTR_daily@data <- lapply(STG_BTR_daily@data, function(ob) {
   if (.hasSlot(ob, "fullYear")) ob@fullYear <- FALSE
   ob
 })
 STG_BTR_daily$STG_BTR_2020@fullYear
-
 ```
 
 ## Transmission  
 
 ```{r, warning=FALSE}
-transmission_existing <- ideea_data$transmission_5x5 |>
-  filter(scenario == "current", !is.na(MW)) |>
-  rename(dst = destination) |>
-  filter(!duplicated(MW)) # temporary solution
+transmission_existing <- ideea_data$transmission[[regN]] |>
+  filter(case == "current", !is.na(MW)) |>
+  rename(dst = region1) |>
+  filter(MW > 0)
 
 gis_mainland_sf <- filter(ideea_sf, offshore == F)
 points_coord <- st_centroid(gis_mainland_sf) |>
@@ -965,7 +1229,7 @@ points_coord <- st_centroid(gis_mainland_sf) |>
   rename(lon = X, lat = Y)
 
 a <- transmission_existing |>
-  # filter(scenario == "current") |>
+  # filter(case == "current") |>
   left_join(points_coord, by = c("region" = "region")) |>
   left_join(points_coord, by = c("dst" = "region")) |>
   mutate(GW = MW / 1000)
@@ -978,20 +1242,20 @@ ggplot() +
       linewidth = GW
     ),
     color = "dodgerblue", lineend = "round",
-    data = filter(a, scenario == "current")
+    data = filter(a, case == "current")
   ) +
   geom_segment(aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
     color = alpha("white", .5), lineend = "round",
-    data = filter(a, scenario == "new")
+    data = filter(a, case == "new")
   ) +
   geom_point(aes(lon, lat), data = points_coord, color = "red") +
   labs(x = "", y = "") +
   theme_bw()
 
 network <- transmission_existing |>
-  filter(scenario == "current") |>
+  filter(case == "current") |>
   mutate(
-    trd_name = paste("TRD", region, dst, sep = "_")
+    trd_name = paste("TRL", region, dst, sep = "_")
   ) |>
   rename(
     region.x = region,
@@ -1020,11 +1284,13 @@ if (nrow(network) > 0) {
         invcost = rep(1000, 2) / 2 # olife == 2
       ),
       olife = list(olife = 50), # doubled annualized invcost for consistency
-      start = list(start = base_year - 10),      
+      start = list(start = base_year - 10),
       capacity = data.frame(
         year = c(2020, 2030, 2050, 2070),
-        stock = c(network$MW[i]/1000, network$MW[i]/1000, 
-                  network$MW[i]/1000, network$MW[i]/1000)
+        stock = c(
+          network$MW[i] / 1000, network$MW[i] / 1000,
+          network$MW[i] / 1000, network$MW[i] / 1000
+        )
       ),
       cap2act = 24 * 365
     )
@@ -1182,7 +1448,7 @@ CT_EGAS <- newConstraint(
 ```
 
 ```{r}
-#No Base year investment
+# No Base year investment
 NO_BY_INV <- newConstraint(
   name = "NO_BY_INV",
   eq = "<=",
@@ -1204,7 +1470,7 @@ NO_BY_INV <- newConstraint(
 ```
 
 Constraint on Solar Capacity Deployment across regions
-```{r}
+```{r, eval=FALSE}
 CT_ESOL <- newConstraint(
   name = "CT_ESOL",
   # desc = "Constraint on new solar plants construction",
@@ -1212,7 +1478,7 @@ CT_ESOL <- newConstraint(
   for.each = list(
     year = NA,
     region = c("EAST", "NORTH", "NORTHEAST", "SOUTH", "WEST")
-    ),
+  ),
   variable = list(
     variable = "vTechCap",
     for.sum = list(
@@ -1222,48 +1488,48 @@ CT_ESOL <- newConstraint(
   ),
   rhs = data.frame(
     year = as.numeric(NA),
-    region = c( "NORTH","SOUTH", "EAST","WEST","NORTHEAST"),
+    region = c("NORTH", "SOUTH", "EAST", "WEST", "NORTHEAST"),
     rhs = c(336.250, 107.330, 66.360, 180.9, 57.36)
-    ),
+  ),
   defVal = Inf,
   interpolation = "back.inter.forth"
-  )
-
+)
 ```
 
 ## Model
 ```{r}
-repo <- newRepository(glue("repo_electricity_{regN}")) |>
-  add(
-    # commodities
-    repo_comm,
-    # supply & import
-    repo_supply,
-    # Generating technologies
-    ECOA, 
-    EGAS, CT_EGAS, 
-    ENUC,
-    NO_NEW_NUCLEAR, # limit on nuclear construction
-    EHYD, WHYD,
-    NO_NEW_HYDRO, # limit on hydro construction
-    ESOL, WSOL, 
-    EWIN, WWIN,
-    EBIO,
-    # battery
-    # STG_BTR, # add during interpolation or solving - one of the options
-    # STG_BTR_daily, # add during interpolation or solving - one of...
-    # transmission
-    repo_transmission,
-    repo_geoccs,
-    repo_ccstechs,
-    # unserved load
-    UNSERVED, # unserved load penalty
-    # demand
-    DEMELC_BY, # BY demand
-    DEMELC_2X, # additional demand
-    CT_ESOL, # solar capacity constraints
-    NO_BY_INV #
-  )
+repo <- newRepository(
+  name = glue("repo_electricity_{regN}"),
+  # commodities
+  repo_comm,
+  # supply & import
+  repo_supply,
+  # Generating technologies
+  ECOA,
+  EGAS, CT_EGAS,
+  ENUC,
+  NO_NEW_NUCLEAR, # limit on nuclear construction
+  EHYD, WHYD,
+  NO_NEW_HYDRO, # limit on hydro construction
+  ESOL, WSOL, # solar PVs
+  EWIN, WWIN, # onshore wind
+  EWIF, WWIF, # offshore wind
+  EBIO, 
+  # battery
+  STG_BTR, # storage with annual cycle
+  # STG_BTR_daily, # alternative storage with daily cycle
+  # transmission
+  repo_transmission,
+  repo_geoccs,
+  repo_ccstechs,
+  # unserved load
+  UNSERVED, # unserved load penalty
+  # demand
+  DEMELC_BY, # BY demand
+  DEMELC_2X, # additional demand
+  # CT_ESOL, # solar capacity constraints
+  NO_BY_INV #
+)
 
 # print(repo)
 # names(repo)
@@ -1272,15 +1538,15 @@ summary(repo)
 # model horizon
 horizon_2020_2060_by_10 <- newHorizon(
   period = 2020:2060,
-  intervals = c(1, 5, 10, 10, rep(10, 15)), 
+  intervals = c(1, 5, rep(10, 15)),
   mid_is_end = T
 )
 horizon_2020_2060_by_10
 
 # model-class object
 mod <- newModel(
-  name = "IDEEA_r7_base",
-  desc = "IDEEA example model",
+  name = glue("IDEEA_ELC_{regN}"),
+  desc = "IDEEA electricity example model",
   region = unique(ideea_sf[[regN]]),
   discount = 0.05,
   calendar = full_calendar_d365_h24,
@@ -1307,15 +1573,17 @@ electricity <- list(
   EHYD = EHYD, # hydro generators
   ESOL = ESOL, # solar generators
   EWIN = EWIN, # wind generators
+  EWIF = EWIF, # wind generators
   EBIO = EBIO, # biomass generators
   repo_ccstechs = repo_ccstechs,
   # capacity (weather) factors
   WSOL = WSOL, # solar capacity factor
-  WWIN = WWIN, # wind capacity factor
+  WWIN = WWIN, # wind capacity 
+  WWIF = WWIF, # wind capacity 
   WHYD = WHYD, # hydro capacity factor
   # battery
-  STG_BTR = STG_BTR, # battery storage with yearly cycle 
-  STG_BTR_daily = STG_BTR_daily, # battery storage with daily cycle
+  STG_BTR = STG_BTR, # battery storage with yearly cycle
+  # STG_BTR_daily = STG_BTR_daily, # battery storage with daily cycle
   # transmission
   repo_transmission = repo_transmission, # transmission network
   # unserved load
@@ -1330,15 +1598,16 @@ electricity <- list(
   NO_NEW_SOLAR = NO_NEW_SOLAR, # No new solar construction
   NO_NEW_WIND = NO_NEW_WIND, # No new wind construction
   CT_EGAS = CT_EGAS, # limit on gas construction
-  CT_ESOL = CT_ESOL, # limit on solar construction
-  CO2_CAP = CO2_CAP,
+  # CT_ESOL = CT_ESOL, # limit on solar construction
+  CO2_CAP = CO2_CAP
   # calendars
-  full_calendar_d365_h24 = full_calendar_d365_h24, # full calendar
-  partial_calendar_1day_per_month = partial_calendar, # partial calendar
-  horizon_2020_2060_by_10 = horizon_2020_2060_by_10 # model horizon
+  # full_calendar_d365_h24 = full_calendar_d365_h24, # full calendar
+  # partial_calendar_1day_per_month = partial_calendar, # partial calendar
+  # horizon_2020_2060_by_10 = horizon_2020_2060_by_10 # model horizon
 )
-save(electricity, file = glue("data-raw/electricity_{regN}.RData"))
-message("Electricity sector model objects are saved in the\n 'data-raw/electricity_reg7.RData' list.")
+fname <- glue("data-raw/electricity_{regN}.RData") |> toString()
+save(electricity, file = fname)
+message("Electricity sector model objects are saved: ", fname) 
 ```
 
 # Solving the model
@@ -1353,66 +1622,192 @@ Quick way to have a glimpse of the results
 # set_progress_bar("progress")
 # set_scenarios_path("D:/Dropbox/Xeon_link/IDEEA-xeon/scenarios")
 # Reference case
-scen_base_sub <- interpolate_model(
+scen_REF_sub <- interpolate_model(
   mod,
-  name = "BASE_sub",
-  STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
+  name = "REF_sub", # indicating 'subset'
+  path = file.path("scenarios", glue(scen_REF_sub@name, "_r{nreg}")),
+  # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
   partial_calendar # add partial calendar to the interpolate function
 )
+scen_REF_sub@path
 
-scen_base_sub <- write_sc(
-  scen_base_sub,
+scen_REF_sub <- write_sc(
+  scen_REF_sub,
   solver = solver_options$gams_gdx_cplex_barrier
   # solver = solver_options$gams_gdx_cplex_parallel
   # solver = solver_options$julia_highs_barrier
   # solver = solver_options$julia_highs_simplex
   # solver = solver_options$julia_highs_parallel
 )
-scen_base_sub@status
-scen_base_sub@misc$tmp.dir
+scen_REF_sub@status
+scen_REF_sub@misc$tmp.dir
 
-solve_scenario(scen_base_sub, wait = F, force = F)
-# solve(scen_base_sub, wait = F)
-scen_base_sub <- read(scen_base_sub)
+# solve_scenario(scen_REF_sub, wait = F, force = F)
+scen_REF_sub <- solve(scen_REF_sub, wait = F, tmp.del = F)
+scen_REF_sub <- read(scen_REF_sub)
 
-getData(scen_base_sub, "vBalance", comm = "CO2", merge = T) |>
-  group_by(scenario, comm, year) |>
-  summarise(value = sum(value))
+# store scenario on disk (unload from RAM)
+scen_REF_sub <- save_scenario(scen_REF_sub, path = "scenarios/REF_sub")
+summary(scen_REF_sub)
+```
 
-getData(scen_base_sub, "vTechNewCap", tech_ = "ESOL", merge = T, 
-        process = T, drop.zeros = T) |>
-  drop_process_vintage() |>
-  group_by(scenario, region, process) |>
-  summarise(value = sum(value)) |>
-  pivot_wider(names_from = region)
+## Policy scenarios
+```{r, eval=params$solve}
+# CO2 cap
+scen_CAP_sub <- interpolate(
+  mod,
+  name = "CAP_sub", # indicating 'subset'
+  path = file.path("scenarios", glue(scen_CAP_sub@name, "_r{nreg}")),
+  # here we can add policy objects
+  # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
+  CO2_CAP,
+  partial_calendar # add partial calendar to the interpolate function
+)
 
-getData(scen_base_sub, "vTechNewCap", drop.zeros = T, 
-        merge = T, digits = 2) |>
+scen_CAP_sub <- write_sc(
+  scen_CAP_sub,
+  solver = solver_options$gams_gdx_cplex_barrier
+  # solver = solver_options$gams_gdx_cplex_parallel
+  # solver = solver_options$julia_highs_barrier
+  # solver = solver_options$julia_highs_simplex
+  # solver = solver_options$julia_highs_parallel
+)
+scen_CAP_sub
+scen_CAP_sub@misc$tmp.dir
+
+# solve_scenario(scen_CAP_sub, wait = F, force = F)
+scen_CAP_sub <- solve(scen_CAP_sub, wait = T, tmp.del = F)
+# scen_CAP_sub <- read(scen_CAP_sub)
+
+# store scenario on disk (unload from RAM)
+scen_CAP_sub <- save_scenario(scen_CAP_sub, path = "scenarios/CAP_sub")
+summary(scen_CAP_sub)
+
+```
+
+
+## Results
+
+### Compare scenarios
+```{r}
+# create a list of
+sns <- list(
+  scen_REF_sub
+  # scen_CAP_sub
+)
+
+# compare objective (in cr.₹)
+getData(sns, "vObjective", merge = T)
+# use `?getData` for help
+```
+
+
+#### Total installed capacity
+```{r}
+# compare generating tech capacity (names start with "E")
+vTechCap <- getData(sns,
+  name = "vTechCap", tech_ = "^E", process = T,
+  merge = T, digits = 3, drop.zeros = T
+)
+
+vTechCap |>
+  pivot_wider(names_from = scenario) |>
   as.data.table()
 ```
 
-### Policy scenarios
-```{r, eval=params$solve}
-# CO2 cap
-scen_CAP <- interpolate(
-  mod, name = "CAP", 
-  # here we can add policy objects
-  STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
-  CO2_CAP,
-  partial_calendar # add partial calendar to the interpolate function
+#### Total capacity map
+
+```{r}
+theme_ideea_map <- function() {
+  theme_bw() +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+      # panel.border = element_blank(),
+      # panel.background = element_blank()      
+    ) +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank()
+    )
+}
+
+vTechCap_agg <- vTechCap |>
+  drop_process_vintage() |>
+  drop_process_vintage() |> 
+  group_by(scenario, process, region, year) |>
+  summarise(GW = sum(value, na.rm = T), .groups = "drop") |>
+  full_join(ideea_sf, by = c(region = regN),
+    relationship = "many-to-many") |>
+  filter(year %in% c(2020, 2035, 2060)) |>
+  st_as_sf()
+
+ggplot() +
+  geom_sf(data = ideea_sf) +
+  geom_sf(aes(fill = GW), data = vTechCap_agg, na.rm = T) +
+  scale_fill_viridis_c(option = "H") +
+  # scale_fill_viridis_c(option = "C", transform = "log10") +
+  facet_grid(year ~ scenario) +
+  theme_ideea_map()
+
+```
+
+
+#### Solar capacity by cluster
+```{r}
+add_cluster_column <- function(x, col_name = "process") {
+  x |> mutate(
+    cluster = as.integer(str_extract(get(col_name), "[0-9]+$")),
+    .after = col_name
   )
+}
 
-scen_CAP <- write_sc(
-  scen_CAP,
-  solver = solver_options$gams_gdx_cplex_barrier
-  # solver = solver_options$gams_gdx_cplex_parallel
-  # solver = solver_options$julia_highs_barrier
-  # solver = solver_options$julia_highs_simplex
-  # solver = solver_options$julia_highs_parallel
-)
-scen_CAP@status
-scen_CAP@misc$tmp.dir
+vTechCap_ESOL_sf <-
+  vTechCap |>
+  filter(grepl("ESOL", process)) |> # select solar techs
+  add_cluster_column() |> # add cluster number
+  # add shapes for every cluster
+  left_join(ideea_sol_cl_sf,
+    by = c(region = regN, cluster = "cluster"),
+    relationship = "many-to-many"
+  ) |>
+  rename(GW = value) |>
+  filter(!is.na(GW), GW > 0) |>
+  filter(year %in% c(2020, 2035, 2060)) |>
+  st_as_sf() # force to treat 'geometry' column as shape-data
 
-solve_scenario(scen_CAP, wait = F, force = F)
+ggplot() +
+  geom_sf(data = ideea_sf) +
+  geom_sf(aes(fill = GW), data = vTechCap_ESOL_sf, color = NA, na.rm = T) +
+  scale_fill_viridis_c(option = "C") +
+  # scale_fill_viridis_c(option = "C", transform = "log10") +
+  facet_grid(year ~ scenario) +
+  theme_ideea_map()
+```
 
+#### Wind capacity by cluster
+```{r}
+vTechCap_EWIN_sf <-
+  vTechCap |>
+  filter(grepl("EWIN", process)) |> # select solar techs
+  add_cluster_column() |> # add cluster number
+  # add shapes for every cluster
+  left_join(ideea_win_cl_sf,
+    by = c(region = regN, cluster = "cluster"),
+    relationship = "many-to-many"
+  ) |>
+  rename(GW = value) |>
+  filter(!is.na(GW), GW > 0) |>
+  filter(year %in% c(2020, 2035, 2060)) |>
+  st_as_sf() # force to treat 'geometry' column as shape-data
+
+ggplot() +
+  geom_sf(data = ideea_sf) +
+  geom_sf(aes(fill = GW), data = vTechCap_EWIN_sf, color = NA, na.rm = T) +
+  scale_fill_viridis_c(option = "D") +
+  # scale_fill_viridis_c(option = "D", transform = "log10") +
+  facet_grid(year ~ scenario) +
+  theme_ideea_map()
 ```
