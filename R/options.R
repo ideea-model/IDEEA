@@ -26,7 +26,7 @@ ideea_global_options <- function(edit = FALSE, load = !edit, remove = FALSE) {
     write_lines("# IDEEA solver options", fl, append = T)
     write_lines("# energyRt::set_gams_path('C:/GAMS/...')", fl, append = T)
     write_lines("# energyRt::set_gdxlib_path('C:/GAMS/...')", fl, append = T)
-    write_lines("# energyRt::set_gams_path('C:/GAMS/...')", fl, append = T)
+    # write_lines("# energyRt::set_gams_path('C:/GAMS/...')", fl, append = T)
     write_lines("# energyRt::set_glpk_path()", fl, append = T)
     write_lines("# energyRt::set_julia_path()", fl, append = T)
     write_lines("# energyRt::set_python_path()", fl, append = T)

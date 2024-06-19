@@ -1,3 +1,27 @@
+
+#' Specify directory for IDEEA external dataset (`ideea_extra`)
+#'
+#' @param path character, path to the dataset
+#'
+#' @return (invisible) logical, TRUE if the directory is set, FALSE otherwise.
+#' @export
+#'
+#' @examples
+set_ideea_extra <- function(path = NULL) {
+  # browser()
+  if (!is.null(path) && path != "") {
+    if (!dir.exists(path)) {
+      stop(paste0('The path "', path, '" does not exist.'), call. = FALSE)
+    }
+    if (!grepl("\\/$", path)) {
+      path <- paste0(path, "/")
+    }
+  }
+  options(IDEEA.extra = path)
+  invisible(TRUE)
+}
+
+
 #' Return path to the IDEEA extra-data directory
 #'
 #' @param subdir character, the name or path to the sub-directory in the IDEEA-extra folder. File name will also be accepted. The path must be relative to the IDEEA external folder.

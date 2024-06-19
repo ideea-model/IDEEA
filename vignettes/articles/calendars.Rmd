@@ -1,6 +1,6 @@
 ---
 title: "Time resoluton"
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -13,8 +13,11 @@ knitr::opts_chunk$set(
 
 
 
-```{r setup}
+```{r setup, message=FALSE, warning=FALSE}
 library(IDEEA)
+library(tidyverse)
+library(data.table)
+library(here)
 ```
 
 ## Time resolution  
@@ -28,12 +31,14 @@ This time-table is to define a `calendar` object, that also describes the hierar
 
 ```{r}
 timetable_full_year <- ideea_modules$time_tables$d365_h24
+
+# create calendar object from a time-table
 full_calendar_d365_h24 <- newCalendar(timetable = timetable_full_year)
 ```
 
 The model object (described below) must have the `calendar` object with all time-frames and time-slices used in the model. However, scenarios can be solved for a subset of the time-slices, defined by another `calendar` object with sub-set of time-slices. Here we define a calendar with a subset of 1 day per month and 24 hours per each day. Therefore, the total number of time-slices in the subset is 12 days * 24 hours = 288 time-slices (vs. 8760 time-slices in the full calendar).
 
-```{r}
+```{r, eval=TRUE}
 # pick days
 yday_sample <- 15 + c(0, as.integer(cumsum(days_in_month(1:11)))) # one day per month
 # pick hours
@@ -61,7 +66,8 @@ partial_calendar <- newCalendar(
 ```
 
 ## Model horizon
-```{r}
+Calendars are (currently) set sub-annual time-structure for all years. 
+```{r, eval=TRUE}
 horizon_2020_2060_by_10 <- newHorizon(
   period = 2020:2060,
   intervals = c(1, 5, rep(10, 15)),
@@ -85,7 +91,7 @@ horizon_2050 <- newHorizon(
 
 
 
-```{r}
+```{r, eval=TRUE, include=FALSE}
 calendars <- list(
   full_calendar_d365_h24 = full_calendar_d365_h24, # full calendar
   partial_calendar_1day_per_month = partial_calendar, # partial calendar
@@ -94,7 +100,7 @@ calendars <- list(
   horizon_2050 = horizon_2050
 )
 
-save(calendars, file = "data-raw/calendars.RData")
+save(calendars, file = here("data-raw/calendars.RData"))
 
 ```
 

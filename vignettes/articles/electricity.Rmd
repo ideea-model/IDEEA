@@ -38,14 +38,14 @@ if (packageVersion("energyRt") < "0.11.33") {
   stop('Please update energyRt.
        pak::pkg_install("energyRt/energyRt@dev")')
 }
-if (packageVersion("IDEEA") < "0.0.33") {
+if (packageVersion("IDEEA") < "0.0.36") {
   stop('Please update IDEEA
        pak::pkg_install("ideea-model/IDEEA@dev")')
 }
-stopifnot(packageVersion("IDEEA") >= "0.0.33")
+stopifnot(packageVersion("IDEEA") >= "0.0.36")
 ```
 
-# Configuration
+## Configuration
 ```{r, eval = T}
 # Set number of regions, currently '5' is the only option
 nreg <- 32
@@ -95,7 +95,7 @@ plot(ideea_sf[regN_off], key.width = lcm(4.5))
 ```
 
 ## Time resolution  
-Sub-annual time resolution is set via the `calendar` object, that specifies levels of nested time-frames (such as 'ANNUAL', 'MONTH', 'DAY', 'HOUR', etc. depending on the modeling goals and decided level of details). This structure of modeled sub-annual time resolution is assigned by a `timetable` data.frame with columns named as used time-frames, as well as 'slice' (refers to the lowest level of 'time-slices' with unique names, e.g. 'd001_h15' indicating the 1st day of the year and the 15th hour of the day), the 'share' column (for the share of the time-frame in the year), and 'weight' (for the weight of the time-frame in the year, used in sampled calendars). 
+Structure of sub-annual time resolution is done  `calendar` objects, that specifies levels of nested time-frames (such as 'ANNUAL', 'MONTH', 'DAY', 'HOUR', etc. depending on the modeling goals and decided level of details). This structure of modeled sub-annual time resolution is assigned by a `timetable` data.frame with columns named as used time-frames, as well as 'slice' (refers to the lowest level of 'time-slices' with unique names, e.g. 'd001_h15' indicating the 1st day of the year and the 15th hour of the day), the 'share' column (for the share of the time-frame in the year), and 'weight' (for the weight of the time-frame in the year, used in sampled calendars). 
 
 ```{r}
 ideea_modules$time_tables$d365_h24
@@ -109,33 +109,6 @@ full_calendar_d365_h24 <- newCalendar(timetable = timetable_full_year)
 ```
 
 The model object (described below) must have the `calendar` object with all time-frames and time-slices used in the model. However, scenarios can be solved for a subset of the time-slices, defined by another `calendar` object with sub-set of time-slices. Here we define a calendar with a subset of 1 day per month and 24 hours per each day. Therefore, the total number of time-slices in the subset is 12 days * 24 hours = 288 time-slices (vs. 8760 time-slices in the full calendar).
-
-```{r}
-# pick days
-yday_sample <- 15 + c(0, as.integer(cumsum(days_in_month(1:11)))) # one day per month
-# pick hours
-hour_sample <- 0:23 # all 24 hours
-
-timetable_subset <- timetable_full_year |>
-  filter(YDAY %in% yday2YDAY(yday_sample)) |>
-  filter(HOUR %in% hour2HOUR(hour_sample))
-timetable_subset
-unique(timetable_subset$HOUR)
-unique(timetable_subset$YDAY)
-unique(timetable_subset$YDAY) |> tsl2dtm(year = 2019, tmz = "Asia/Kolkata")
-
-SUBSET_HOURS <- nrow(timetable_subset) # total hours in the subset
-FRACT_YEAR <- SUBSET_HOURS / 8760 # fraction in a year
-print("Subannual time resolution:")
-print(paste("   Total number of days a year:", length(yday_sample)))
-print(paste("   Total number of hours per year:", SUBSET_HOURS))
-
-# Partial calendar
-partial_calendar <- newCalendar(
-  timetable = timetable_subset,
-  year_fraction = sum(timetable_subset$share)
-)
-```
 
 
 ## Commodities  
@@ -382,38 +355,6 @@ sol_clust_digits <- 4 # parameter used in functions
 }
 # rm(sol_clust_max)
 
-# name_with_cluster <- function(name, cluster, ndigits = 2) {
-#   paste0(
-#     name,
-#     formatC(cluster,
-#       digits = ndigits, width = ndigits,
-#       flag = "0", mode = "integer"
-#     )
-#   )
-# }
-# name_with_cluster("", 0)
-# name_with_cluster("SOL", 1)
-# name_with_cluster("WIN_CL", 99)
-# 
-# get_cluster <- function(name, digits = 2, cluster_flag = "CL") {
-#   # pattern1 <- paste0("(?:CL)?(\\d{", digits,"})(?!\\d)")
-#   pattern1 <- paste0("(?:", cluster_flag,")?(?<!\\d)(\\d{", digits,"})(?!\\d)")
-#   pattern2 <- paste0("\\d{", digits,"}")
-#   # browser()
-#   str_extract(name, pattern1) |> str_extract(pattern2)
-# }
-# 
-# get_cluster(c("ESOL_2030_47", "ESOL_21_2030"))
-# get_cluster(c("ESOL_2030_471", "ESOL_21_2030"), digits = 2)
-# get_cluster(c("ESOL_CL2030_471", "ESOL_21_2030"), digits = 2)
-# get_cluster(c("ESOL_CL2030_471", "ESOL_21_2030"), digits = 3)
-# get_cluster(c("ESOL_2030_47", "ESOL_21_2030"), digits = 4)
-# get_cluster(c("ESOL_2030_CL47", "ESOL_21_2030"))
-# get_cluster(c("ESOL_V2030_CL47", "ESOL_CL21_V2030", 
-#               "ESOL_2030_47", "ESOL_21_2030"))
-# get_cluster(c("ESOL_2030_471", "ESOL_21_2030", "ESOL_V2030_CL47",
-#               "ESOL_CL21_V2030"))
-
 WSOL <- newRepository(name = "Solar capacity factors")
 
 for (i in unique(solar_cf$cluster)) {
@@ -525,7 +466,7 @@ for (i in unique(wind_cf$cluster)) {
 }
 summary(WWIF)
 names(WWIF)
-WWIF@data$WWIF_CL01
+# WWIF@data$WWIF_CL01
 ```
 
 ### Hydro  
@@ -1523,7 +1464,7 @@ repo <- newRepository(
   repo_geoccs,
   repo_ccstechs,
   # unserved load
-  UNSERVED, # unserved load penalty
+  # UNSERVED, # unserved load penalty
   # demand
   DEMELC_BY, # BY demand
   DEMELC_2X, # additional demand
@@ -1625,11 +1566,13 @@ Quick way to have a glimpse of the results
 scen_REF_sub <- interpolate_model(
   mod,
   name = "REF_sub", # indicating 'subset'
-  path = file.path("scenarios", glue(scen_REF_sub@name, "_r{nreg}")),
+  path = file.path("scenarios", glue("REF_sub_r{nreg}")),
   # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
-  partial_calendar # add partial calendar to the interpolate function
+  # partial_calendar, # add partial calendar to the interpolate function
+  ideea_modules$calendars$horizon_2050
 )
-scen_REF_sub@path
+scen_REF_sub@path <- file.path(
+  "D:/Dropbox/projects/IDEEA_scenarios", glue("REF_sub_r{nreg}"))
 
 scen_REF_sub <- write_sc(
   scen_REF_sub,
@@ -1657,11 +1600,12 @@ summary(scen_REF_sub)
 scen_CAP_sub <- interpolate(
   mod,
   name = "CAP_sub", # indicating 'subset'
-  path = file.path("scenarios", glue(scen_CAP_sub@name, "_r{nreg}")),
+  path = file.path("scenarios", glue("CAP_sub_r{nreg}_debug")),
   # here we can add policy objects
   # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
   CO2_CAP,
-  partial_calendar # add partial calendar to the interpolate function
+  ideea_modules$calendars$horizon_2050
+  # partial_calendar # add partial calendar to the interpolate function
 )
 
 scen_CAP_sub <- write_sc(
@@ -1675,9 +1619,9 @@ scen_CAP_sub <- write_sc(
 scen_CAP_sub
 scen_CAP_sub@misc$tmp.dir
 
-# solve_scenario(scen_CAP_sub, wait = F, force = F)
-scen_CAP_sub <- solve(scen_CAP_sub, wait = T, tmp.del = F)
-# scen_CAP_sub <- read(scen_CAP_sub)
+solve_scenario(scen_CAP_sub, wait = F, force = F)
+# scen_CAP_sub <- solve(scen_CAP_sub, wait = T, tmp.del = F)
+scen_CAP_sub <- read(scen_CAP_sub)
 
 # store scenario on disk (unload from RAM)
 scen_CAP_sub <- save_scenario(scen_CAP_sub, path = "scenarios/CAP_sub")
@@ -1689,11 +1633,14 @@ summary(scen_CAP_sub)
 ## Results
 
 ### Compare scenarios
-```{r}
+```{r, eval=params$solve}
 # create a list of
 sns <- list(
-  scen_REF_sub
+  # scen_REF_sub,
   # scen_CAP_sub
+  .scen$CAP_sub,
+  .scen$REF_sub
+
 )
 
 # compare objective (in cr.₹)
@@ -1703,7 +1650,7 @@ getData(sns, "vObjective", merge = T)
 
 
 #### Total installed capacity
-```{r}
+```{r, eval=params$solve}
 # compare generating tech capacity (names start with "E")
 vTechCap <- getData(sns,
   name = "vTechCap", tech_ = "^E", process = T,
@@ -1715,48 +1662,53 @@ vTechCap |>
   as.data.table()
 ```
 
+```{r, eval=params$solve}
+# getData(scen_CAP_sub, "vImportRow", imp = "UNSERVED",
+#         digits = 1, drop.zeros = T, merge = T) |> 
+#   group_by(name, comm) |> 
+#   summarize(GWh = sum(value))
+
+getData(scen_CAP_sub, "pDemand", digits = 1, drop.zeros = T, merge = T) |> 
+  group_by(name, comm) |> 
+  summarize(GWh = sum(value))
+
+```
+
+
+
 #### Total capacity map
 
-```{r}
-theme_ideea_map <- function() {
-  theme_bw() +
-    theme(
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank()
-      # panel.border = element_blank(),
-      # panel.background = element_blank()      
-    ) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks.y = element_blank()
-    )
-}
-
+```{r, eval=params$solve}
 vTechCap_agg <- vTechCap |>
-  drop_process_vintage() |>
+  drop_process_cluster() |>
   drop_process_vintage() |> 
   group_by(scenario, process, region, year) |>
   summarise(GW = sum(value, na.rm = T), .groups = "drop") |>
-  full_join(ideea_sf, by = c(region = regN),
+  as.data.table() |>
+  full_join(ideea_sf, by = c(region = regN_off),
     relationship = "many-to-many") |>
-  filter(year %in% c(2020, 2035, 2060)) |>
+  filter(!is.na(process)) |>
+  # filter(year %in% c(2020, 2035, 2060)) |>
   st_as_sf()
 
 ggplot() +
   geom_sf(data = ideea_sf) +
   geom_sf(aes(fill = GW), data = vTechCap_agg, na.rm = T) +
-  scale_fill_viridis_c(option = "H") +
+  scale_fill_viridis_c(option = "H", transform = "sqrt") +
   # scale_fill_viridis_c(option = "C", transform = "log10") +
-  facet_grid(year ~ scenario) +
+  facet_grid(scenario~process) +
+  # facet_wrap(~process) +
   theme_ideea_map()
+
+vTechCap_agg |> st_drop_geometry() |> group_by(scenario, process, year) |>
+  summarise(GW = sum(GW)) |>
+  pivot_wider(names_from = scenario, values_from = GW)
 
 ```
 
 
 #### Solar capacity by cluster
-```{r}
+```{r, eval=params$solve}
 add_cluster_column <- function(x, col_name = "process") {
   x |> mutate(
     cluster = as.integer(str_extract(get(col_name), "[0-9]+$")),
@@ -1770,37 +1722,37 @@ vTechCap_ESOL_sf <-
   add_cluster_column() |> # add cluster number
   # add shapes for every cluster
   left_join(ideea_sol_cl_sf,
-    by = c(region = regN, cluster = "cluster"),
+    by = c(region = regN_off, cluster = "cluster"),
     relationship = "many-to-many"
   ) |>
   rename(GW = value) |>
   filter(!is.na(GW), GW > 0) |>
-  filter(year %in% c(2020, 2035, 2060)) |>
+  # filter(year %in% c(2020, 2035, 2060)) |>
   st_as_sf() # force to treat 'geometry' column as shape-data
 
 ggplot() +
   geom_sf(data = ideea_sf) +
   geom_sf(aes(fill = GW), data = vTechCap_ESOL_sf, color = NA, na.rm = T) +
-  scale_fill_viridis_c(option = "C") +
-  # scale_fill_viridis_c(option = "C", transform = "log10") +
+  # scale_fill_viridis_c(option = "H") +
+  scale_fill_viridis_c(option = "C", transform = "log10") +
   facet_grid(year ~ scenario) +
   theme_ideea_map()
 ```
 
 #### Wind capacity by cluster
-```{r}
+```{r, eval=params$solve}
 vTechCap_EWIN_sf <-
   vTechCap |>
   filter(grepl("EWIN", process)) |> # select solar techs
   add_cluster_column() |> # add cluster number
   # add shapes for every cluster
   left_join(ideea_win_cl_sf,
-    by = c(region = regN, cluster = "cluster"),
+    by = c(region = regN_off, cluster = "cluster"),
     relationship = "many-to-many"
   ) |>
   rename(GW = value) |>
   filter(!is.na(GW), GW > 0) |>
-  filter(year %in% c(2020, 2035, 2060)) |>
+  # filter(year %in% c(2020, 2035, 2060)) |>
   st_as_sf() # force to treat 'geometry' column as shape-data
 
 ggplot() +
@@ -1811,3 +1763,37 @@ ggplot() +
   facet_grid(year ~ scenario) +
   theme_ideea_map()
 ```
+
+
+## Trade
+```{r, eval=params$solve}
+vTradeCap <- getData(sns, "vTradeCap", merge = T)
+
+b <- a |>
+  left_join(network, by = c("region" = "region.x", dst = "region.y",
+                            "case" = "case", MW = "MW")) |>
+  # left_join(filter(vTradeCap, year %in% max(vTradeCap$year)),
+  left_join(vTradeCap, 
+            by = c("trd_name" = "trade"))
+
+ggplot() +
+  geom_sf(data = ideea_sf, fill = "wheat") +
+  geom_segment(
+    aes(
+      x = lon.x, y = lat.x, xend = lon.y, yend = lat.y,
+      linewidth = value
+    ),
+    color = "dodgerblue", lineend = "round",
+    data = filter(b, case == "current")
+  ) +
+  geom_segment(aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
+    color = alpha("white", .5), lineend = "round",
+    data = filter(a, case == "new")
+  ) +
+  geom_point(aes(lon, lat), data = points_coord, color = "red") +
+  labs(x = "", y = "") +
+  facet_grid(year~scenario) +
+  theme_ideea_map()
+
+```
+

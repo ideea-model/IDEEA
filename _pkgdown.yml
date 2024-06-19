@@ -29,6 +29,8 @@ navbar:
     - text: "IDEEA model components"
     - text: "—Regions"
       href: articles/regions.html
+    - text: "—Time"
+      href: articles/calendars.html
     - text: "—Datasets"
       href: articles/data.html
     - text: "IDEEA model sectors"
