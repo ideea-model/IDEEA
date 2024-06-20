@@ -62,14 +62,13 @@ repo_energy <- newRepository(
   name = "repo_energy",
   desc = "Primary energy supply"
 )
-```
 
-```{r}
 # region names where offshore regions (if any) associated with closest land-region:
 regN <- glue("reg{nreg}") 
 # offshore regions have distinct names:
 regN_off <- glue("reg{nreg}_off") 
 ```
+</details>
 
 
 ## Coal and Lignite
@@ -77,6 +76,9 @@ regN_off <- glue("reg{nreg}_off")
 India ranks fifth globally in proven coal reserves with 361.41 billion tonnes identified, with a 2.36% increase in reserves due to recent discoveries. Over half of these reserves are classified as proven. Coal is predominantly located in Jharkhand, Odisha, and Chhattisgarh. Additionally, India holds 46.02 billion metric tons of lignite coal, primarily in Tamil Nadu, with a significant portion yet to be classified as proven. Lignite production decreased by 13.04% in the fiscal year 2020-21, reflecting a 1.60% CAGR decline over the past decade. Lignite's main use is in electricity generation, which consumes 84.46% of its output. To improve the auction process for lignite mines, India is developing a National Lignite Index, akin to the National Coal Index, facilitated by the Indian Statistical Institute, Kolkata.
 
 ### Definition of commodity and supply
+
+<details>
+<summary>code</summary>
 
 ```{r eval=TRUE, message=FALSE, warning=FALSE}
 # definition of commodity
@@ -109,23 +111,39 @@ coa_sup <-
   get_ideea_data("coal", nreg = nreg, "production", agg_fun = sum) |>
   full_join(
     get_ideea_data("coal", nreg = nreg, "cost_USD_t_2020", agg_fun = mean)
+  ) |>
+  full_join(coa_reserve) |>
+  replace_na(list(production_2021 = 0)) |>
+  mutate(
+    production_2060 = ceiling(total_reserve_Mt / 30) # assume 30 years of supply
   )
+
+coa_ava <- coa_sup |>
+  select(-total_reserve_Mt) |>
+  rename(production_2020 = production_2021) |>
+  pivot_longer(cols = c(production_2020, production_2060), 
+               names_prefix = "production_", names_transform = as.integer,
+               names_to = "year", values_to = "Mt") |>
+  mutate(GWh = round(convert("Mtce", "GWh", .7 * Mt), digits = -2)) |> # ~70% energy content
+  as.data.table()
 
 # define domestic supply of coal
 SUP_COA <- newSupply(
   name = "SUP_COA",
   desc = "Domestic coal supply, all grades",
   commodity = "COA",
+  region = unique(coa_ava[[regN]]),
   unit = "GWh",
   reserve = data.frame( # maximum 
-    region = coa_reserve[[regN]],
-    res.up = round(convert("Mtce", "GWh", coa_reserve$total_reserve_Mt * .7))
+    region = coa_sup[[regN]],
+    res.up = round(convert("Mtce", "GWh", .7 * coa_sup$total_reserve_Mt ))
   ),
   availability = data.frame(
-    region = coa_sup[[regN]],
-    ava.up = round(convert("Mtce", "GWh", coa_sup$production_2021 * .7), 0),
+    year = coa_ava$year,
+    region = coa_ava[[regN]],
+    ava.up = coa_ava$GWh,
     cost = signif(convert("USD/tce", "cr.INR/GWh", 
-                          coa_sup$cost_USD_t_2020 * .7), 3)
+                          coa_ava$cost_USD_t_2020 * .7), 3)
   )
 )
 
@@ -450,9 +468,13 @@ This surplus biomass could generate an estimated 28.5 GWe of power, with the maj
 ```{r bio_sup, message=FALSE}
 # loading and processing data
 # get_ideea_data(name = "biomass", raw = T) # check raw data
-bio_sup <- get_ideea_data(name = "biomass", nreg = nreg, 
+bio_sup <- get_ideea_data(name = "biomass", 
+                          nreg = nreg, 
                           variable = "max_MWe") |>
-  filter(max_MWe > 0)
+  filter(max_MWe > 0) |>
+  mutate(
+    
+  )
 
 # bio_ava <- 
 #   get_ideea_data("biomass_ava_assumption", nreg = nreg, 
@@ -467,13 +489,12 @@ BIO <- newCommodity(
   name = "BIO", 
   desc = "Biomass, all types",
   unit = "GWh", 
-  #slice = "ANNUAL"  deprecated
-  timeframe = "ANNUAL"
-  # emis = data.frame(
-  #   comm = "PM25",
-  #   unit = "kt/GWh",
-  #   emis = 0.1
-  # )
+  timeframe = "ANNUAL",
+  emis = data.frame(
+    comm = "PM25",
+    unit = "kt/GWh",
+    emis = 0.1
+  )
 )
 
 # Declaration of domestic supply

@@ -874,6 +874,8 @@ for (cl in 1:win_clust_max) {
         GW_exist = if_else(get("diff") >= 0, 0,
                            -get("diff"))
       )
+  } else {
+    cap_win_exist_to_cluster$GW_exist <- 0
   }
   capacity_cl = data.frame(
       region = cap_win_exist_to_cluster$region,
@@ -885,7 +887,7 @@ for (cl in 1:win_clust_max) {
   EWIN@data[[tname]] <- EWIN@data[[tname]] |>
     update(capacity = capacity_cl)
 
-  if (!any(cap_win_exist_to_cluster$GW_exist > 0)) break 
+  if (any(cap_win_exist_to_cluster$GW_exist > 0)) break 
 }
 
 names(EWIN)
@@ -1393,7 +1395,7 @@ CT_EGAS <- newConstraint(
 NO_BY_INV <- newConstraint(
   name = "NO_BY_INV",
   eq = "<=",
-  for.each = list(year = c(2020)),
+  for.each = list(year = c(2020, 2021, 2060)),
   variable = list(
     variable = "vTechNewCap",
     for.sum = list(
@@ -1402,11 +1404,11 @@ NO_BY_INV <- newConstraint(
     )
   ),
   rhs = data.frame(
-    year = c(2020),
-    rhs = 1e-20
+    year = c(2020, 2021, 2060),
+    rhs = c(1e-20, 1e10, 1e10) #
   ),
-  defVal = 1e-20,
-  interpolation = "inter"
+  defVal = 1e10, # large number (Inf may not work as expected in some solvers)
+  interpolation = "inter.forth"
 )
 ```
 
@@ -1572,7 +1574,8 @@ scen_REF_sub <- interpolate_model(
   ideea_modules$calendars$horizon_2050
 )
 scen_REF_sub@path <- file.path(
-  "D:/Dropbox/projects/IDEEA_scenarios", glue("REF_sub_r{nreg}"))
+  "D:/Dropbox/projects/IDEEA_scenarios", glue("REF_sub_r{nreg}")
+  )
 
 scen_REF_sub <- write_sc(
   scen_REF_sub,
@@ -1590,7 +1593,7 @@ scen_REF_sub <- solve(scen_REF_sub, wait = F, tmp.del = F)
 scen_REF_sub <- read(scen_REF_sub)
 
 # store scenario on disk (unload from RAM)
-scen_REF_sub <- save_scenario(scen_REF_sub, path = "scenarios/REF_sub")
+scen_REF_sub <- save_scenario(scen_REF_sub)
 summary(scen_REF_sub)
 ```
 
@@ -1608,6 +1611,9 @@ scen_CAP_sub <- interpolate(
   # partial_calendar # add partial calendar to the interpolate function
 )
 
+scen_CAP_sub@path <- file.path(
+  "D:/Dropbox/projects/IDEEA_scenarios", glue("CAP_sub_r{nreg}_debug2"))
+
 scen_CAP_sub <- write_sc(
   scen_CAP_sub,
   solver = solver_options$gams_gdx_cplex_barrier
@@ -1624,7 +1630,7 @@ solve_scenario(scen_CAP_sub, wait = F, force = F)
 scen_CAP_sub <- read(scen_CAP_sub)
 
 # store scenario on disk (unload from RAM)
-scen_CAP_sub <- save_scenario(scen_CAP_sub, path = "scenarios/CAP_sub")
+scen_CAP_sub <- save_scenario(scen_CAP_sub)
 summary(scen_CAP_sub)
 
 ```
@@ -1637,9 +1643,9 @@ summary(scen_CAP_sub)
 # create a list of
 sns <- list(
   # scen_REF_sub,
-  # scen_CAP_sub
-  .scen$CAP_sub,
-  .scen$REF_sub
+  scen_CAP_sub
+  # .scen$CAP_sub,
+  # .scen$REF_sub
 
 )
 
@@ -1675,7 +1681,6 @@ getData(scen_CAP_sub, "pDemand", digits = 1, drop.zeros = T, merge = T) |>
 ```
 
 
-
 #### Total capacity map
 
 ```{r, eval=params$solve}
@@ -1696,8 +1701,8 @@ ggplot() +
   geom_sf(aes(fill = GW), data = vTechCap_agg, na.rm = T) +
   scale_fill_viridis_c(option = "H", transform = "sqrt") +
   # scale_fill_viridis_c(option = "C", transform = "log10") +
-  facet_grid(scenario~process) +
-  # facet_wrap(~process) +
+  # facet_grid(scenario~process) +
+  facet_wrap(scenario~process) +
   theme_ideea_map()
 
 vTechCap_agg |> st_drop_geometry() |> group_by(scenario, process, year) |>
@@ -1794,6 +1799,11 @@ ggplot() +
   labs(x = "", y = "") +
   facet_grid(year~scenario) +
   theme_ideea_map()
+
+```
+
+```{r}
+
 
 ```
 
