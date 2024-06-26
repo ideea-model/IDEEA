@@ -79,6 +79,16 @@ if (F) {
                 "ESOL_CL21_V2030"))
 }
 
+#' Drop cluster identifier from a name
+#'
+#' @param name
+#' @param digits
+#' @param cluster_flag
+#'
+#' @return
+#' @export
+#'
+#' @examples
 drop_cluster <- function(name, digits = 2, cluster_flag = "CL") {
   pattern1 <- paste0("_(?:", cluster_flag,")?(?<!\\d)(\\d{", digits,"})(?!\\d)")
   # pattern2 <- paste0("\\d{", digits,"}")
@@ -86,7 +96,12 @@ drop_cluster <- function(name, digits = 2, cluster_flag = "CL") {
   str_replace(name, pattern1, "")
 }
 
-#' dat |> drop_process_vintage()
+#' Drop cluster identifier from a process name
+#'
+#' @param x
+#' @param digits
+#' @param cluster_flag
+#' @export
 drop_process_cluster <- function(x, digits = 2, cluster_flag = "CL") {
   if (!"process" %in% names(x)) {
     return(x)

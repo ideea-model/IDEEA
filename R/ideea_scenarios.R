@@ -14,7 +14,7 @@ set_ideea_scenarios <- function(path = NULL) {
     if (!dir.exists(path)) {
       stop(paste0('The path "', path, '" does not exist.'), call. = FALSE)
     }
-    if (!grepl("\\/$", path)) {
+    if (!grepl("(\\\\|/)$", path)) {
       path <- paste0(path, "/")
     }
   }
@@ -29,7 +29,7 @@ set_ideea_scenarios <- function(path = NULL) {
 #'
 #' @examples
 ideea_scenarios <- function() {
-  options(IDEEA.scenarios)
+  getOption("IDEEA.scenarios")
 }
 
 
@@ -45,7 +45,7 @@ ideea_scenarios <- function() {
 #' @export
 #'
 #' @examples
-ideea_scenario_name <- function(
+ideea_scenario_dir_name <- function(
     name,
     model_name = NULL,
     calendar_name = NULL,

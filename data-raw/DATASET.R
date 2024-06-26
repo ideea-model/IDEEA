@@ -45,7 +45,6 @@ if (F) {
   # save to 'data/ideea_modules.rda'
   usethis::use_data(ideea_modules, internal = F, overwrite = T)
   # rebuild the package
-
 }
 
 

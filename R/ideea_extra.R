@@ -13,7 +13,7 @@ set_ideea_extra <- function(path = NULL) {
     if (!dir.exists(path)) {
       stop(paste0('The path "', path, '" does not exist.'), call. = FALSE)
     }
-    if (!grepl("\\/$", path)) {
+    if (!grepl("(\\\\|/)$", path)) {
       path <- paste0(path, "/")
     }
   }

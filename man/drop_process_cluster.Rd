@@ -2,10 +2,10 @@
 % Please edit documentation in R/electricity.R
 \name{drop_process_cluster}
 \alias{drop_process_cluster}
-\title{dat |> drop_process_vintage()}
+\title{Drop cluster identifier from a process name}
 \usage{
 drop_process_cluster(x, digits = 2, cluster_flag = "CL")
 }
 \description{
-dat |> drop_process_vintage()
+Drop cluster identifier from a process name
 }

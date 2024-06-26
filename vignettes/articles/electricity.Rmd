@@ -34,31 +34,41 @@ knitr::opts_chunk$set(
 
 ```{r, echo=FALSE, fig.cap="Schematic representation of IDEEA electricity model"}
 try(knitr::include_graphics("images/elc_schematic.jpg"), silent = T)
-if (packageVersion("energyRt") < "0.11.33") {
+if (packageVersion("energyRt") < "0.11.34") {
   stop('Please update energyRt.
        pak::pkg_install("energyRt/energyRt@dev")')
 }
-if (packageVersion("IDEEA") < "0.0.36") {
+if (packageVersion("IDEEA") < "0.0.37") {
   stop('Please update IDEEA
        pak::pkg_install("ideea-model/IDEEA@dev")')
 }
-stopifnot(packageVersion("IDEEA") >= "0.0.36")
+stopifnot(packageVersion("IDEEA") >= "0.0.37")
 ```
 
 ## Configuration
 ```{r, eval = T}
 # Set number of regions, currently '5' is the only option
 nreg <- 32
+# nreg <- 5
+
 offshore <- TRUE # should offshore regions be included
 islands <- TRUE # should islands be included
 base_year <- 2019 # the first year of the model (base year or `BY`)
+
+if (nreg == 5) {
+  transmission_matrix <- "current"
+} else if (nreg == 32) {
+  transmission_matrix <- "68_lines"
+} else {
+  stop("Only 5 and 32 regions are currently implemented")
+}
 
 # region variable name to use in functions (e.g. `get_ideea_data`)
 regN <- paste0("reg", nreg)
 regN_off <- paste0(regN, "_off")
 
 # wind and solar clustering tolerance
-tol_win_cl <- 0.10
+tol_win_cl <- 0.05
 tol_sol_cl <- 0.05
 ```
 
@@ -104,8 +114,8 @@ ideea_modules$time_tables$d365_h24
 This time-table is to define a `calendar` object, that also describes the hierarchy of time-frames and sets the sequence of the time-slices. 
 
 ```{r}
-timetable_full_year <- ideea_modules$time_tables$d365_h24
-full_calendar_d365_h24 <- newCalendar(timetable = timetable_full_year)
+calendar_d365_h24_full <- ideea_modules$calendars$calendar_d365_h24_full
+
 ```
 
 The model object (described below) must have the `calendar` object with all time-frames and time-slices used in the model. However, scenarios can be solved for a subset of the time-slices, defined by another `calendar` object with sub-set of time-slices. Here we define a calendar with a subset of 1 day per month and 24 hours per each day. Therefore, the total number of time-slices in the subset is 12 days * 24 hours = 288 time-slices (vs. 8760 time-slices in the full calendar).
@@ -195,11 +205,13 @@ DEMELC_BY <- newDemand(
 
 
 ```{r, fig.cap="Hourly load by region, 2019"}
-ggplot(load_BY) +
+# display first 6 regions
+ggplot(filter(load_BY, get(regN) %in% unique(load_BY[[regN]])[1:6])) +
   geom_line(aes(HOUR, GWh, color = YDAY, group = YDAY), alpha = .25) +
   scale_color_viridis_c(option = "H", limits = c(1, 365)) +
   scale_x_continuous(limits = c(0, 23)) +
-  facet_wrap(~ get(regN), ncol = floor(nreg / 2), scales = "free_y") +
+  # facet_wrap(~ get(regN), ncol = floor(nreg / 3), scales = "free_y") +
+  facet_wrap(~ get(regN), ncol = 2, scales = "free_y") +
   labs(y = "GWh", x = "hour") +
   theme_bw()
 ggsave(glue("load_2019_{regN}.png"), width = 7, height = 9, path = "tmp")
@@ -1159,10 +1171,10 @@ STG_BTR_daily$STG_BTR_2020@fullYear
 ## Transmission  
 
 ```{r, warning=FALSE}
-transmission_existing <- ideea_data$transmission[[regN]] |>
-  filter(case == "current", !is.na(MW)) |>
+transmission_lines <- ideea_data$transmission[[regN]] |>
+  filter(case == transmission_matrix, !is.na(MW)) |>
   rename(dst = region1) |>
-  filter(MW > 0)
+  filter(MW >= 0)
 
 gis_mainland_sf <- filter(ideea_sf, offshore == F)
 points_coord <- st_centroid(gis_mainland_sf) |>
@@ -1171,11 +1183,24 @@ points_coord <- st_centroid(gis_mainland_sf) |>
   cbind(data.frame(region = gis_mainland_sf[[regN]])) |>
   rename(lon = X, lat = Y)
 
-a <- transmission_existing |>
+a <- transmission_lines |>
   # filter(case == "current") |>
   left_join(points_coord, by = c("region" = "region")) |>
   left_join(points_coord, by = c("dst" = "region")) |>
-  mutate(GW = MW / 1000)
+  mutate(GW = MW / 1000) |>
+  rowwise() |>
+  mutate(
+    # rough estimate of transmission lines distance between two nodes
+    distance_km = st_distance(
+      # length in meters
+      st_sfc(st_point(c(lon.x, lat.x)), crs = 4326),
+      st_sfc(st_point(c(lon.y, lat.y)), crs = 4326)
+      ),
+    # adding 15% to the distance for landscape
+    distance_km = round(1.15 * as.numeric(distance_km) / 1e3)
+  ) |>
+  as.data.table()
+a
 
 ggplot() +
   geom_sf(data = ideea_sf, fill = "wheat") +
@@ -1185,25 +1210,26 @@ ggplot() +
       linewidth = GW
     ),
     color = "dodgerblue", lineend = "round",
-    data = filter(a, case == "current")
+    data = filter(a, case %in% transmission_matrix)
   ) +
-  geom_segment(aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
-    color = alpha("white", .5), lineend = "round",
-    data = filter(a, case == "new")
-  ) +
+  # geom_segment(aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
+  #   color = alpha("white", .5), lineend = "round",
+  #   data = filter(a, case == "new")
+  # ) +
   geom_point(aes(lon, lat), data = points_coord, color = "red") +
   labs(x = "", y = "") +
   theme_bw()
 
-network <- transmission_existing |>
-  filter(case == "current") |>
+network <- transmission_lines |>
+  filter(case == "68_lines") |>
   mutate(
     trd_name = paste("TRL", region, dst, sep = "_")
-  ) |>
+    ) |>
   rename(
     region.x = region,
     region.y = dst
   )
+# network$MW <- 0 
 
 repo_transmission <- newRepository("transmission")
 if (nrow(network) > 0) {
@@ -1223,18 +1249,20 @@ if (nrow(network) > 0) {
       ),
       capacityVariable = T,
       invcost = data.frame(
+        # convert(1000, "USD/MW/mi", "cr.INR/GW/km") ~= 5 cr.INR/GW/km
+        # see: https://www.nrel.gov/docs/fy22osti/81662.pdf
         region = c(network$region.x[i], network$region.y[i]),
-        invcost = rep(1000, 2) / 2 # olife == 2
+        invcost = rep(5, 2) / 2 # olife == 2
       ),
       olife = list(olife = 50), # doubled annualized invcost for consistency
       start = list(start = base_year - 10),
-      capacity = data.frame(
-        year = c(2020, 2030, 2050, 2070),
-        stock = c(
-          network$MW[i] / 1000, network$MW[i] / 1000,
-          network$MW[i] / 1000, network$MW[i] / 1000
-        )
-      ),
+      # capacity = data.frame(
+      #   year = c(2020, 2030, 2050, 2070),
+      #   stock = c(
+      #     network$MW[i] / 1000, network$MW[i] / 1000,
+      #     network$MW[i] / 1000, network$MW[i] / 1000
+      #   )
+      # ),
       cap2act = 24 * 365
     )
     repo_transmission <- add(repo_transmission, trd)
@@ -1265,7 +1293,7 @@ CO2_CAP <- newConstraint(
   name = "CO2_CAP",
   eq = "<=",
   rhs = list(
-    year = c(2025, 2075),
+    year = c(2025, 2060),
     rhs = c(900000, 1e-10)
   ),
   for.each = list(year = 2025:2100), # Cap total emission
@@ -1479,12 +1507,12 @@ repo <- newRepository(
 summary(repo)
 
 # model horizon
-horizon_2020_2060_by_10 <- newHorizon(
-  period = 2020:2060,
-  intervals = c(1, 5, rep(10, 15)),
-  mid_is_end = T
-)
-horizon_2020_2060_by_10
+# horizon_2020_2060_by_10 <- newHorizon(
+#   period = 2020:2060,
+#   intervals = c(1, 5, rep(10, 15)),
+#   mid_is_end = T
+# )
+# horizon_2020_2060_by_10
 
 # model-class object
 mod <- newModel(
@@ -1492,8 +1520,8 @@ mod <- newModel(
   desc = "IDEEA electricity example model",
   region = unique(ideea_sf[[regN]]),
   discount = 0.05,
-  calendar = full_calendar_d365_h24,
-  horizon = horizon_2020_2060_by_10,
+  calendar = ideea_modules$calendars$calendar_d365_h24_full,
+  horizon = ideea_modules$calendars$horizon_2020_2060_by_10,
   data = repo
 )
 # mod@config@horizon@intervals
@@ -1544,7 +1572,7 @@ electricity <- list(
   # CT_ESOL = CT_ESOL, # limit on solar construction
   CO2_CAP = CO2_CAP
   # calendars
-  # full_calendar_d365_h24 = full_calendar_d365_h24, # full calendar
+  # calendar_d365_h24_full = calendar_d365_h24_full, # full calendar
   # partial_calendar_1day_per_month = partial_calendar, # partial calendar
   # horizon_2020_2060_by_10 = horizon_2020_2060_by_10 # model horizon
 )
@@ -1563,19 +1591,21 @@ It is recommended to solve the model for a portion of a year (subset of time-sli
 Quick way to have a glimpse of the results
 ```{r, eval=params$solve}
 # set_progress_bar("progress")
-# set_scenarios_path("D:/Dropbox/Xeon_link/IDEEA-xeon/scenarios")
 # Reference case
 scen_REF_sub <- interpolate_model(
   mod,
-  name = "REF_sub", # indicating 'subset'
-  path = file.path("scenarios", glue("REF_sub_r{nreg}")),
+  name = "REF_sub" # indicating 'subset'
+  # path = file.path("scenarios", glue("REF_sub_r{nreg}")),
   # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
   # partial_calendar, # add partial calendar to the interpolate function
-  ideea_modules$calendars$horizon_2050
+  # ideea_modules$calendars$horizon_2050
 )
-scen_REF_sub@path <- file.path(
-  "D:/Dropbox/projects/IDEEA_scenarios", glue("REF_sub_r{nreg}")
-  )
+scen_REF_sub@path <- ideea_scenario_dir_name(
+  name = "REF_sub", 
+  model_name = scen_REF_sub@model@name, 
+  calendar_name = scen_REF_sub@settings@calendar@name, 
+  horizon_name = "2020_2060_by_10"
+)
 
 scen_REF_sub <- write_sc(
   scen_REF_sub,
@@ -1611,8 +1641,12 @@ scen_CAP_sub <- interpolate(
   # partial_calendar # add partial calendar to the interpolate function
 )
 
-scen_CAP_sub@path <- file.path(
-  "D:/Dropbox/projects/IDEEA_scenarios", glue("CAP_sub_r{nreg}_debug2"))
+scen_CAP_sub@path <- ideea_scenario_dir_name(
+  name = "CAP_sub", 
+  model_name = mod@name, 
+  calendar_name = "d365_h24", 
+  horizon_name = "2050"
+)
 
 scen_CAP_sub <- write_sc(
   scen_CAP_sub,
@@ -1636,13 +1670,100 @@ summary(scen_CAP_sub)
 ```
 
 
+```{r, eval=FALSE}
+scen_REF <- interpolate_model(
+  mod,
+  name = "REF", # indicating 'subset'
+  # path = file.path("scenarios", glue("REF_r{nreg}")),
+  # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
+  # partial_calendar, # add partial calendar to the interpolate function
+  ideea_modules$calendars$horizon_2060
+)
+
+scen_REF@path <- ideea_scenario_name(
+  name = "REF", 
+  model_name = mod@name, 
+  calendar_name = "d365_h24", 
+  horizon_name = "2060"
+)
+
+scen_REF <- write_sc(
+  scen_REF,
+  solver = solver_options$gams_gdx_cplex_barrier
+  # solver = solver_options$gams_gdx_cplex_parallel
+  # solver = solver_options$julia_highs_barrier
+  # solver = solver_options$julia_highs_simplex
+  # solver = solver_options$julia_highs_parallel
+)
+scen_REF@status
+scen_REF@misc$tmp.dir
+
+# solve_scenario(scen_REF, wait = F, force = F)
+scen_REF <- solve(scen_REF, wait = F, tmp.del = F)
+scen_REF <- read(scen_REF)
+
+# store scenario on disk (unload from RAM)
+scen_REF <- save_scenario(scen_REF)
+summary(scen_REF)
+
+```
+
+
+
+```{r, eval=FALSE}
+set_progress_bar()
+# CO2 cap
+scen_CAP <- interpolate(
+  mod,
+  name = "CAP", # indicating 'subset'
+  # path = file.path("scenarios", glue("CAP_r{nreg}_debug")),
+  # here we can add policy objects
+  # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
+  CO2_CAP,
+  ideea_modules$calendars$horizon_2050
+  # horizon_2050
+  # partial_calendar # add partial calendar to the interpolate function
+)
+
+scen_CAP@path <- ideea_scenario_dir_name(
+  name = "CAP", 
+  model_name = mod@name, 
+  calendar_name = "d365_h24", 
+  horizon_name = "2050"
+)
+scen_CAP@path
+
+scen_CAP <- write_sc(
+  scen_CAP,
+  solver = solver_options$gams_gdx_cplex_barrier
+  # solver = solver_options$gams_gdx_cplex_parallel
+  # solver = solver_options$julia_highs_barrier
+  # solver = solver_options$julia_highs_simplex
+  # solver = solver_options$julia_highs_parallel
+)
+scen_CAP
+scen_CAP@misc$tmp.dir
+
+# solve_scenario(scen_CAP, wait = F, force = F)
+scen_CAP <- read(scen_CAP)
+# scen_CAP <- solve(scen_CAP, wait = T, tmp.del = F)
+
+# store scenario on disk (unload from RAM)
+scen_CAP <- save_scenario(scen_CAP)
+summary(scen_CAP)
+# installr::os.sleep()
+```
+
+
 ## Results
 
 ### Compare scenarios
 ```{r, eval=params$solve}
 # create a list of
 sns <- list(
-  # scen_REF_sub,
+  # scen_REF,
+  # scen_CAP
+  # scen_REF_sub
   scen_CAP_sub
   # .scen$CAP_sub,
   # .scen$REF_sub
@@ -1654,6 +1775,13 @@ getData(sns, "vObjective", merge = T)
 # use `?getData` for help
 ```
 
+```{r}
+getData(sns, "vBalance", comm = "CO2", merge = T, digits = 1, drop.zeros = T) |> 
+  # group_by(name, year) |> 
+  # summarize(GWh = sum(value)) |> 
+  pivot_wider(names_from = scenario, values_from = value)
+
+```
 
 #### Total installed capacity
 ```{r, eval=params$solve}
@@ -1674,7 +1802,7 @@ vTechCap |>
 #   group_by(name, comm) |> 
 #   summarize(GWh = sum(value))
 
-getData(scen_CAP_sub, "pDemand", digits = 1, drop.zeros = T, merge = T) |> 
+getData(sns, "pDemand", digits = 1, drop.zeros = T, merge = T) |> 
   group_by(name, comm) |> 
   summarize(GWh = sum(value))
 
@@ -1701,11 +1829,12 @@ ggplot() +
   geom_sf(aes(fill = GW), data = vTechCap_agg, na.rm = T) +
   scale_fill_viridis_c(option = "H", transform = "sqrt") +
   # scale_fill_viridis_c(option = "C", transform = "log10") +
-  # facet_grid(scenario~process) +
-  facet_wrap(scenario~process) +
+  facet_grid(scenario~process) +
+  # facet_wrap(scenario~process) +
   theme_ideea_map()
 
-vTechCap_agg |> st_drop_geometry() |> group_by(scenario, process, year) |>
+vTechCap_agg |> st_drop_geometry() |> 
+  group_by(scenario, process, year) |>
   summarise(GW = sum(GW)) |>
   pivot_wider(names_from = scenario, values_from = GW)
 
@@ -1772,11 +1901,11 @@ ggplot() +
 
 ## Trade
 ```{r, eval=params$solve}
-vTradeCap <- getData(sns, "vTradeCap", merge = T)
+vTradeCap <- getData(sns, "vTradeCap", merge = T, digits = 1)
 
 b <- a |>
   left_join(network, by = c("region" = "region.x", dst = "region.y",
-                            "case" = "case", MW = "MW")) |>
+                            "case" = "case")) |>
   # left_join(filter(vTradeCap, year %in% max(vTradeCap$year)),
   left_join(vTradeCap, 
             by = c("trd_name" = "trade"))
@@ -1789,12 +1918,12 @@ ggplot() +
       linewidth = value
     ),
     color = "dodgerblue", lineend = "round",
-    data = filter(b, case == "current")
+    data = filter(b, value > 20)
   ) +
-  geom_segment(aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
-    color = alpha("white", .5), lineend = "round",
-    data = filter(a, case == "new")
-  ) +
+  # geom_segment(aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
+  #   color = alpha("white", .5), lineend = "round",
+  #   data = filter(a, case == "new")
+  # ) +
   geom_point(aes(lon, lat), data = points_coord, color = "red") +
   labs(x = "", y = "") +
   facet_grid(year~scenario) +

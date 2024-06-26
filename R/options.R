@@ -18,7 +18,7 @@ ideea_global_options <- function(edit = FALSE, load = !edit, remove = FALSE) {
       return(invisible(success))
     }
     write_lines("message('Loading IDEEA global options.')", fl, append = T)
-    write_lines("message(\"(use 'ideea_global_options(edit = TRUE)' to edit)\"", fl, append = T)
+    write_lines("message(\"(use 'ideea_global_options(edit = TRUE)' to edit)\")", fl, append = T)
     write_lines('', fl, append = T)
     write_lines("# IDEEA external dataset", fl, append = T)
     write_lines("# set_ideea_extra('...')", fl, append = T)

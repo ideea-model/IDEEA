@@ -33,7 +33,10 @@ This time-table is to define a `calendar` object, that also describes the hierar
 timetable_full_year <- ideea_modules$time_tables$d365_h24
 
 # create calendar object from a time-table
-full_calendar_d365_h24 <- newCalendar(timetable = timetable_full_year)
+calendar_d365_h24_full <- newCalendar(
+  name = "d365_h24",
+  timetable = timetable_full_year
+  )
 ```
 
 The model object (described below) must have the `calendar` object with all time-frames and time-slices used in the model. However, scenarios can be solved for a subset of the time-slices, defined by another `calendar` object with sub-set of time-slices. Here we define a calendar with a subset of 1 day per month and 24 hours per each day. Therefore, the total number of time-slices in the subset is 12 days * 24 hours = 288 time-slices (vs. 8760 time-slices in the full calendar).
@@ -60,6 +63,7 @@ print(paste("   Total number of hours per year:", SUBSET_HOURS))
 
 # Partial calendar
 partial_calendar <- newCalendar(
+  name = "d365_h24_subset_1day_per_month",
   timetable = timetable_subset,
   year_fraction = sum(timetable_subset$share)
 )
@@ -69,35 +73,80 @@ partial_calendar <- newCalendar(
 Calendars are (currently) set sub-annual time-structure for all years. 
 ```{r, eval=TRUE}
 horizon_2020_2060_by_10 <- newHorizon(
+  name = "2020_2060_by_10",
   period = 2020:2060,
   intervals = c(1, 5, rep(10, 15)),
   mid_is_end = T
 )
 horizon_2020_2060_by_10
 
+horizon_2020_2060_by_5 <- newHorizon(
+  name = "2020_2060_by_5",
+  period = 2020:2060,
+  intervals = c(1, rep(5, 25)),
+  mid_is_end = T
+)
+
 horizon_2020 <- newHorizon(
+  name = "2020",
   period = 2020,
   intervals = c(1),
   mid_is_end = T
 )
 
+horizon_2030 <- newHorizon(
+  name = "2030",
+  period = 2030,
+  intervals = c(1),
+  mid_is_end = T
+)
+
+horizon_2040 <- newHorizon(
+  name = "2040",
+  period = 2040,
+  intervals = c(1),
+  mid_is_end = T
+)
+
 horizon_2050 <- newHorizon(
+  name = "2050",
   period = 2050,
   intervals = c(1),
   mid_is_end = T
 )
 
+horizon_2060 <- newHorizon(
+  name = "2060",
+  period = 2060,
+  intervals = c(1),
+  mid_is_end = T
+)
+
+horizon_2070 <- newHorizon(
+  name = "2070",
+  period = 2070,
+  intervals = c(1),
+  mid_is_end = T
+)
 ```
 
 
 
 ```{r, eval=TRUE, include=FALSE}
 calendars <- list(
-  full_calendar_d365_h24 = full_calendar_d365_h24, # full calendar
-  partial_calendar_1day_per_month = partial_calendar, # partial calendar
-  horizon_2020_2060_by_10 = horizon_2020_2060_by_10, # model horizon
+  calendar_d365_h24_full = calendar_d365_h24_full, # full calendar
+  calendar_d365_h24_subset_1day_per_month = partial_calendar, # partial calendar
+  # partial_calendar_1day_per_month = partial_calendar, # partial calendar
+  # multi-year model horizons
+  horizon_2020_2060_by_5 = horizon_2020_2060_by_5, # by 5 years
+  horizon_2020_2060_by_10 = horizon_2020_2060_by_10, # by 10 years
+  # one-year horizons
   horizon_2020 = horizon_2020,
-  horizon_2050 = horizon_2050
+  horizon_2030 = horizon_2030,
+  horizon_2040 = horizon_2040,
+  horizon_2050 = horizon_2050,
+  horizon_2060 = horizon_2060,
+  horizon_2070 = horizon_2070
 )
 
 save(calendars, file = here("data-raw/calendars.RData"))
