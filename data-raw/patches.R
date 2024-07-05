@@ -75,3 +75,32 @@ if (F) {
   fwrite(tra_5x5, file = glue("data-raw/trade_matrix_r5_v01.csv"))
 
 }
+
+if (F) {
+  # patch: extend investment period for 2050 techs (2024-06-27)
+  library(IEEEA); library(data.table)
+  ideea_modules <- IDEEA::ideea_modules
+  techs <- ideea_modules$techs
+  techs |> class()
+  techs |> names()
+  techs$ECOASUB |> names()
+
+  for (p in names(techs)) {
+    # stop()
+    VIN2050 <- names(techs[[p]])
+    VIN2050 <- VIN2050[VIN2050 %like% "2050"]
+    for (tc in VIN2050) {
+      # stop()
+      message(tc)
+      techs[[p]]@data[[tc]] <-
+        update(techs[[p]][[tc]], end = techs[[p]][[tc]]@end[0,])
+
+    }
+
+  }
+
+  ideea_modules$techs <- techs
+
+  usethis::use_data(ideea_modules, internal = F, overwrite = T)
+  # rebuild the package
+}

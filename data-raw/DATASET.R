@@ -68,16 +68,6 @@ if (F) { # run manually
 
 # usethis::use_data(DATASET, overwrite = TRUE)
 
-
-### Calendars ####
-if (F) {
-  timetable_full_year <- ideea_modules$time_tables$d365_h24
-  full_calendar_d365_h24 <- newCalendar(timetable = timetable_full_year)
-  calendars <- list(
-
-  )
-}
-
 ### Transmission ####
 if (F) {
   library(IDEEA)
@@ -90,7 +80,11 @@ if (F) {
     ideea_data$transmission_5x5 <- NULL
   }
   transmission$reg5 <- fread("data-raw/trade_matrix_r5_v01.csv")
-  transmission$reg32 <- fread("data-raw/trade_matrix_r32_v01.csv")
+  transmission$reg32 <- rbind(
+    fread("data-raw/trade_matrix_r32_v01.csv"),
+    fread("data-raw/trade_matrix_r32_v02.csv"),
+    fread("data-raw/trade_matrix_r32_v03.csv")
+  )
   ideea_data$transmission <- transmission
   usethis::use_data(ideea_data, internal = F, overwrite = T)
 }

@@ -58,7 +58,9 @@ base_year <- 2019 # the first year of the model (base year or `BY`)
 if (nreg == 5) {
   transmission_matrix <- "current"
 } else if (nreg == 32) {
-  transmission_matrix <- "68_lines"
+  # transmission_matrix <- "newlines_v01" # ~70 power lines
+  # transmission_matrix <- "newlines_v02" # ~50 power lines
+  transmission_matrix <- "newlines_v03" # ~30 power lines
 } else {
   stop("Only 5 and 32 regions are currently implemented")
 }
@@ -1170,7 +1172,13 @@ STG_BTR_daily$STG_BTR_2020@fullYear
 
 ## Transmission  
 
+### HVAC
+HVAC cost: INR 1.56 Cr/km/GW
+Losses: 7%-10% per 1000km
+HVDC Cost: INR 3-5 Cr/km 
+Losses: 1-3% per 1000km
 ```{r, warning=FALSE}
+# transmission_matrix <- "newlines_v01"
 transmission_lines <- ideea_data$transmission[[regN]] |>
   filter(case == transmission_matrix, !is.na(MW)) |>
   rename(dst = region1) |>
@@ -1197,7 +1205,11 @@ a <- transmission_lines |>
       st_sfc(st_point(c(lon.y, lat.y)), crs = 4326)
       ),
     # adding 15% to the distance for landscape
-    distance_km = round(1.15 * as.numeric(distance_km) / 1e3)
+    distance_km = round(1.15 * as.numeric(distance_km) / 1e3),
+    AC_eff = 1 / (1 + 0.1 * distance_km / 1e3), # ~10% loss per 1000 km 
+    AC_invcost = 2 * distance_km, # ~ 2 cr.INR/GW/km
+    DC_eff = 1 / (1 + 0.02 * distance_km / 1e3), # ~2% loss per 1000 km
+    DC_invcost = 4 * distance_km # ~ 4 cr.INR/GW/km + converters
   ) |>
   as.data.table()
 a
@@ -1220,10 +1232,11 @@ ggplot() +
   labs(x = "", y = "") +
   theme_bw()
 
-network <- transmission_lines |>
-  filter(case == "68_lines") |>
+network <- a |>
+  filter(case == transmission_matrix) |>
   mutate(
-    trd_name = paste("TRL", region, dst, sep = "_")
+    trd_name_ac = paste("HVAC", region, dst, sep = "_"),
+    trd_name_dc = paste("HVDC", region, dst, sep = "_")
     ) |>
   rename(
     region.x = region,
@@ -1231,12 +1244,17 @@ network <- transmission_lines |>
   )
 # network$MW <- 0 
 
-repo_transmission <- newRepository("transmission")
+repo_transmission_ac <- newRepository("transmission")
 if (nrow(network) > 0) {
   for (i in 1:nrow(network)) {
     trd <- newTrade(
-      name = network$trd_name[i],
-      # desc = network$lines_type[i],
+      name = network$trd_name_ac[i],
+      desc = paste0("Bi-directional HVAC transmission line between ",
+                    network$region.x[i], " and ",
+                    network$region.y[i], 
+                    ifelse(is.null(network$lines_type[i]), "", 
+                           paste0(" (", network$lines_type[i], ")"))
+                    ),
       commodity = "ELC",
       routes = data.frame(
         src = c(network$region.x[i], network$region.y[i]),
@@ -1245,31 +1263,276 @@ if (nrow(network) > 0) {
       trade = data.frame(
         src = c(network$region.x[i], network$region.y[i]),
         dst = c(network$region.y[i], network$region.x[i]),
-        teff = rep(1 - .1, 2)
+        teff = c(network$AC_eff[i], network$AC_eff[i])
       ),
       capacityVariable = T,
       invcost = data.frame(
         # convert(1000, "USD/MW/mi", "cr.INR/GW/km") ~= 5 cr.INR/GW/km
         # see: https://www.nrel.gov/docs/fy22osti/81662.pdf
         region = c(network$region.x[i], network$region.y[i]),
-        invcost = rep(5, 2) / 2 # olife == 2
+        invcost = rep(a$AC_invcost[i] / 2, 2) # olife == 2
       ),
-      olife = list(olife = 50), # doubled annualized invcost for consistency
+      olife = list(olife = 60), # doubled annualized invcost for consistency
       start = list(start = base_year - 10),
-      # capacity = data.frame(
-      #   year = c(2020, 2030, 2050, 2070),
-      #   stock = c(
-      #     network$MW[i] / 1000, network$MW[i] / 1000,
-      #     network$MW[i] / 1000, network$MW[i] / 1000
-      #   )
-      # ),
+      capacity = data.frame(
+        year = c(2020, 2030, 2050, 2070),
+        stock = c(
+          network$MW[i] / 1000, network$MW[i] / 1000,
+          network$MW[i] / 1000, network$MW[i] / 1000
+        ),
+        cap.up = 10 # upper limit on transmission capacity
+      ),
       cap2act = 24 * 365
     )
-    repo_transmission <- add(repo_transmission, trd)
+    repo_transmission_ac <- add(repo_transmission_ac, trd)
     rm(trd)
   }
 }
-names(repo_transmission)
+names(repo_transmission_ac)
+repo_transmission_ac[[1]]
+```
+
+<!-- Minimal network case -->
+```{r, eval=FALSE, include=FALSE}
+# Create a mini-model to find lowest cost network 
+# that connects all regions. 
+# The model specifies the demand for electricity in each region,
+# in the first "nreg" slices of the year. And assigns supply
+# to only one region in every slice via supply and weather objects.
+
+# get connected regions (mainland) regions
+regs_in_mod <- get_ideea_map(32, islands = FALSE, offshore = FALSE) |>
+  st_drop_geometry() |>
+  filter(!offshore) |>
+  pull(regN)
+nreg_in_mod <- length(regs_in_mod) # number of regions
+
+# select time-slices for the weather class
+ava_tbl <- data.frame(
+  region = regs_in_mod,
+  slice = ideea_modules$time_tables$d365_h24$slice[1:nreg_in_mod],
+  value = rep(1, nreg_in_mod)
+)
+
+# create data frame for the weather object (full year, all regions)
+ava_tot <- expand.grid(
+  region = regs_in_mod,
+  slice = ideea_modules$time_tables$d365_h24$slice
+) |>
+  mutate(value = 0) |>
+  rows_update(ava_tbl, by = c("region", "slice"))
+
+UNSERVED <- newImport(
+  name = "UNSERVED",
+  desc = "Unserved load - unserved electricity penalty, for debugging",
+  commodity = "ELC",
+  unit = "GWh",
+  imp = list(price = 1e6)
+)
+
+# supply creates a unit of electricity in each region
+SUPELC <- newSupply(
+  name = "SUPELC",
+  desc = "Injecton point of ELC",
+  commodity = "ELC",
+  unit = "GWh",
+  availability = data.frame(
+    cost = 1, # cost of electricity will affect the optimized network
+    ava.up = 1e4 # upper limit on supply will be adjusted by weather obj
+    ),
+  weather = data.frame(
+    weather = "WSUP",
+    wava.up = 1 # 
+  )
+)
+
+# weather limits supply to one region per slice
+WSUP <- newWeather(
+  name = "WSUP",
+  desc = "Injecton point of ELC",
+  weather = data.frame(
+    region = ava_tot$region,
+    slice = ava_tot$slice,
+    wval = ava_tot$value
+    ),
+  timeframe = "HOUR"
+  )
+
+# demand for electricity in each region, 
+# 1 GWh each selected slice and region
+DEM_ELC <- newDemand(
+  name = "DEM_ELC",
+  desc = "Demand for electricity",
+  commodity = "ELC",
+  unit = "GWh",
+  dem = data.frame(
+    # region = regs_in_mod,
+    slice = ideea_modules$time_tables$d365_h24$slice[1:nreg_in_mod],
+    dem = rep(1, nreg_in_mod)
+    )
+)
+DEM_ELC@dem
+
+# repository with all objects
+repo_optimal_network <- newRepository(
+  name = "repo_optimal_network",
+  ELC,
+  SUPELC,
+  WSUP,
+  UNSERVED,
+  repo_transmission_ac, # use "newlines_v01" with maximum number of lines
+  DEM_ELC
+  )
+
+# model
+mod_optimal_network <- newModel(
+  name = "optimal_network",
+  desc = "Optimal network model",
+  region = regs_in_mod,
+  repo_optimal_network,
+  calendar = ideea_modules$calendars$calendar_d365_h24_full,
+  horizon = ideea_modules$calendars$horizon_2050,
+  discount = 0
+  )
+
+# scenario/solved network
+scen_optimal_network <- solve(
+  mod_optimal_network, 
+  solver = solver_options$gams_gdx_cplex, 
+  tmp.del = F, wait = T)
+
+sns <- list(P1 = scen_optimal_network)
+
+vTradeCap <- getData(sns, "vTradeCap", merge = T, digits = 1)
+
+vTradeCap_HVAC <- vTradeCap |>
+  filter(grepl("HVAC", trade)) |>
+  as.data.table() 
+
+vTradeCap_HVDC <- vTradeCap |>
+  filter(grepl("HVDC", trade)) |>
+  as.data.table()
+
+opt_network <- 
+  left_join(
+    network,
+    vTradeCap, by = c("trd_name_ac" = "trade")
+  )
+# save(opt_network, file = "tmp/opt_network.RData")
+
+
+ggplot() +
+  geom_sf(data = ideea_sf, fill = "wheat") +
+  geom_segment(
+    aes(
+      x = lon.x, y = lat.x, xend = lon.y, yend = lat.y,
+      linewidth = value
+    ),
+    color = "dodgerblue", lineend = "round", alpha = .75,
+    data = filter(opt_network, value > 1)
+  ) +
+  geom_point(aes(lon, lat), data = points_coord, color = "red") +
+  labs(x = "", y = "") +
+  facet_grid(year~scenario) +
+  theme_ideea_map()
+
+```
+
+### HVDC
+```{r}
+EDC <- newCommodity(
+  name = "EDC",
+  desc = "Ultra high voltage DC electricity",
+  unit = "GWh"
+)
+
+# Converters (inverter and rectifier stations)
+EDC2ELC <- newTechnology(
+  name = "EDC2ELC",
+  desc = "Inverter station",
+  input = list(comm = "EDC", unit = "GWh"),
+  output = list(comm = "ELC", unit = "GWh"),
+  invcost = list(
+    invcost = 500
+  ), 
+  ceff = list(
+    comm = "ELC",
+    cact2cout = .99
+    ),
+  olife = list(olife = 30),
+  cap2act = 24 * 365
+)
+draw(EDC2ELC)
+
+ELC2EDC <- newTechnology(
+  name = "ELC2EDC",
+  desc = "Rectifier station",
+  output = list(comm = "EDC", unit = "GWh"),
+  input = list(comm = "ELC", unit = "GWh"),
+  invcost = list(
+    invcost = 500
+  ), 
+  ceff = list(
+    comm = "EDC",
+    cact2cout = .99),
+  olife = list(olife = 30),
+  cap2act = 24 * 365
+)
+draw(ELC2EDC)
+
+repo_transmission_dc <- 
+  newRepository(name = "transmission_dc", EDC, EDC2ELC, ELC2EDC)
+
+if (nrow(network) > 0) {
+  for (i in 1:nrow(network)) {
+    trd <- newTrade(
+      name = network$trd_name_dc[i],
+      desc = paste0("Bi-directional HVDC transmission line between ",
+                    network$region.x[i], " and ",
+                    network$region.y[i], 
+                    ifelse(is.null(network$lines_type[i]), "", 
+                           paste0(" (", network$lines_type[i], ")"))
+                    ),
+      commodity = "EDC",
+      routes = data.frame(
+        src = c(network$region.x[i], network$region.y[i]),
+        dst = c(network$region.y[i], network$region.x[i])
+      ),
+      trade = data.frame(
+        src = c(network$region.x[i], network$region.y[i]),
+        dst = c(network$region.y[i], network$region.x[i]),
+        teff = c(network$DC_eff[i], network$DC_eff[i])
+      ),
+      capacityVariable = T,
+      invcost = data.frame(
+        # convert(1000, "USD/MW/mi", "cr.INR/GW/km") ~= 5 cr.INR/GW/km
+        # see: https://www.nrel.gov/docs/fy22osti/81662.pdf
+        region = c(network$region.x[i], network$region.y[i]),
+        invcost = rep(a$DC_invcost[i] / 2, 2) # olife == 2
+      ),
+      olife = list(olife = 60), # doubled annualized invcost for consistency
+      start = list(start = base_year - 10),
+      capacity = data.frame(
+        year = c(2020, 2030, 2050, 2070),
+        stock = c(
+          network$MW[i] / 1000, network$MW[i] / 1000,
+          network$MW[i] / 1000, network$MW[i] / 1000
+        ),
+        cap.up = 100 #upper limit on transmission capacity
+      ),
+      cap2act = 24 * 365
+    )
+    repo_transmission_dc <- add(repo_transmission_dc, trd)
+    rm(trd)
+  }
+}
+names(repo_transmission_dc)
+# filter out some lines in mountainous regions
+repo_transmission_dc@data[["HVDC_HP_JK"]] <- NULL
+repo_transmission_dc@data[["HVDC_SK_WB"]] <- NULL
+repo_transmission_dc@data[["HVDC_BR_SK"]] <- NULL
+repo_transmission_dc@data[["HVDC_ML_SK"]] <- NULL
+
 ```
 
 ## Unserved load
@@ -1293,8 +1556,8 @@ CO2_CAP <- newConstraint(
   name = "CO2_CAP",
   eq = "<=",
   rhs = list(
-    year = c(2025, 2060),
-    rhs = c(900000, 1e-10)
+    year = c(2025, 2060, 2100),
+    rhs = c(900000, 1e-10, 1e-10) # CO2 cap assumptions
   ),
   for.each = list(year = 2025:2100), # Cap total emission
   variable = list(
@@ -1490,11 +1753,12 @@ repo <- newRepository(
   STG_BTR, # storage with annual cycle
   # STG_BTR_daily, # alternative storage with daily cycle
   # transmission
-  repo_transmission,
+  repo_transmission_ac,
+  repo_transmission_dc,
   repo_geoccs,
   repo_ccstechs,
   # unserved load
-  # UNSERVED, # unserved load penalty
+  UNSERVED, # unserved load penalty
   # demand
   DEMELC_BY, # BY demand
   DEMELC_2X, # additional demand
@@ -1594,18 +1858,22 @@ Quick way to have a glimpse of the results
 # Reference case
 scen_REF_sub <- interpolate_model(
   mod,
-  name = "REF_sub" # indicating 'subset'
+  name = "REF_sub", # indicating 'subset'
+  calendar = ideea_modules$calendars$calendar_d365_h24_subset_1day_per_month,
+  horizon = ideea_modules$calendars$horizon_2020_2060_by_10
   # path = file.path("scenarios", glue("REF_sub_r{nreg}")),
   # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
   # partial_calendar, # add partial calendar to the interpolate function
   # ideea_modules$calendars$horizon_2050
 )
-scen_REF_sub@path <- ideea_scenario_dir_name(
-  name = "REF_sub", 
-  model_name = scen_REF_sub@model@name, 
-  calendar_name = scen_REF_sub@settings@calendar@name, 
-  horizon_name = "2020_2060_by_10"
-)
+scen_REF_sub@path <- file.path(
+  ideea_scenarios(),
+  ideea_scenario_dir_name(
+    name = "REF_sub", 
+    model_name = scen_REF_sub@model@name, 
+    calendar_name = scen_REF_sub@settings@calendar@name, 
+    horizon_name = "2020_2060_by_10"
+))
 
 scen_REF_sub <- write_sc(
   scen_REF_sub,
@@ -1633,20 +1901,25 @@ summary(scen_REF_sub)
 scen_CAP_sub <- interpolate(
   mod,
   name = "CAP_sub", # indicating 'subset'
-  path = file.path("scenarios", glue("CAP_sub_r{nreg}_debug")),
+  # path = file.path("scenarios", glue("CAP_sub_r{nreg}_debug")),
   # here we can add policy objects
   # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
   CO2_CAP,
-  ideea_modules$calendars$horizon_2050
+  calendar = ideea_modules$calendars$calendar_d365_h24_subset_1day_per_month,
+  # horizon = ideea_modules$calendars$horizon_2020_2060_by_10
+  ideea_modules$calendars$horizon_2060
   # partial_calendar # add partial calendar to the interpolate function
 )
 
-scen_CAP_sub@path <- ideea_scenario_dir_name(
-  name = "CAP_sub", 
-  model_name = mod@name, 
-  calendar_name = "d365_h24", 
-  horizon_name = "2050"
-)
+scen_CAP_sub@path <- file.path(
+  ideea_scenarios(),
+  ideea_scenario_dir_name(
+    name = "CAP_sub", 
+    model_name = mod@name, 
+    calendar_name = "d365_h24", 
+    horizon_name = "2050"
+))
+scen_CAP_sub@path
 
 scen_CAP_sub <- write_sc(
   scen_CAP_sub,
@@ -1680,12 +1953,15 @@ scen_REF <- interpolate_model(
   ideea_modules$calendars$horizon_2060
 )
 
-scen_REF@path <- ideea_scenario_name(
-  name = "REF", 
-  model_name = mod@name, 
-  calendar_name = "d365_h24", 
-  horizon_name = "2060"
-)
+scen_REF@path <- file.path(
+  ideea_scenarios(),
+  ideea_scenario_dir_name(
+    name = "REF", 
+    model_name = mod@name, 
+    calendar_name = "d365_h24", 
+    horizon_name = "2060"
+))
+scen_REF
 
 scen_REF <- write_sc(
   scen_REF,
@@ -1709,7 +1985,6 @@ summary(scen_REF)
 ```
 
 
-
 ```{r, eval=FALSE}
 set_progress_bar()
 # CO2 cap
@@ -1720,17 +1995,19 @@ scen_CAP <- interpolate(
   # here we can add policy objects
   # STG_BTR_daily, # Battery, modeled with daily cycle for sampled calendar
   CO2_CAP,
-  ideea_modules$calendars$horizon_2050
+  ideea_modules$calendars$horizon_2060
   # horizon_2050
   # partial_calendar # add partial calendar to the interpolate function
 )
 
-scen_CAP@path <- ideea_scenario_dir_name(
-  name = "CAP", 
-  model_name = mod@name, 
-  calendar_name = "d365_h24", 
-  horizon_name = "2050"
-)
+scen_CAP@path <- file.path(
+  ideea_scenarios(),
+  ideea_scenario_dir_name(
+    name = "CAP", 
+    model_name = mod@name, 
+    calendar_name = "d365_h24", 
+    horizon_name = "2060"
+  ))
 scen_CAP@path
 
 scen_CAP <- write_sc(
@@ -1744,7 +2021,7 @@ scen_CAP <- write_sc(
 scen_CAP
 scen_CAP@misc$tmp.dir
 
-# solve_scenario(scen_CAP, wait = F, force = F)
+solve_scenario(scen_CAP, wait = F, force = F)
 scen_CAP <- read(scen_CAP)
 # scen_CAP <- solve(scen_CAP, wait = T, tmp.del = F)
 
@@ -1754,20 +2031,17 @@ summary(scen_CAP)
 # installr::os.sleep()
 ```
 
-
 ## Results
-
 ### Compare scenarios
 ```{r, eval=params$solve}
 # create a list of
 sns <- list(
   # scen_REF,
-  # scen_CAP
+  scen_CAP
   # scen_REF_sub
-  scen_CAP_sub
+  # scen_CAP_sub
   # .scen$CAP_sub,
   # .scen$REF_sub
-
 )
 
 # compare objective (in cr.₹)
@@ -1776,7 +2050,8 @@ getData(sns, "vObjective", merge = T)
 ```
 
 ```{r}
-getData(sns, "vBalance", comm = "CO2", merge = T, digits = 1, drop.zeros = T) |> 
+getData(sns, "vBalance", comm = "CO2", merge = T, digits = 1, 
+        drop.zeros = T) |> 
   # group_by(name, year) |> 
   # summarize(GWh = sum(value)) |> 
   pivot_wider(names_from = scenario, values_from = value)
@@ -1803,7 +2078,7 @@ vTechCap |>
 #   summarize(GWh = sum(value))
 
 getData(sns, "pDemand", digits = 1, drop.zeros = T, merge = T) |> 
-  group_by(name, comm) |> 
+  group_by(scenario, name, comm) |> 
   summarize(GWh = sum(value))
 
 ```
@@ -1829,8 +2104,8 @@ ggplot() +
   geom_sf(aes(fill = GW), data = vTechCap_agg, na.rm = T) +
   scale_fill_viridis_c(option = "H", transform = "sqrt") +
   # scale_fill_viridis_c(option = "C", transform = "log10") +
-  facet_grid(scenario~process) +
-  # facet_wrap(scenario~process) +
+  # facet_grid(process~scenario) +
+  facet_wrap(scenario~process) +
   theme_ideea_map()
 
 vTechCap_agg |> st_drop_geometry() |> 
@@ -1899,16 +2174,44 @@ ggplot() +
 ```
 
 
-## Trade
+#### Network
 ```{r, eval=params$solve}
 vTradeCap <- getData(sns, "vTradeCap", merge = T, digits = 1)
 
-b <- a |>
-  left_join(network, by = c("region" = "region.x", dst = "region.y",
+vTradeCap_HVAC <- vTradeCap |>
+  filter(grepl("HVAC", trade)) |>
+  as.data.table() 
+
+vTradeCap_HVDC <- vTradeCap |>
+  filter(grepl("HVDC", trade)) |>
+  as.data.table()
+
+b_ac <- a |>
+  select(-starts_with("lon"), -starts_with("lat")) |>
+  left_join(network, by = c("region" = "region.x", 
+                            dst = "region.y",
                             "case" = "case")) |>
   # left_join(filter(vTradeCap, year %in% max(vTradeCap$year)),
   left_join(vTradeCap, 
-            by = c("trd_name" = "trade"))
+            by = c("trd_name_ac" = "trade")) |>
+  mutate(
+    type = "HVAC"
+  )
+
+b_dc <- a |>
+  select(-starts_with("lon"), -starts_with("lat")) |>
+  left_join(network, by = c("region" = "region.x", 
+                            dst = "region.y",
+                            "case" = "case")) |>
+  # left_join(filter(vTradeCap, year %in% max(vTradeCap$year)),
+  left_join(vTradeCap, 
+            by = c("trd_name_dc" = "trade")) |>
+  mutate(
+    type = "HVDC"
+  )
+
+b <- rbind(b_ac, b_dc) |>
+  as.data.table()
 
 ggplot() +
   geom_sf(data = ideea_sf, fill = "wheat") +
@@ -1917,8 +2220,8 @@ ggplot() +
       x = lon.x, y = lat.x, xend = lon.y, yend = lat.y,
       linewidth = value
     ),
-    color = "dodgerblue", lineend = "round",
-    data = filter(b, value > 20)
+    color = "dodgerblue", lineend = "round", alpha = .75,
+    data = filter(b, value > 1)
   ) +
   # geom_segment(aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
   #   color = alpha("white", .5), lineend = "round",
@@ -1926,12 +2229,55 @@ ggplot() +
   # ) +
   geom_point(aes(lon, lat), data = points_coord, color = "red") +
   labs(x = "", y = "") +
-  facet_grid(year~scenario) +
+  facet_grid(year~type) +
+  guides(fill = guide_legend(title = "GW")) +
   theme_ideea_map()
+ggsave("tmp/network.png", width = 6, height = 4, scale = 1.25)
 
 ```
 
+#### DC converter stations
 ```{r}
+vTechCap_DC <- getData(sns, "vTechCap", tech_ = "ELC2EDC|EDC2ELC", 
+                       merge = T, digits = 1, process = T) |>
+  as.data.table()
+
+vTechCap_DC_sf <- getData(sns, "vTechCap", tech_ = "ELC2EDC|EDC2ELC", 
+                          merge = T, digits = 1, process = T) |>
+  # drop_process_cluster() |>
+  drop_process_vintage() |> 
+  group_by(scenario, process, region, year) |>
+  summarise(GW = sum(value, na.rm = T), .groups = "drop") |>
+  filter(GW > 0) |>
+  full_join(ideea_sf, by = c(region = regN_off),
+    relationship = "many-to-many") |>
+  filter(!is.na(process)) |>
+  # filter(year %in% c(2020, 2035, 2060)) |>
+  st_as_sf()
+vTechCap_DC_sf$GW |> summary()
+
+ggplot() +
+  geom_sf(data = ideea_sf) +
+  geom_sf(aes(fill = GW), na.rm = T, 
+          data = filter(vTechCap_DC_sf, GW > 1)) +
+  scale_fill_viridis_c(option = "D") +
+  # scale_fill_viridis_c(option = "C", transform = "log10") +
+  facet_grid(scenario~process) +
+  # facet_wrap(scenario~process) +
+  labs(title = "HVAC/HVDC converter stations",
+       subtitle = "EDC2ELC - electricity import, ELC2EDC - export") +
+  theme_ideea_map()
+ggsave("tmp/DC_converter_stations.png", width = 6, height = 4, 
+       scale = 1.25)
+
+```
+
+
+#### Unserved
+```{r}
+getData(sns, "vImportRow", comm = "ELC", drop.zeros = T, merge = F) 
+  # group_by(name, comm) |> 
+  # summarize(GWh = sum(value))
 
 
 ```
