@@ -1280,6 +1280,7 @@ if (nrow(network) > 0) {
           network$MW[i] / 1000, network$MW[i] / 1000,
           network$MW[i] / 1000, network$MW[i] / 1000
         ),
+        # ncap.up = 5, # upper limit on new transmission
         cap.up = 10 # upper limit on transmission capacity
       ),
       cap2act = 24 * 365
@@ -1820,7 +1821,8 @@ electricity <- list(
   STG_BTR = STG_BTR, # battery storage with yearly cycle
   # STG_BTR_daily = STG_BTR_daily, # battery storage with daily cycle
   # transmission
-  repo_transmission = repo_transmission, # transmission network
+  repo_transmission_ac = repo_transmission_ac, # transmission network
+  repo_transmission_dc = repo_transmission_dc, # transmission network
   # unserved load
   UNSERVED = UNSERVED, # unserved load penalty
   # demand (load curves)
@@ -1845,13 +1847,13 @@ save(electricity, file = fname)
 message("Electricity sector model objects are saved: ", fname) 
 ```
 
-# Solving the model
+## Solving the model
 Note:
 The full model requires powerful solver (CPLEX or GUROBI) and GAMS
 Julia or Python + CPLEX/GUROBI will also work, but currently require more time to generate the problem for the solver.  
 It is recommended to solve the model for a portion of a year (subset of time-slices), which can be solved with free solvers such as HiGHS or Cbc.
 
-## Reference scenario - subset
+### Reference scenario - subset
 Quick way to have a glimpse of the results
 ```{r, eval=params$solve}
 # set_progress_bar("progress")
@@ -1895,7 +1897,7 @@ scen_REF_sub <- save_scenario(scen_REF_sub)
 summary(scen_REF_sub)
 ```
 
-## Policy scenarios
+### Policy scenarios
 ```{r, eval=params$solve}
 # CO2 cap
 scen_CAP_sub <- interpolate(
@@ -1907,7 +1909,7 @@ scen_CAP_sub <- interpolate(
   CO2_CAP,
   calendar = ideea_modules$calendars$calendar_d365_h24_subset_1day_per_month,
   # horizon = ideea_modules$calendars$horizon_2020_2060_by_10
-  ideea_modules$calendars$horizon_2060
+  ideea_modules$calendars$horizon_2050
   # partial_calendar # add partial calendar to the interpolate function
 )
 
@@ -1925,6 +1927,8 @@ scen_CAP_sub <- write_sc(
   scen_CAP_sub,
   solver = solver_options$gams_gdx_cplex_barrier
   # solver = solver_options$gams_gdx_cplex_parallel
+  # solver = solver_options$pyomo_glpk
+  # solver = solver_options$pyomo_cbc
   # solver = solver_options$julia_highs_barrier
   # solver = solver_options$julia_highs_simplex
   # solver = solver_options$julia_highs_parallel
@@ -2012,8 +2016,9 @@ scen_CAP@path
 
 scen_CAP <- write_sc(
   scen_CAP,
-  solver = solver_options$gams_gdx_cplex_barrier
+  # solver = solver_options$gams_gdx_cplex_barrier
   # solver = solver_options$gams_gdx_cplex_parallel
+  solver = solver_options$pyomo_glpk
   # solver = solver_options$julia_highs_barrier
   # solver = solver_options$julia_highs_simplex
   # solver = solver_options$julia_highs_parallel

@@ -1,8 +1,8 @@
 Package: IDEEA
 Title: Indian Zero Carbon Energy Pathways (IDEEA) optimization model
 Description: IDEEA is a capacity expansion and energy resource planning model built with a goal to explore energy transition options and pathways for India, and inform policy.
-Version: 0.0.40.9000
-Date: 2024-07-04
+Version: 0.0.42.9000
+Date: 2024-07-23
 Authors@R: 
     person("IDEEA", "comunity", email = "ideea@email.org", role = c("aut", "cre"))
 License: AGPL (>= 3)
