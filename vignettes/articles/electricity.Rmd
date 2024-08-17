@@ -34,15 +34,15 @@ knitr::opts_chunk$set(
 
 ```{r, echo=FALSE, fig.cap="Schematic representation of IDEEA electricity model"}
 try(knitr::include_graphics("images/elc_schematic.jpg"), silent = T)
-if (packageVersion("energyRt") < "0.11.34") {
+if (packageVersion("energyRt") < "0.11.37") {
   stop('Please update energyRt.
        pak::pkg_install("energyRt/energyRt@dev")')
 }
-if (packageVersion("IDEEA") < "0.0.37") {
+if (packageVersion("IDEEA") < "0.0.42") {
   stop('Please update IDEEA
        pak::pkg_install("ideea-model/IDEEA@dev")')
 }
-stopifnot(packageVersion("IDEEA") >= "0.0.37")
+stopifnot(packageVersion("IDEEA") >= "0.0.42")
 ```
 
 ## Configuration
