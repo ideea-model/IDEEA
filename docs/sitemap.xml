@@ -1,159 +1,57 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/404.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/about.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/about.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/buildings.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/ccus.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/data.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/electricity.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/energy.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/growth.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/help.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/hydrogen.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/install.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/iron_steel.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/karnataka.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/regions.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/articles/transport.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/buildings.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/ccus.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/data.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/electricity.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/energy.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/growth.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/help.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/hydrogen.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/IDEEA.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/install.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/iron_steel.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/karnataka.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/regions.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/articles/transport.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/code_of_conduct.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/add_tech_type.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/drop_process_vintage.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/drop_vintage.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_cf.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_cl_sf.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_data.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_map.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/IDEEA-package.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_data.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_extra.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_global_options.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_modules.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_snapshot.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/ideea_snapshot_cf.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://ideea-model.github.io/IDEEA/reference/pipe.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://ideea-model.github.io/IDEEA/404.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/about.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/buildings.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/calendars.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/ccus.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/data.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/electricity.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/energy.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/growth.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/help.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/hydrogen.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/IDEEA.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/index.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/install.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/iron_steel.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/karnataka.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/regions.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/reports.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/transmission.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/articles/transport.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/authors.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/code_of_conduct.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/index.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/LICENSE-text.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/LICENSE.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/add_reg_off.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/add_tech_type.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/drop_cluster.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/drop_process_cluster.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/drop_process_vintage.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/drop_vintage.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/get_cluster.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_cf.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_cl_sf.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_data.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/get_ideea_map.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/IDEEA-package.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_cl_mask.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_data.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_extra.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_gif_cf.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_global_options.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_modules.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_scenarios.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_scenario_dir_name.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_scenario_name.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_snapshot.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/ideea_snapshot_cf.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/index.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/name_with_cluster.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/pipe.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/set_ideea_extra.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/set_ideea_scenarios.html</loc></url>
+<url><loc>https://ideea-model.github.io/IDEEA/reference/theme_ideea_map.html</loc></url>
 </urlset>
+
