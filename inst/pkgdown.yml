@@ -1,0 +1,26 @@
+pandoc: 3.1.11
+pkgdown: 2.1.0
+pkgdown_sha: ~
+articles:
+  articles/about: about.html
+  articles/buildings: buildings.html
+  articles/calendars: calendars.html
+  articles/ccus: ccus.html
+  articles/data: data.html
+  articles/electricity: electricity.html
+  articles/energy: energy.html
+  articles/growth: growth.html
+  articles/help: help.html
+  articles/hydrogen: hydrogen.html
+  IDEEA: IDEEA.html
+  articles/install: install.html
+  articles/iron_steel: iron_steel.html
+  articles/karnataka: karnataka.html
+  articles/regions: regions.html
+  articles/reports: reports.html
+  articles/transmission: transmission.html
+  articles/transport: transport.html
+last_built: 2024-08-27T02:10Z
+urls:
+  reference: https://ideea-model.github.io/IDEEA/reference
+  article: https://ideea-model.github.io/IDEEA/articles

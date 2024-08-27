@@ -1,0 +1,164 @@
+---
+title: "Reports"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Analysis of the model output
+
+An example of a report that can be generated from the model output, using results from the IDEEA electricity model.
+
+
+```{r setup, warning=FALSE, message=FALSE}
+library(IDEEA)
+library(tidyverse)
+```
+
+
+### Load the model output
+Here we use pre-saved results from the IDEEA electricity model, 5 or 32 regions, as described in the `vignette("electricity")`.
+
+```{r}
+# load reference scenario
+load_scenario(file.path(ideea_scenarios(), "REF_IDEEA_ELC_reg32_d365_h24_2060"))
+# load carbon constrained scenario
+load_scenario(file.path(ideea_scenarios(), "CAP_IDEEA_ELC_reg32_d365_h24_2060"))
+
+# combine scenarios in one list for comparison
+sns <- list(
+  REF_2060 = .scen$REF, 
+  CAP_2060 = .scen$CAP
+  )
+
+```
+
+<details><summary>Details</summary>
+```{r}
+# quick check
+summary(.scen$REF)
+summary(.scen$CAP)
+
+summary(sns) # list with presolved IDEEA scenarios
+```
+</details>
+
+### Compare the results
+
+#### Objective 
+Objective value of the model (minimized cost)
+```{r}
+getData(sns, "vObjective", merge = TRUE)
+```
+
+#### Installed capacity
+<details><code></summary>
+```{r}
+vTechCap <- getData(
+  scen = sns, 
+  name = c("vTechCap"), # capacity variable of technologies
+  tech_ = "^E", # select only electricity generators (start with "E")
+  process = TRUE, # use unified set-name for all processes (rename 'tech' -> 'process')
+  digits = 2, # round to 2 digits
+  drop.zeros = T, # drop zero values
+  merge = TRUE # merge tables
+  ) |>
+  drop_process_cluster() |> # erase cluster from process name
+  drop_process_vintage() # erase vintage-year from process name
+
+vStorageCap <- getData(
+  scen = sns, 
+  name = c("vStorageCap"), # capacity variables of storage technologies
+  # tech_ = "^S", # select only storage technologies (start with "S")
+  process = TRUE, # use unified set-name for all processes (rename 'tech' -> 'process')
+  digits = 2, # round to 2 digits
+  drop.zeros = T, # drop zero values
+  merge = TRUE # merge tables
+  ) |> 
+  drop_process_vintage() # erase vintage-year from process name
+
+# combine technologies and storage
+vCap <- bind_rows(vTechCap, vStorageCap)
+
+vCap$process |> unique()
+
+```
+</details>
+
+```{r, echo=FALSE}
+vCap |>
+  group_by(scenario, process, year) |>
+  summarise(GW = sum(value), .groups = "drop") |>
+  pivot_wider(names_from = scenario, values_from = GW) |>
+kableExtra::kable(
+  caption = "Installed capacity of electricity generation and storage technologies, GW", 
+  align = "c"
+)
+```
+
+
+#### Transmission capacity
+```{r}
+vTradeCap <- getData(sns, "vTradeCap", merge = TRUE, process = T)
+  
+  
+```
+
+
+#### Generation mix
+```{r, fig.cap="Electricity generation mix by technology, TWh"}
+vTechOut_ELC <- getData(sns, "vTechOut", tech_ = "^E", process = T, digits = 2,
+                        drop.zeros = TRUE, merge = TRUE) |>
+  drop_process_cluster() |>
+  drop_process_vintage()
+
+vTechOut_ELC_year <- vTechOut_ELC |>
+  group_by(scenario, process, year) |>
+  summarise(TWh = sum(value) / 1e3, .groups = "drop") |>
+  filter(!process %in% c("ELC2EDC", "EDC2ELC")) # drop converters
+
+ggplot(vTechOut_ELC_year) +
+  geom_bar(aes(x = scenario, y = TWh, fill = process), stat = "identity") +
+  scale_fill_viridis_d(option = "H", direction = -1) +
+  theme_bw()
+
+```
+
+#### Intraday generation profile
+
+
+
+
+#### Emissions
+```{r, echo=FALSE}
+# Emissions from fuel combustion
+# vEmsFuelTot <- getData(sns, "vEmsFuelTot", merge = TRUE)
+
+# Emissions from processes (auxiliary commodities)
+all_emis <- getData(sns, 
+                    name = c("vTechAOut", "vEmsFuelTot"), 
+                    process = T, digits = 2,
+                    drop.zeros = TRUE, merge = TRUE)
+
+all_emis$comm |> unique()
+
+```
+
+
+```{r, tab.cap="Emissions from fuel combustion and processes, CO2 Mt, kt others"}
+all_emis |>
+  group_by(scenario, comm, year) |>
+  summarise(Mt = sum(value) / 1e3, .groups = "drop") |>
+  pivot_wider(names_from = scenario, values_from = Mt) |>
+  kableExtra::kable(
+    # caption = "Emissions from fuel combustion and processes, CO2 Mt, kt others", 
+    align = "c"
+  )
+
+```
+
+

@@ -93,7 +93,7 @@ drop_cluster <- function(name, digits = 2, cluster_flag = "CL") {
   pattern1 <- paste0("_(?:", cluster_flag,")?(?<!\\d)(\\d{", digits,"})(?!\\d)")
   # pattern2 <- paste0("\\d{", digits,"}")
   # browser()
-  str_replace(name, pattern1, "")
+  stringr::str_replace(name, pattern1, "")
 }
 
 #' Drop cluster identifier from a process name

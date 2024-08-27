@@ -2,6 +2,7 @@ url: https://ideea-model.github.io/IDEEA
 template:
   bootstrap: 5
   bootswatch: minty
+  # light-switch: true
   # ganalytics: G-1FN9MK20PS
   includes:
     in_header: |
@@ -15,7 +16,8 @@ template:
         gtag('config', 'G-1FN9MK20PS');
       </script>
 navbar:
- components:
+  # bg: light
+  components:
    articles:
     text: Articles
     menu:
@@ -38,6 +40,8 @@ navbar:
       href: articles/energy.html
     - text: "—Electricity"
       href: articles/electricity.html
+    - text: "—Transmission"
+      href: articles/transmission.html
     - text: "—Hydrogen"
       href: articles/hydrogen.html
     - text: "—CCUS"
@@ -59,6 +63,8 @@ navbar:
     - text: "—Karnataka"
       # href: articles/karnataka.html
     # - text: "IDEEA "
+    - text: "—Reports"
+      href: articles/reports.html
     - text: -------
     - text: "IDEEA in Switch (in work)"
     - text: "IDEEA in PyPSA (planned)"
@@ -75,3 +81,5 @@ navbar:
 # — long dash
 # ● bullet point
 
+deploy:
+  install_metadata: true

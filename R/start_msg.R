@@ -10,7 +10,9 @@
   )
   # load global settings if exist
   if (file.exists("~/.ideea.R")) {
-    IDEEA::ideea_global_options(load = TRUE)
+    try({
+      IDEEA::ideea_global_options(load = TRUE)
+    })
   }
 }
 

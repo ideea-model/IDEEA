@@ -1,0 +1,39 @@
+---
+title: "Build and Development Tools"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library("here") # points to the root of the project
+```
+
+
+## Website
+
+### Yaml
+```{r}
+# open the yaml file
+file.edit("_pkgdown.yml")
+```
+
+### (Re-)Build the whole website
+```{r}
+# rebuild the package if needed
+pkgdown::build_site(pkg = here()) 
+```
+
+
+## Documentation
+
+### New vignette or article
+
+```{r}
+# usethis::use_vignette("my-vignette")
+# usethis::use_article("my-article")
+
+# usethis::use_article("reports", "Reports")
+
+```
+

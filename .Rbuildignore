@@ -4,3 +4,9 @@ data-raw/
 /data-raw/
 ^data-raw$
 ^vignettes/articles$
+^dev/
+/dev/
+dev/
+solwork/
+scenarios/
+tmp/
