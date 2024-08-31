@@ -61,7 +61,7 @@ navbar:
     # - text: -------
     - text: "Regional models"
     - text: "—Karnataka"
-      # href: articles/karnataka.html
+      href: articles/karnataka.html
     # - text: "IDEEA "
     - text: "—Reports"
       href: articles/reports.html
@@ -83,3 +83,9 @@ navbar:
 
 deploy:
   install_metadata: true
+
+figures:
+  dpi: 300
+  # other.parameters:
+  #   rgl:
+  #     fig.asp: 1

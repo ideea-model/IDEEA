@@ -197,16 +197,17 @@ regs_in_mod <- get_ideea_map(32, islands = FALSE, offshore = FALSE) |>
 nreg_in_mod <- length(regs_in_mod) # number of regions
 
 # select time-slices for the weather class
+timetable <- ideea_modules$calendars$calendar_d365_h24@timetable
 ava_tbl <- data.frame(
   region = regs_in_mod,
-  slice = ideea_modules$time_tables$d365_h24$slice[1:nreg_in_mod],
+  slice = timetable$slice[1:nreg_in_mod],
   value = rep(1, nreg_in_mod)
 )
 
 # create data frame for the weather object (full year, all regions)
 ava_tot <- expand.grid(
   region = regs_in_mod,
-  slice = ideea_modules$time_tables$d365_h24$slice
+  slice = timetable$slice
 ) |>
   mutate(value = 0) |>
   rows_update(ava_tbl, by = c("region", "slice"))
@@ -256,7 +257,7 @@ DEM_ELC <- newDemand(
   unit = "GWh",
   dem = data.frame(
     # region = regs_in_mod,
-    slice = ideea_modules$time_tables$d365_h24$slice[1:nreg_in_mod],
+    slice = timetable$slice[1:nreg_in_mod],
     dem = rep(1, nreg_in_mod)
     )
 )
@@ -279,11 +280,11 @@ mod_optimal_network <- newModel(
   desc = "Optimal network model",
   region = regs_in_mod,
   repo_optimal_network,
-  calendar = ideea_modules$calendars$calendar_d365_h24_full,
+  calendar = ideea_modules$calendars$calendar_d365_h24,
   horizon = ideea_modules$calendars$horizon_2050,
   discount = 0
   )
-
+# 
 # scenario/solved network
 scen_optimal_network <- solve(
   mod_optimal_network, 

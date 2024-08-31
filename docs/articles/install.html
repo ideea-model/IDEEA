@@ -33,7 +33,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">IDEEA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.49.00.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.50.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>—Refineries</h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>—Cement and Clinker</h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>Regional models</h6></li>
-    <li><h6 class="dropdown-header" data-toc-skip>—Karnataka</h6></li>
+    <li><a class="dropdown-item" href="../articles/karnataka.html">—Karnataka</a></li>
     <li><a class="dropdown-item" href="../articles/reports.html">—Reports</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>IDEEA in Switch (in work)</h6></li>
@@ -207,9 +207,9 @@ and copy-paste the code from this document to the R-markdown file.</p>
 <span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"reticulate"</span>, upgrade <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># running Python from R</span></span>
 <span><span class="co"># install energyRt and merra2ools</span></span>
 <span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"energyRt/merra2ools"</span><span class="op">)</span> <span class="co"># (fix version later)</span></span>
-<span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"energyRt/energyRt@dev"</span><span class="op">)</span> <span class="co"># (fix version later)</span></span>
+<span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"energyRt/energyRt@v0.50"</span><span class="op">)</span> <span class="co"># (fix version later)</span></span>
 <span><span class="co"># install IDEEA</span></span>
-<span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"ideea-model/IDEEA"</span><span class="op">)</span> </span>
+<span><span class="fu"><a href="https://pak.r-lib.org/reference/pkg_install.html" class="external-link">pkg_install</a></span><span class="op">(</span><span class="st">"ideea-model/IDEEA@v0.50"</span><span class="op">)</span> </span>
 <span><span class="co"># GAMS users may want to install `gdxtools` (see GAMS section)</span></span>
 <span><span class="co"># pkg_install("lolow/gdxtools") # Manipulate GDX-files for data exchange</span></span>
 <span><span class="co"># additional packages for visualization and reporting</span></span>

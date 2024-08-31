@@ -33,7 +33,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">IDEEA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.49.00.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.50.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>—Refineries</h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>—Cement and Clinker</h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>Regional models</h6></li>
-    <li><h6 class="dropdown-header" data-toc-skip>—Karnataka</h6></li>
+    <li><a class="dropdown-item" href="../articles/karnataka.html">—Karnataka</a></li>
     <li><a class="dropdown-item" href="../articles/reports.html">—Reports</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>IDEEA in Switch (in work)</h6></li>
@@ -120,7 +120,10 @@ of the year and the 15th hour of the day), the ‘share’ column (for the
 share of the time-frame in the year), and ‘weight’ (for the weight of
 the time-frame in the year, used in sampled calendars).</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ideea_modules</span><span class="op">$</span><span class="va">time_tables</span><span class="op">$</span><span class="va">d365_h24</span></span>
+<code class="sourceCode R"><span><span class="co"># create timetable with 3 levels of timeframes: ANNUAL, YDAY, HOUR</span></span>
+<span><span class="va">timetable_d365_h24</span> <span class="op">&lt;-</span> <span class="fu">energyRt</span><span class="fu">::</span><span class="fu"><a href="https://energyRt.org/reference/calendar.html" class="external-link">make_timetable</a></span><span class="op">(</span><span class="fu">energyRt</span><span class="fu">::</span><span class="va">tsl_levels</span><span class="op">$</span><span class="va">d365_h24</span><span class="op">)</span></span>
+<span><span class="co"># full year timetable has 8760 time-slices (24 hours * 365 days)</span></span>
+<span><span class="va">timetable_d365_h24</span></span>
 <span><span class="co">#&gt;       ANNUAL   YDAY   HOUR    slice        share weight</span></span>
 <span><span class="co">#&gt;       &lt;char&gt; &lt;char&gt; &lt;char&gt;   &lt;char&gt;        &lt;num&gt;  &lt;num&gt;</span></span>
 <span><span class="co">#&gt;    1: ANNUAL   d001    h00 d001_h00 0.0001141553      1</span></span>
@@ -138,12 +141,10 @@ the time-frame in the year, used in sampled calendars).</p>
 also describes the hierarchy of time-frames and sets the sequence of the
 time-slices.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">timetable_full_year</span> <span class="op">&lt;-</span> <span class="va">ideea_modules</span><span class="op">$</span><span class="va">time_tables</span><span class="op">$</span><span class="va">d365_h24</span></span>
-<span></span>
-<span><span class="co"># create calendar object from a time-table</span></span>
-<span><span class="va">calendar_d365_h24_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/calendar.html" class="external-link">newCalendar</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="co"># create calendar object from a time-table</span></span>
+<span><span class="va">calendar_d365_h24</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/calendar.html" class="external-link">newCalendar</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"d365_h24"</span>,</span>
-<span>  timetable <span class="op">=</span> <span class="va">timetable_full_year</span></span>
+<span>  timetable <span class="op">=</span> <span class="va">timetable_d365_h24</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p>The model object (described below) must have the
 <code>calendar</code> object with all time-frames and time-slices used
@@ -159,7 +160,7 @@ time-slices in the subset is 12 days * 24 hours = 288 time-slices
 <span><span class="co"># pick hours</span></span>
 <span><span class="va">hour_sample</span> <span class="op">&lt;-</span> <span class="fl">0</span><span class="op">:</span><span class="fl">23</span> <span class="co"># all 24 hours</span></span>
 <span></span>
-<span><span class="va">timetable_subset</span> <span class="op">&lt;-</span> <span class="va">timetable_full_year</span> <span class="op">|&gt;</span></span>
+<span><span class="va">timetable_subset</span> <span class="op">&lt;-</span> <span class="va">timetable_d365_h24</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">YDAY</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://energyRt.org/reference/yday2YDAY.html" class="external-link">yday2YDAY</a></span><span class="op">(</span><span class="va">yday_sample</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">HOUR</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://energyRt.org/reference/hour2HOUR.html" class="external-link">hour2HOUR</a></span><span class="op">(</span><span class="va">hour_sample</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">timetable_subset</span></span>
@@ -210,7 +211,8 @@ time-slices in the subset is 12 days * 24 hours = 288 time-slices
 years.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">horizon_2020_2060_by_10</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/horizon.html" class="external-link">newHorizon</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"2020_2060_by_10"</span>,</span>
+<span>  name <span class="op">=</span> <span class="st">"Y2020_2060_by_10"</span>,</span>
+<span>  desc <span class="op">=</span> <span class="st">"2020 to 2060 by 10 years"</span>,</span>
 <span>  period <span class="op">=</span> <span class="fl">2020</span><span class="op">:</span><span class="fl">2060</span>,</span>
 <span>  intervals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">5</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  mid_is_end <span class="op">=</span> <span class="cn">T</span></span>
@@ -218,10 +220,10 @@ years.</p>
 <span><span class="va">horizon_2020_2060_by_10</span></span>
 <span><span class="co">#&gt; An object of class "horizon"</span></span>
 <span><span class="co">#&gt; Slot "name":</span></span>
-<span><span class="co">#&gt; character(0)</span></span>
+<span><span class="co">#&gt; [1] "Y2020_2060_by_10"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Slot "desc":</span></span>
-<span><span class="co">#&gt; character(0)</span></span>
+<span><span class="co">#&gt; [1] "2020 to 2060 by 10 years"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Slot "period":</span></span>
 <span><span class="co">#&gt;  [1] 2020 2021 2022 2023 2024 2025 2026 2027 2028 2029 2030 2031 2032 2033 2034</span></span>
@@ -239,49 +241,56 @@ years.</p>
 <span><span class="co">#&gt; 6:  2056  2060  2060</span></span>
 <span></span>
 <span><span class="va">horizon_2020_2060_by_5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/horizon.html" class="external-link">newHorizon</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"2020_2060_by_5"</span>,</span>
+<span>  name <span class="op">=</span> <span class="st">"Y2020_2060_by_5"</span>,</span>
+<span>  desc <span class="op">=</span> <span class="st">"2020 to 2060 by 5 years"</span>,</span>
 <span>  period <span class="op">=</span> <span class="fl">2020</span><span class="op">:</span><span class="fl">2060</span>,</span>
 <span>  intervals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">25</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  mid_is_end <span class="op">=</span> <span class="cn">T</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">horizon_2020</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/horizon.html" class="external-link">newHorizon</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"2020"</span>,</span>
+<span>  name <span class="op">=</span> <span class="st">"Y2020"</span>,</span>
+<span>  desc <span class="op">=</span> <span class="st">"one year horizon: 2020"</span>,</span>
 <span>  period <span class="op">=</span> <span class="fl">2020</span>,</span>
 <span>  intervals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,</span>
 <span>  mid_is_end <span class="op">=</span> <span class="cn">T</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">horizon_2030</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/horizon.html" class="external-link">newHorizon</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"2030"</span>,</span>
+<span>  name <span class="op">=</span> <span class="st">"Y2030"</span>,</span>
+<span>  desc <span class="op">=</span> <span class="st">"one year horizon: 2030"</span>,</span>
 <span>  period <span class="op">=</span> <span class="fl">2030</span>,</span>
 <span>  intervals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,</span>
 <span>  mid_is_end <span class="op">=</span> <span class="cn">T</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">horizon_2040</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/horizon.html" class="external-link">newHorizon</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"2040"</span>,</span>
+<span>  name <span class="op">=</span> <span class="st">"Y2040"</span>,</span>
+<span>  desc <span class="op">=</span> <span class="st">"one year horizon: 2040"</span>,</span>
 <span>  period <span class="op">=</span> <span class="fl">2040</span>,</span>
 <span>  intervals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,</span>
 <span>  mid_is_end <span class="op">=</span> <span class="cn">T</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">horizon_2050</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/horizon.html" class="external-link">newHorizon</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"2050"</span>,</span>
+<span>  name <span class="op">=</span> <span class="st">"Y2050"</span>,</span>
+<span>  desc <span class="op">=</span> <span class="st">"one year horizon: 2050"</span>,</span>
 <span>  period <span class="op">=</span> <span class="fl">2050</span>,</span>
 <span>  intervals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,</span>
 <span>  mid_is_end <span class="op">=</span> <span class="cn">T</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">horizon_2060</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/horizon.html" class="external-link">newHorizon</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"2060"</span>,</span>
+<span>  name <span class="op">=</span> <span class="st">"Y2060"</span>,</span>
+<span>  desc <span class="op">=</span> <span class="st">"one year horizon: 2060"</span>,</span>
 <span>  period <span class="op">=</span> <span class="fl">2060</span>,</span>
 <span>  intervals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,</span>
 <span>  mid_is_end <span class="op">=</span> <span class="cn">T</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">horizon_2070</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/horizon.html" class="external-link">newHorizon</a></span><span class="op">(</span></span>
-<span>  name <span class="op">=</span> <span class="st">"2070"</span>,</span>
+<span>  name <span class="op">=</span> <span class="st">"Y2070"</span>,</span>
+<span>  desc <span class="op">=</span> <span class="st">"one year horizon: 2070"</span>,</span>
 <span>  period <span class="op">=</span> <span class="fl">2070</span>,</span>
 <span>  intervals <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>,</span>
 <span>  mid_is_end <span class="op">=</span> <span class="cn">T</span></span>

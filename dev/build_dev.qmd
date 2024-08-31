@@ -21,7 +21,7 @@ file.edit("_pkgdown.yml")
 ### (Re-)Build the whole website
 ```{r}
 # rebuild the package if needed
-pkgdown::build_site(pkg = here()) 
+pkgdown::build_site(pkg = here::here()) 
 ```
 
 
@@ -34,6 +34,5 @@ pkgdown::build_site(pkg = here())
 # usethis::use_article("my-article")
 
 # usethis::use_article("reports", "Reports")
-
 ```
 

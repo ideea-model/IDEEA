@@ -389,7 +389,7 @@ if (isTRUE(params$save_ccus_objects)) {
 library(data.table)
 # test CCUS on minimal model
 gis_sf <- get_ideea_map(7, offshore = F, reg_off = F)
-timetable_full_year <- ideea_modules$time_tables$d365_h24
+# timetable_full_year <- ideea_modules$time_tables$d365_h24
 
 COA0 <- newCommodity(
   name = "COA0",
@@ -554,14 +554,14 @@ names(repo)
 summary(repo)
 
 # model horizon
-horizon_2020_2055_by_10 <- newHorizon(
-  period = 2050:2060,
-  intervals = c(1, 5, 10, 10, rep(10, 15)), 
-  mid_is_end = T
-)
-horizon_2020_2055_by_10
+# horizon_2020_2055_by_10 <- newHorizon(
+#   period = 2050:2060,
+#   intervals = c(1, 5, 10, 10, rep(10, 15)), 
+#   mid_is_end = T
+# )
+# horizon_2020_2055_by_10
 
-full_calendar_d365_h24 <- newCalendar(ideea_modules$time_tables$d365_h24)
+# full_calendar_d365_h24 <- newCalendar(ideea_modules$time_tables$d365_h24)
 
 # model-class object
 mod <- newModel(
@@ -569,33 +569,35 @@ mod <- newModel(
   desc = "IDEEA CCS model",
   region = unique(gis_sf$region),
   discount = 0.05,
-  calendar = full_calendar_d365_h24,
-  horizon = horizon_2020_2055_by_10,
+  # calendar = full_calendar_d365_h24,
+  calendar = ideea_modules$calendars$calendar_d365_h24,
+  horizon = ideea_modules$horizons$horizon_2020_2060_by_10,
   data = repo
 )
 
 set_progress_bar()
 # show_progress_bar(F)
 
-# See `/dev/settings.R` to configure your system
-if (file.exists("~/.ideea/settings.R")) source("~/.ideea/settings.R")
-
-timetable_subset <- timetable_full_year %>%
-  filter(YDAY %in% yday2YDAY(1:10))
-  # filter(HOUR %in% hour2HOUR(hour_sample))
-timetable_subset
-
-partial_calendar <- newCalendar(
-  timetable = timetable_subset, 
-  year_fraction = sum(timetable_subset$share)
-)
+# # See `/dev/settings.R` to configure your system
+# if (file.exists("~/.ideea/settings.R")) source("~/.ideea/settings.R")
+# 
+# timetable_subset <- timetable_full_year %>%
+#   filter(YDAY %in% yday2YDAY(1:10))
+#   # filter(HOUR %in% hour2HOUR(hour_sample))
+# timetable_subset
+# 
+# partial_calendar <- newCalendar(
+#   timetable = timetable_subset, 
+#   year_fraction = sum(timetable_subset$share)
+# )
 
 scen_CCS_FLEX <- solve_model(
   mod,
   name = "CCS_FLEX",
   # GHG_CAP,
   # STG_BTR_daily,
-  partial_calendar,
+  # partial_calendar,
+  ideea_modules$calendars$calendar_d365_h24_subset_1day_per_month,
   solver = solver_options$gams_gdx_cplex_parallel,
   tmp.del = FALSE
 )

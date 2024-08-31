@@ -370,14 +370,24 @@ get_ideea_cl_sf <- function(
   x |> group_by(across(any_of(c(
     glue("reg{nreg}"),
     glue("reg{nreg}_off"),
-    "mainland", "offshore", "cluster", "area", "MW_max"
+    "mainland", "offshore", "cluster"
+    # , "area", "MW_max"
     )))) |>
-    summarise(
-      across(all_of(nms), ~ mean(.x, na.rm = TRUE)),
+    reframe(
+      across(all_of(nms), ~ weighted.mean(.x, MW_max, na.rm = TRUE)),
+      # across(all_of(nms), ~ weighted.mean(.x, area, na.rm = TRUE)),
+      across(all_of(c("area", "MW_max")), ~ sum(.x, na.rm = TRUE)),
       geometry = st_union(geometry),
-      .groups = "drop") |>
-    mutate(cluster = as.integer(cluster)) |>
-    st_as_sf()
+      # .groups = "drop"
+      ) |>
+    st_as_sf() |>
+    st_make_valid() |>
+    mutate(
+      cluster = as.integer(cluster),
+      area = st_area(geometry),
+      area = units::set_units(area, "km^2")
+      # MW_max =
+    )
 
 }
 

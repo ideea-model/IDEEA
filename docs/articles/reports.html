@@ -33,7 +33,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">IDEEA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.49.00.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.50.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>—Refineries</h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>—Cement and Clinker</h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>Regional models</h6></li>
-    <li><h6 class="dropdown-header" data-toc-skip>—Karnataka</h6></li>
+    <li><a class="dropdown-item" href="../articles/karnataka.html">—Karnataka</a></li>
     <li><a class="dropdown-item" href="../articles/reports.html">—Reports</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>IDEEA in Switch (in work)</h6></li>
@@ -108,7 +108,8 @@
 using results from the IDEEA electricity model.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ideea-model.github.io/IDEEA">IDEEA</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="load-the-model-output">Load the model output<a class="anchor" aria-label="anchor" href="#load-the-model-output"></a>
 </h3>
@@ -116,43 +117,36 @@ using results from the IDEEA electricity model.</p>
 32 regions, as described in the
 <code>vignette("electricity")</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># load reference scenario</span></span>
-<span><span class="fu"><a href="https://energyRt.org/reference/load_scenario.html" class="external-link">load_scenario</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="../reference/ideea_scenarios.html">ideea_scenarios</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"REF_IDEEA_ELC_reg32_d365_h24_2060"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/ideea_scenarios_list.html">ideea_scenarios_list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># load reference scenario</span></span>
+<span><span class="fu"><a href="https://energyRt.org/reference/load_scenario.html" class="external-link">load_scenario</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="../reference/ideea_scenarios.html">ideea_scenarios</a></span><span class="op">(</span><span class="op">)</span>, </span>
+<span>            <span class="st">"CAP_IDEEA_ELC_reg32_d365_h24_2060"</span></span>
+<span>            <span class="co"># "REF_IDEEA_ELC_reg32_d365_h24_2060"</span></span>
+<span>            <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
 <span><span class="co"># load carbon constrained scenario</span></span>
-<span><span class="fu"><a href="https://energyRt.org/reference/load_scenario.html" class="external-link">load_scenario</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="../reference/ideea_scenarios.html">ideea_scenarios</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"CAP_IDEEA_ELC_reg32_d365_h24_2060"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://energyRt.org/reference/load_scenario.html" class="external-link">load_scenario</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="../reference/ideea_scenarios.html">ideea_scenarios</a></span><span class="op">(</span><span class="op">)</span>, </span>
+<span>            <span class="st">"REF_IDEEA_ELC_reg32_d365_h24_Y2050"</span></span>
+<span>            <span class="co"># "CAP_IDEEA_ELC_reg32_d365_h24_2060"</span></span>
+<span>            <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="co"># combine scenarios in one list for comparison</span></span>
 <span><span class="va">sns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  REF_2060 <span class="op">=</span> <span class="va">.scen</span><span class="op">$</span><span class="va">REF</span>, </span>
+<span>  <span class="co"># REF_2060 = .scen$REF,</span></span>
 <span>  CAP_2060 <span class="op">=</span> <span class="va">.scen</span><span class="op">$</span><span class="va">CAP</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<details><summary>
-Details
-</summary><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<!-- <details><summary>Details</summary> -->
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># quick check</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">.scen</span><span class="op">$</span><span class="va">REF</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scenario: REF </span></span>
-<span><span class="co">#&gt; desc:  </span></span>
-<span><span class="co">#&gt; Model: IDEEA_ELC_reg32 </span></span>
-<span><span class="co">#&gt; Interpolated: TRUE </span></span>
-<span><span class="co">#&gt; path: D:/Dropbox/projects/IDEEA_scenarios//REF_IDEEA_ELC_reg32_d365_h24_2060 </span></span>
-<span><span class="co">#&gt; Solution status: optimal</span></span>
-<span><span class="co">#&gt; vObjective:  525192.3 </span></span>
-<span><span class="co">#&gt; Size: 62.2 Mb</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">.scen</span><span class="op">$</span><span class="va">CAP</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Scenario: CAP </span></span>
-<span><span class="co">#&gt; desc:  </span></span>
-<span><span class="co">#&gt; Model: IDEEA_ELC_reg32 </span></span>
-<span><span class="co">#&gt; Interpolated: TRUE </span></span>
-<span><span class="co">#&gt; path: D:/Dropbox/projects/IDEEA_scenarios//CAP_IDEEA_ELC_reg32_d365_h24_2060 </span></span>
-<span><span class="co">#&gt; Solution status: The solution status is not optimal (7) </span></span>
-<span><span class="co">#&gt; Size: 61.6 Mb</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">sns</span><span class="op">)</span> <span class="co"># list with presolved IDEEA scenarios</span></span>
-<span><span class="co">#&gt;          Length Class    Mode</span></span>
-<span><span class="co">#&gt; REF_2060 1      scenario S4  </span></span>
-<span><span class="co">#&gt; CAP_2060 1      scenario S4</span></span></code></pre></div>
-</details>
+<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">sns</span><span class="op">)</span> <span class="co"># list with presolved IDEEA scenarios</span></span></code></pre></div>
+<!-- </details> -->
 </div>
 <div class="section level3">
 <h3 id="compare-the-results">Compare the results<a class="anchor" aria-label="anchor" href="#compare-the-results"></a>
@@ -162,37 +156,37 @@ Details
 </h4>
 <p>Objective value of the model (minimized cost)</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://energyRt.org/reference/getData.html" class="external-link">getData</a></span><span class="op">(</span><span class="va">sns</span>, <span class="st">"vObjective"</span>, merge <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
-<span><span class="co">#&gt;   scenario name          value</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> REF_2060 vObjective  <span style="text-decoration: underline;">525</span>192.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> CAP_2060 vObjective 1<span style="text-decoration: underline;">118</span>131.</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://energyRt.org/reference/getData.html" class="external-link">getData</a></span><span class="op">(</span><span class="va">sns</span>, <span class="st">"vObjective"</span>, merge <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="installed-capacity">Installed capacity<a class="anchor" aria-label="anchor" href="#installed-capacity"></a>
 </h4>
-<details><code>
-
+<!-- <details><code></summary> -->
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vTechCap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/getData.html" class="external-link">getData</a></span><span class="op">(</span></span>
 <span>  scen <span class="op">=</span> <span class="va">sns</span>, </span>
 <span>  name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"vTechCap"</span><span class="op">)</span>, <span class="co"># capacity variable of technologies</span></span>
 <span>  tech_ <span class="op">=</span> <span class="st">"^E"</span>, <span class="co"># select only electricity generators (start with "E")</span></span>
 <span>  process <span class="op">=</span> <span class="cn">TRUE</span>, <span class="co"># use unified set-name for all processes (rename 'tech' -&gt; 'process')</span></span>
-<span>  digits <span class="op">=</span> <span class="fl">2</span>, <span class="co"># round to 2 digits</span></span>
+<span>  digits <span class="op">=</span> <span class="fl">1</span>, <span class="co"># round to 2 digits</span></span>
 <span>  drop.zeros <span class="op">=</span> <span class="cn">T</span>, <span class="co"># drop zero values</span></span>
 <span>  merge <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># merge tables</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/drop_process_cluster.html">drop_process_cluster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="co"># erase cluster from process name</span></span>
 <span>  <span class="fu"><a href="../reference/drop_process_vintage.html">drop_process_vintage</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># erase vintage-year from process name</span></span>
 <span></span>
+<span><span class="va">vTechCap_conv</span> <span class="op">&lt;-</span> <span class="va">vTechCap</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"ELC2EDC|EDC2ELC"</span>, <span class="va">process</span><span class="op">)</span><span class="op">)</span> <span class="co"># converters</span></span>
+<span></span>
+<span><span class="va">vTechCap_gen</span> <span class="op">&lt;-</span> <span class="va">vTechCap</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter-joins.html" class="external-link">anti_join</a></span><span class="op">(</span><span class="va">vTechCap_conv</span>, by <span class="op">=</span> <span class="st">"process"</span><span class="op">)</span> <span class="co"># keep only generators</span></span>
+<span></span>
 <span><span class="va">vStorageCap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/getData.html" class="external-link">getData</a></span><span class="op">(</span></span>
 <span>  scen <span class="op">=</span> <span class="va">sns</span>, </span>
 <span>  name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"vStorageCap"</span><span class="op">)</span>, <span class="co"># capacity variables of storage technologies</span></span>
 <span>  <span class="co"># tech_ = "^S", # select only storage technologies (start with "S")</span></span>
 <span>  process <span class="op">=</span> <span class="cn">TRUE</span>, <span class="co"># use unified set-name for all processes (rename 'tech' -&gt; 'process')</span></span>
-<span>  digits <span class="op">=</span> <span class="fl">2</span>, <span class="co"># round to 2 digits</span></span>
+<span>  digits <span class="op">=</span> <span class="fl">1</span>, <span class="co"># round to 2 digits</span></span>
 <span>  drop.zeros <span class="op">=</span> <span class="cn">T</span>, <span class="co"># drop zero values</span></span>
 <span>  merge <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># merge tables</span></span>
 <span>  <span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -201,101 +195,74 @@ Details
 <span><span class="co"># combine technologies and storage</span></span>
 <span><span class="va">vCap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">vTechCap</span>, <span class="va">vStorageCap</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">vCap</span><span class="op">$</span><span class="va">process</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "EBIO"        "ECOAULT"     "EDC2ELC"     "EHYD"        "ELC2EDC"    </span></span>
-<span><span class="co">#&gt;  [6] "ENUC"        "ESOL"        "EWIN"        "ECOA_CCS_FL" "EWIF"       </span></span>
-<span><span class="co">#&gt; [11] "STG_BTR"</span></span></code></pre></div>
-</code></details><table class="table">
-<caption>Installed capacity of electricity generation and storage
-technologies, GW</caption>
-<thead><tr class="header">
-<th align="center">process</th>
-<th align="center">year</th>
-<th align="center">CAP_2060</th>
-<th align="center">REF_2060</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="center">EBIO</td>
-<td align="center">2060</td>
-<td align="center">62.47</td>
-<td align="center">10.22</td>
-</tr>
-<tr class="even">
-<td align="center">ECOAULT</td>
-<td align="center">2060</td>
-<td align="center">0.32</td>
-<td align="center">549.49</td>
-</tr>
-<tr class="odd">
-<td align="center">ECOA_CCS_FL</td>
-<td align="center">2060</td>
-<td align="center">0.32</td>
-<td align="center">NA</td>
-</tr>
-<tr class="even">
-<td align="center">EDC2ELC</td>
-<td align="center">2060</td>
-<td align="center">59.76</td>
-<td align="center">194.34</td>
-</tr>
-<tr class="odd">
-<td align="center">EHYD</td>
-<td align="center">2060</td>
-<td align="center">50.18</td>
-<td align="center">50.18</td>
-</tr>
-<tr class="even">
-<td align="center">ELC2EDC</td>
-<td align="center">2060</td>
-<td align="center">69.60</td>
-<td align="center">198.37</td>
-</tr>
-<tr class="odd">
-<td align="center">ENUC</td>
-<td align="center">2060</td>
-<td align="center">5.85</td>
-<td align="center">5.85</td>
-</tr>
-<tr class="even">
-<td align="center">ESOL</td>
-<td align="center">2060</td>
-<td align="center">1678.17</td>
-<td align="center">31.13</td>
-</tr>
-<tr class="odd">
-<td align="center">EWIF</td>
-<td align="center">2060</td>
-<td align="center">0.01</td>
-<td align="center">NA</td>
-</tr>
-<tr class="even">
-<td align="center">EWIN</td>
-<td align="center">2060</td>
-<td align="center">468.47</td>
-<td align="center">58.78</td>
-</tr>
-<tr class="odd">
-<td align="center">STG_BTR</td>
-<td align="center">2060</td>
-<td align="center">4430.84</td>
-<td align="center">26.26</td>
-</tr>
-</tbody>
-</table>
+<span><span class="va">vCap</span><span class="op">$</span><span class="va">process</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<!-- </details> -->
+</div>
+<div class="section level4">
+<h4 id="capacity-maps">Capacity maps<a class="anchor" aria-label="anchor" href="#capacity-maps"></a>
+</h4>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ideea_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_ideea_map.html">get_ideea_map</a></span><span class="op">(</span>nreg <span class="op">=</span> <span class="fl">32</span><span class="op">)</span> </span>
+<span><span class="va">vTechCap_gen_sf</span> <span class="op">&lt;-</span> <span class="va">ideea_sf</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">right_join</a></span><span class="op">(</span><span class="va">vTechCap_gen</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"reg32"</span> <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span>, </span>
+<span>            relationship <span class="op">=</span> <span class="st">"many-to-many"</span><span class="op">)</span> </span>
+<span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"grey"</span>, data <span class="op">=</span> <span class="va">ideea_sf</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">value</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">vTechCap_sf</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"H"</span>, transform <span class="op">=</span> <span class="st">"sqrt"</span>, name <span class="op">=</span> <span class="st">"GW"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">process</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/theme_ideea_map.html">theme_ideea_map</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="transmission-capacity">Transmission capacity<a class="anchor" aria-label="anchor" href="#transmission-capacity"></a>
 </h4>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">vTradeCap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/getData.html" class="external-link">getData</a></span><span class="op">(</span><span class="va">sns</span>, <span class="st">"vTradeCap"</span>, merge <span class="op">=</span> <span class="cn">TRUE</span>, process <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span>  </span>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vTradeCap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/getData.html" class="external-link">getData</a></span><span class="op">(</span><span class="va">sns</span>, <span class="st">"vTradeCap"</span>, merge <span class="op">=</span> <span class="cn">TRUE</span>, process <span class="op">=</span> <span class="cn">T</span>,</span>
+<span>                     digits <span class="op">=</span> <span class="fl">1</span>, drop.zeros <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">tra_lines_coord</span> <span class="op">&lt;-</span> <span class="va">ideea_data</span><span class="op">$</span><span class="va">transmission</span><span class="op">[[</span><span class="va">regN</span><span class="op">]</span><span class="op">]</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">case</span> <span class="op">==</span> <span class="st">"newlines_v01"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">matches</a></span><span class="op">(</span><span class="st">"region|lon|lat|trd_name"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">vTradeCap_coord</span> <span class="op">&lt;-</span> <span class="va">vTradeCap</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">tra_lines_coord</span>, </span>
+<span>            by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"process"</span> <span class="op">=</span> <span class="st">"trd_name_ac"</span><span class="op">)</span>, </span>
+<span>            relationship <span class="op">=</span> <span class="st">"many-to-many"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">trd_name_dc</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rows.html" class="external-link">rows_patch</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span></span>
+<span>      <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span><span class="va">tra_lines_coord</span>, process <span class="op">=</span> <span class="va">trd_name_dc</span><span class="op">)</span>,</span>
+<span>      <span class="op">-</span><span class="va">trd_name_ac</span></span>
+<span>    <span class="op">)</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"process"</span><span class="op">)</span>, unmatched <span class="op">=</span> <span class="st">"ignore"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    type <span class="op">=</span> <span class="fu"><a href="https://stringr.tidyverse.org/reference/str_extract.html" class="external-link">str_extract</a></span><span class="op">(</span><span class="va">process</span>, <span class="st">"HVAC|HVDC"</span><span class="op">)</span>,</span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span>  </span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">ideea_sf</span>, fill <span class="op">=</span> <span class="st">"wheat"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_segment.html" class="external-link">geom_segment</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
+<span>      x <span class="op">=</span> <span class="va">lon.x</span>, y <span class="op">=</span> <span class="va">lat.x</span>, xend <span class="op">=</span> <span class="va">lon.y</span>, yend <span class="op">=</span> <span class="va">lat.y</span>,</span>
+<span>      linewidth <span class="op">=</span> <span class="va">value</span>, color <span class="op">=</span> <span class="va">type</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    <span class="co"># color = "dodgerblue", </span></span>
+<span>    lineend <span class="op">=</span> <span class="st">"round"</span>, alpha <span class="op">=</span> <span class="fl">.75</span>,</span>
+<span>    data <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">vTradeCap_coord</span>, <span class="va">value</span> <span class="op">&gt;=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="co"># geom_point(aes(lon, lat), data = points_coord_r32, color = "red") +</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">""</span>, y <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html" class="external-link">facet_grid</a></span><span class="op">(</span><span class="va">year</span><span class="op">~</span><span class="va">scenario</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/theme_ideea_map.html">theme_ideea_map</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="generation-mix">Generation mix<a class="anchor" aria-label="anchor" href="#generation-mix"></a>
 </h4>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vTechOut_ELC</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://energyRt.org/reference/getData.html" class="external-link">getData</a></span><span class="op">(</span><span class="va">sns</span>, <span class="st">"vTechOut"</span>, tech_ <span class="op">=</span> <span class="st">"^E"</span>, process <span class="op">=</span> <span class="cn">T</span>, digits <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                        drop.zeros <span class="op">=</span> <span class="cn">TRUE</span>, merge <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/drop_process_cluster.html">drop_process_cluster</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -310,11 +277,6 @@ technologies, GW</caption>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_bar</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">scenario</span>, y <span class="op">=</span> <span class="va">TWh</span>, fill <span class="op">=</span> <span class="va">process</span><span class="op">)</span>, stat <span class="op">=</span> <span class="st">"identity"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_d</a></span><span class="op">(</span>option <span class="op">=</span> <span class="st">"H"</span>, direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reports_files/figure-html/unnamed-chunk-8-1.png" alt="Electricity generation mix by technology, TWh" width="700"><p class="caption">
-Electricity generation mix by technology, TWh
-</p>
-</div>
 </div>
 <div class="section level4">
 <h4 id="intraday-generation-profile">Intraday generation profile<a class="anchor" aria-label="anchor" href="#intraday-generation-profile"></a>
@@ -323,8 +285,7 @@ Electricity generation mix by technology, TWh
 <div class="section level4">
 <h4 id="emissions">Emissions<a class="anchor" aria-label="anchor" href="#emissions"></a>
 </h4>
-<pre><code><span><span class="co">#&gt; [1] "CO2" "NOX" "PM"  "SOX"</span></span></code></pre>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">all_emis</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">scenario</span>, <span class="va">comm</span>, <span class="va">year</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>Mt <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">value</span><span class="op">)</span> <span class="op">/</span> <span class="fl">1e3</span>, .groups <span class="op">=</span> <span class="st">"drop"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -333,42 +294,6 @@ Electricity generation mix by technology, TWh
 <span>    <span class="co"># caption = "Emissions from fuel combustion and processes, CO2 Mt, kt others", </span></span>
 <span>    align <span class="op">=</span> <span class="st">"c"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<table class="table">
-<caption>Emissions from fuel combustion and processes, CO2 Mt, kt
-others</caption>
-<thead><tr class="header">
-<th align="center">comm</th>
-<th align="center">year</th>
-<th align="center">CAP_2060</th>
-<th align="center">REF_2060</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="center">CO2</td>
-<td align="center">2060</td>
-<td align="center">1e-05</td>
-<td align="center">3140.0504</td>
-</tr>
-<tr class="even">
-<td align="center">NOX</td>
-<td align="center">2060</td>
-<td align="center">NA</td>
-<td align="center">951.5223</td>
-</tr>
-<tr class="odd">
-<td align="center">PM</td>
-<td align="center">2060</td>
-<td align="center">NA</td>
-<td align="center">285.4918</td>
-</tr>
-<tr class="even">
-<td align="center">SOX</td>
-<td align="center">2060</td>
-<td align="center">NA</td>
-<td align="center">951.5223</td>
-</tr>
-</tbody>
-</table>
 </div>
 </div>
 </div>

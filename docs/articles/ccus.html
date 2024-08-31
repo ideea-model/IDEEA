@@ -33,7 +33,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">IDEEA</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.49.00.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.50.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>—Refineries</h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>—Cement and Clinker</h6></li>
     <li><h6 class="dropdown-header" data-toc-skip>Regional models</h6></li>
-    <li><h6 class="dropdown-header" data-toc-skip>—Karnataka</h6></li>
+    <li><a class="dropdown-item" href="../articles/karnataka.html">—Karnataka</a></li>
     <li><a class="dropdown-item" href="../articles/reports.html">—Reports</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>IDEEA in Switch (in work)</h6></li>
@@ -345,7 +345,7 @@ and efficiency slots <code>@aux</code> and <code>@aeff</code>.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">draw</span><span class="op">(</span><span class="va">ECOA_CCS_FX</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ccus_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<p><img src="ccus_files/figure-html/unnamed-chunk-10-1.png" width="2187.5"></p>
 <p>If <code>CO2SINK</code> is used, the commodity and it’s resource must
 be added to the model.</p>
 </div>
@@ -404,7 +404,7 @@ process.</p>
 <span>  <span class="co"># end = list(end = 2060),</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">draw</span><span class="op">(</span><span class="va">EGAS_CCS_FX</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ccus_files/figure-html/unnamed-chunk-11-1.png" width="700"></p>
+<p><img src="ccus_files/figure-html/unnamed-chunk-11-1.png" width="2187.5"></p>
 </div>
 </div>
 <div class="section level2">
@@ -447,7 +447,7 @@ before).</p>
 <span>  end <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>end <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span> <span class="co">#</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">draw</span><span class="op">(</span><span class="va">ALIAS_COA</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ccus_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
+<p><img src="ccus_files/figure-html/unnamed-chunk-12-1.png" width="2187.5"></p>
 <p>This “alias” commodity does not require a new resource, it’s supply
 will be defined and bounded by the supply of the original commodity via
 the <code>ALIAS_COA</code> technology which has no costs, therefore will
@@ -496,7 +496,7 @@ define the maximum capture rate (<code>share.up</code>).</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu">draw</span><span class="op">(</span><span class="va">ECOA_CCS_FL</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ccus_files/figure-html/unnamed-chunk-13-1.png" width="700"></p>
+<p><img src="ccus_files/figure-html/unnamed-chunk-13-1.png" width="2187.5"></p>
 <p>This technology is designed to operate from 0% to 90% capture rate
 instead of fixed 90% in the fixed rate example.</p>
 </div>
@@ -528,7 +528,7 @@ instead of fixed 90% in the fixed rate example.</p>
 <span>  end <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>end <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span> <span class="co">#</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu">draw</span><span class="op">(</span><span class="va">ALIAS_GAS</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ccus_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
+<p><img src="ccus_files/figure-html/unnamed-chunk-14-1.png" width="2187.5"></p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">EGAS_CCS_FL</span> <span class="op">&lt;-</span> <span class="va">EGAS_CCS_FX</span> <span class="op">|&gt;</span></span>
@@ -559,7 +559,7 @@ instead of fixed 90% in the fixed rate example.</p>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu">draw</span><span class="op">(</span><span class="va">EGAS_CCS_FL</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ccus_files/figure-html/unnamed-chunk-14-2.png" width="700"></p>
+<p><img src="ccus_files/figure-html/unnamed-chunk-14-2.png" width="2187.5"></p>
 </div>
 </div>
 <div class="section level2">
