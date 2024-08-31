@@ -5,12 +5,14 @@
   # start message
   packageStartupMessage(
     "\n",
-    glue::glue('IDEEA version: {packageVersion("IDEEA")} ({packageDate("IDEEA")})'),
+    glue::glue('IDEEA version: {packageVersion("IDEEA")}-beta ({packageDate("IDEEA")})'),
     '\nhttps://github.com/ideea-model/IDEEA\n'
   )
   # load global settings if exist
   if (file.exists("~/.ideea.R")) {
-    IDEEA::ideea_global_options(load = TRUE)
+    try({
+      IDEEA::ideea_global_options(load = TRUE)
+    })
   }
 }
 

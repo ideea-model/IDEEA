@@ -11,6 +11,7 @@ get_ideea_map(
   aggregate = (nreg != 46),
   rename = FALSE,
   reg_off = offshore,
+  merge_islands = TRUE,
   ...
 )
 }
@@ -26,6 +27,10 @@ get_ideea_map(
 \item{rename}{logical, if TRUE, the \code{region} and \code{name} will be returned instead of \verb{reg\{nreg\}} and \verb{name\{nreg\}}}
 
 \item{reg_off}{logical, if TRUE, \code{reg_off} or \verb{reg\{nreg\}_off} column will be added with added \verb{_off} to the names of offshore areas/regions.}
+
+\item{merge_islands}{logical, \code{mainland} column should be dropped (if TRUE) or added (FALSE) to the returned sf-object.}
+
+\item{...}{}
 }
 \value{
 IDEEA map with in 'sf' or 'sp' format

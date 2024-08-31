@@ -31,7 +31,7 @@ if (F) {
 
 if (F) {
   # patch: renaming region -> reg5 in "biomass_ava_assumption" (2024-05-08) ####
-  ideea_data <- ideea_data
+  ideea_data <- IDEEA::ideea_data
   ideea_data$biomass_ava_assumption
   ideea_data$biomass_ava_assumption <- rename(
     ideea_data$biomass_ava_assumption,
@@ -42,5 +42,65 @@ if (F) {
   usethis::use_data(ideea_data, internal = F, overwrite = T)
 }
 
+if (F) {
+  # patch: "generators_wri" (2024-05-15) ####
+  # drop excessive "reg*" from "generators_wri"
+  # the regionalization is made for 46 regions, based on given lon/lat
+  ideea_data$generators_wri |> names()
+  ideea_data <- IDEEA::ideea_data
+  generators_wri <- ideea_data$generators_wri |>
+    select(-(matches("reg") & !matches("reg46")))
+  ideea_data$generators_wri <- generators_wri
+  names(ideea_data$generators_wri)
+  # save to the package data
+  usethis::use_data(ideea_data, internal = F, overwrite = T)
+}
 
-# usethis::use_data(DATASET, overwrite = TRUE)
+if (F) {
+  library(tidyverse)
+  ideea_data <- IDEEA::ideea_data
+  ideea_data$gas_ava_assumption <- ideea_data$gas_ava_assumption |>
+    rename(reg5 = "region")
+  names(ideea_data$gas_ava_assumption)
+  # save to the package data
+  usethis::use_data(ideea_data, internal = F, overwrite = T)
+
+}
+
+if (F) {
+  # transmission
+  tra_5x5 <- ideea_data$transmission_5x5 |>
+    rename(region1 = destination, case = scenario)
+
+  fwrite(tra_5x5, file = glue("data-raw/trade_matrix_r5_v01.csv"))
+
+}
+
+if (F) {
+  # patch: extend investment period for 2050 techs (2024-06-27)
+  library(IEEEA); library(data.table)
+  ideea_modules <- IDEEA::ideea_modules
+  techs <- ideea_modules$techs
+  techs |> class()
+  techs |> names()
+  techs$ECOASUB |> names()
+
+  for (p in names(techs)) {
+    # stop()
+    VIN2050 <- names(techs[[p]])
+    VIN2050 <- VIN2050[VIN2050 %like% "2050"]
+    for (tc in VIN2050) {
+      # stop()
+      message(tc)
+      techs[[p]]@data[[tc]] <-
+        update(techs[[p]][[tc]], end = techs[[p]][[tc]]@end[0,])
+
+    }
+
+  }
+
+  ideea_modules$techs <- techs
+
+  usethis::use_data(ideea_modules, internal = F, overwrite = T)
+  # rebuild the package
+}

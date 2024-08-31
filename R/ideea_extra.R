@@ -1,3 +1,27 @@
+
+#' Specify directory for IDEEA external dataset (`ideea_extra`)
+#'
+#' @param path character, path to the dataset
+#'
+#' @return (invisible) logical, TRUE if the directory is set, FALSE otherwise.
+#' @export
+#'
+#' @examples
+set_ideea_extra <- function(path = NULL) {
+  # browser()
+  if (!is.null(path) && path != "") {
+    if (!dir.exists(path)) {
+      stop(paste0('The path "', path, '" does not exist.'), call. = FALSE)
+    }
+    if (!grepl("(\\\\|/)$", path)) {
+      path <- paste0(path, "/")
+    }
+  }
+  options(IDEEA.extra = path)
+  invisible(TRUE)
+}
+
+
 #' Return path to the IDEEA extra-data directory
 #'
 #' @param subdir character, the name or path to the sub-directory in the IDEEA-extra folder. File name will also be accepted. The path must be relative to the IDEEA external folder.
@@ -346,14 +370,24 @@ get_ideea_cl_sf <- function(
   x |> group_by(across(any_of(c(
     glue("reg{nreg}"),
     glue("reg{nreg}_off"),
-    "mainland", "offshore", "cluster", "area", "MW_max"
+    "mainland", "offshore", "cluster"
+    # , "area", "MW_max"
     )))) |>
-    summarise(
-      across(all_of(nms), ~ mean(.x, na.rm = TRUE)),
+    reframe(
+      across(all_of(nms), ~ weighted.mean(.x, MW_max, na.rm = TRUE)),
+      # across(all_of(nms), ~ weighted.mean(.x, area, na.rm = TRUE)),
+      across(all_of(c("area", "MW_max")), ~ sum(.x, na.rm = TRUE)),
       geometry = st_union(geometry),
-      .groups = "drop") |>
-    mutate(cluster = as.integer(cluster)) |>
-    st_as_sf()
+      # .groups = "drop"
+      ) |>
+    st_as_sf() |>
+    st_make_valid() |>
+    mutate(
+      cluster = as.integer(cluster),
+      area = st_area(geometry),
+      area = units::set_units(area, "km^2")
+      # MW_max =
+    )
 
 }
 

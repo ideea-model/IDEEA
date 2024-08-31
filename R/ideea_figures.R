@@ -135,3 +135,24 @@ ideea_snapshot <- function(scen, YEAR, SLICE, return_data = FALSE) {
     labs(x = "", y = "GWh")
 }
 
+#' ggplot theme for IDEEA maps
+#'
+#' @return
+#' @export
+#'
+#' @examples
+theme_ideea_map <- function() {
+  theme_bw() +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+      # panel.border = element_blank(),
+      # panel.background = element_blank()
+    ) +
+    theme(
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank()
+    )
+}

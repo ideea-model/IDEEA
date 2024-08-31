@@ -1,0 +1,169 @@
+---
+title: "Time resoluton"
+editor_options:
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+
+```{r setup, message=FALSE, warning=FALSE}
+library(IDEEA)
+library(tidyverse)
+library(data.table)
+library(here)
+```
+
+## Time resolution  
+Sub-annual time resolution is set via the `calendar` object, that specifies levels of nested time-frames (such as 'ANNUAL', 'MONTH', 'DAY', 'HOUR', etc. depending on the modeling goals and decided level of details). This structure of modeled sub-annual time resolution is assigned by a `timetable` data.frame with columns named as used time-frames, as well as 'slice' (refers to the lowest level of 'time-slices' with unique names, e.g. 'd001_h15' indicating the 1st day of the year and the 15th hour of the day), the 'share' column (for the share of the time-frame in the year), and 'weight' (for the weight of the time-frame in the year, used in sampled calendars). 
+
+```{r}
+# create timetable with 3 levels of timeframes: ANNUAL, YDAY, HOUR
+timetable_d365_h24 <- energyRt::make_timetable(energyRt::tsl_levels$d365_h24)
+# full year timetable has 8760 time-slices (24 hours * 365 days)
+timetable_d365_h24
+```
+
+This time-table is to define a `calendar` object, that also describes the hierarchy of time-frames and sets the sequence of the time-slices. 
+
+```{r}
+# create calendar object from a time-table
+calendar_d365_h24 <- newCalendar(
+  name = "d365_h24",
+  timetable = timetable_d365_h24
+  )
+```
+
+The model object (described below) must have the `calendar` object with all time-frames and time-slices used in the model. However, scenarios can be solved for a subset of the time-slices, defined by another `calendar` object with sub-set of time-slices. Here we define a calendar with a subset of 1 day per month and 24 hours per each day. Therefore, the total number of time-slices in the subset is 12 days * 24 hours = 288 time-slices (vs. 8760 time-slices in the full calendar).
+
+```{r, eval=TRUE}
+# pick days
+yday_sample <- 15 + c(0, as.integer(cumsum(days_in_month(1:11)))) # one day per month
+# pick hours
+hour_sample <- 0:23 # all 24 hours
+
+timetable_subset <- timetable_d365_h24 |>
+  filter(YDAY %in% yday2YDAY(yday_sample)) |>
+  filter(HOUR %in% hour2HOUR(hour_sample))
+timetable_subset
+unique(timetable_subset$HOUR)
+unique(timetable_subset$YDAY)
+unique(timetable_subset$YDAY) |> tsl2dtm(year = 2019, tmz = "Asia/Kolkata")
+
+SUBSET_HOURS <- nrow(timetable_subset) # total hours in the subset
+FRACT_YEAR <- SUBSET_HOURS / 8760 # fraction in a year
+print("Subannual time resolution:")
+print(paste("   Total number of days a year:", length(yday_sample)))
+print(paste("   Total number of hours per year:", SUBSET_HOURS))
+
+# Partial calendar
+partial_calendar <- newCalendar(
+  name = "d365_h24_subset_1day_per_month",
+  timetable = timetable_subset,
+  year_fraction = sum(timetable_subset$share)
+)
+```
+
+## Model horizon
+Calendars are (currently) set sub-annual time-structure for all years. 
+```{r, eval=TRUE}
+horizon_2020_2060_by_10 <- newHorizon(
+  name = "Y2020_2060_by_10",
+  desc = "2020 to 2060 by 10 years",
+  period = 2020:2060,
+  intervals = c(1, 5, rep(10, 15)),
+  mid_is_end = T
+)
+horizon_2020_2060_by_10
+
+horizon_2020_2060_by_5 <- newHorizon(
+  name = "Y2020_2060_by_5",
+  desc = "2020 to 2060 by 5 years",
+  period = 2020:2060,
+  intervals = c(1, rep(5, 25)),
+  mid_is_end = T
+)
+
+horizon_2020 <- newHorizon(
+  name = "Y2020",
+  desc = "one year horizon: 2020",
+  period = 2020,
+  intervals = c(1),
+  mid_is_end = T
+)
+
+horizon_2030 <- newHorizon(
+  name = "Y2030",
+  desc = "one year horizon: 2030",
+  period = 2030,
+  intervals = c(1),
+  mid_is_end = T
+)
+
+horizon_2040 <- newHorizon(
+  name = "Y2040",
+  desc = "one year horizon: 2040",
+  period = 2040,
+  intervals = c(1),
+  mid_is_end = T
+)
+
+horizon_2050 <- newHorizon(
+  name = "Y2050",
+  desc = "one year horizon: 2050",
+  period = 2050,
+  intervals = c(1),
+  mid_is_end = T
+)
+
+horizon_2060 <- newHorizon(
+  name = "Y2060",
+  desc = "one year horizon: 2060",
+  period = 2060,
+  intervals = c(1),
+  mid_is_end = T
+)
+
+horizon_2070 <- newHorizon(
+  name = "Y2070",
+  desc = "one year horizon: 2070",
+  period = 2070,
+  intervals = c(1),
+  mid_is_end = T
+)
+```
+
+
+
+```{r, eval=TRUE, include=FALSE}
+# Save the calendars and horizons in IDEEA's data
+
+calendars <- list(
+  calendar_d365_h24 = calendar_d365_h24, # full calendar
+  calendar_d365_h24_subset_1day_per_month = partial_calendar # partial calendar
+)
+
+horizons <- list(
+  # multi-year model horizons
+  horizon_2020_2060_by_5 = horizon_2020_2060_by_5, # by 5 years
+  horizon_2020_2060_by_10 = horizon_2020_2060_by_10, # by 10 years
+  # one-year horizons
+  horizon_2020 = horizon_2020,
+  horizon_2030 = horizon_2030,
+  horizon_2040 = horizon_2040,
+  horizon_2050 = horizon_2050,
+  horizon_2060 = horizon_2060,
+  horizon_2070 = horizon_2070
+)
+
+save(calendars, horizons, file = here("data-raw/calendars.RData"))
+# run 'calendars' chunk in 'data-raw/DATASET.R' and rebuild the package
+
+```
+

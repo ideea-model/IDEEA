@@ -6,7 +6,8 @@
 #' @param aggregate logical, if true, geometries will be aggregated by region.
 #' @param rename logical, if TRUE, the `region` and `name` will be returned instead of `reg{nreg}` and `name{nreg}`
 #' @param reg_off logical, if TRUE, `reg_off` or `reg{nreg}_off` column will be added with added `_off` to the names of offshore areas/regions.
-# @param ROW logical, if TRUE, an additional geometry with neighbour countries' land within 67-98 latitude and 5-38 longitude (ROW - the Rest of the World) will be added.
+#' @param merge_islands logical, `mainland` column should be dropped (if TRUE) or added (FALSE) to the returned sf-object.
+#' @param ...
 #'
 #' @return IDEEA map with in 'sf' or 'sp' format
 #' @export
@@ -28,7 +29,10 @@ get_ideea_map <- function(
     aggregate = (nreg != 46),
     rename = FALSE,
     reg_off = offshore,
+    merge_islands = TRUE,
     ...) {
+  # @param ROW logical, if TRUE, an additional geometry with neighbour countries' land within 67-98 latitude and 5-38 longitude (ROW - the Rest of the World) will be added.
+  # browser()
   map <- IDEEA:::ideea_map
   nms <- paste0(c("reg", "name"), nreg)
   if (!all(nms %in% names(map))) {
@@ -47,13 +51,19 @@ get_ideea_map <- function(
     map <- map |> dplyr::filter(!grepl("ROW", reg1, ignore.case = T))
   }
 
-  # browser()
   if (aggregate) {
+    if (merge_islands) {
+      map <- map |> select(-any_of("mainland"))
+    }
     map <- map |>
       dplyr::group_by(across(
-        dplyr::all_of(c(nms, "mainland", "offshore", "reg1", "name1"))
+        dplyr::any_of(c(nms, "mainland", "offshore", "reg1", "name1"))
       )) |>
-      dplyr::summarize(.groups = "drop")
+      dplyr::summarize(
+        geometry = sf::st_union(geometry),
+        .groups = "drop"
+        ) |>
+      sf::st_make_valid()
   }
 
   if (reg_off) {
@@ -75,15 +85,13 @@ get_ideea_map <- function(
   names(map) <- nm
   map <- select(
     map,
-    any_of(c("region", "reg_off", "name")),
+    any_of(c("region", "reg_off", "name", "mainland", "offshore")),
     any_of(c(glue("reg{nreg}"), glue("reg{nreg}_off"), glue("name{nreg}")))
     # any_of(c("reg1", "reg1_off", "name1"))
   )
   return(map)
 }
-# !!! ToDo !!!
-# 2. merge merra-grid in offshore
-# 3. provide merra-grid for all regions & offshore
+
 
 if (F) {
   # library(sf)
@@ -335,7 +343,7 @@ get_ideea_data <- function(
     # aggregate
     x <- x |>
       group_by(across(any_of(c(regN, sets_in_y_noReg, sets_in_x_noReg)))) |>
-      summarise(across(variable, agg_fun, na.rm = drop_na)) |>
+      summarise(across(variable, ~ agg_fun(.x, na.rm = drop_na))) |>
       as.data.table()
   }
   # sets_in_x_noReg

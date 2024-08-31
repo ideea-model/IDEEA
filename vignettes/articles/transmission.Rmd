@@ -1,0 +1,378 @@
+---
+title: "Transmission network"
+params:
+  save_network: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This document describes the electricity transmission network data, stored in the IDEEA repository. It includes the existing capacity, aggregated to fit the for 5-region model case, and the information for potential expansion of the network for both, 5-region and 32-region model cases. 
+The stored data on new transmission lines is estimated based on the geographical distance between regions, average efficiency and the cost of building new lines.
+
+Modeling electricity transmission in capacity expansion models is simplified by the use of a linearized nature of the models. Instead of focusing on the physical laws of electricity transmission, the main question in capacity expansion models is on potential of trade between regions, if spatial balancing of electricity supply and demand can reduce overall system costs, increase efficiency, and reduce emissions. Every transmission line is a separate technology or process that can be selected for investment and sized by the model along with other technological options and their locations.
+
+The transmission network is represented by a set of transmission lines, each connecting two regions. The transmitted energy is limited by the capacity of the line, which includes pre-built capacity and potential new capacity (with optional constraint). 
+
+```{r setup, warning=FALSE, message=FALSE}
+library(IDEEA)
+library(tidyverse)
+library(data.table)
+library(here)
+library(glue)
+```
+
+### 5-region model  
+
+<details><summary>code</summary>
+
+```{r, warning=FALSE}
+regN <- "reg5"
+
+ideea_r5_sf <- get_ideea_map(nreg = 5, islands = FALSE, offshore = FALSE)
+
+transmission_lines <- ideea_data$transmission[[regN]]
+  # filter(region.x != region.y)
+  # filter(case == transmission_matrix, !is.na(MW)) |>
+  # filter(MW >= 0)
+
+gis_mainland_sf <- filter(ideea_r5_sf, offshore == F)
+points_coord_r5 <- st_centroid(gis_mainland_sf) |>
+  st_coordinates() |>
+  as.data.frame() |>
+  cbind(data.frame(region = gis_mainland_sf[[regN]])) |>
+  rename(lon = X, lat = Y)
+
+network_r5 <- transmission_lines |>
+  # filter(case == "current") |>
+  left_join(points_coord_r5, by = c("region.x" = "region")) |>
+  left_join(points_coord_r5, by = c("region.y" = "region")) |>
+  mutate(GW = MW / 1000) |>
+  rowwise() |>
+  mutate(
+    # rough estimate of transmission lines distance between two nodes
+    distance_km = st_distance(
+      # length in meters
+      st_sfc(st_point(c(lon.x, lat.x)), crs = 4326),
+      st_sfc(st_point(c(lon.y, lat.y)), crs = 4326)
+      ),
+    # adding 15% to the distance for landscape
+    distance_km = round(1.15 * as.numeric(distance_km) / 1e3),
+    AC_eff = 1 / (1 + 0.1 * distance_km / 1e3), # ~10% loss per 1000 km 
+    AC_invcost = 2 * distance_km, # ~ 2 cr.INR/GW/km
+    DC_eff = 1 / (1 + 0.02 * distance_km / 1e3), # ~2% loss per 1000 km
+    DC_invcost = 4 * distance_km # ~ 4 cr.INR/GW/km + converters
+  ) |>
+  # add names for transmission lines
+  mutate(
+    trd_name_ac = paste("HVAC", region.x, region.y, sep = "_"),
+    trd_name_dc = paste("HVDC", region.x, region.y, sep = "_")
+    ) |>
+  as.data.table()
+
+# create plot for each case
+plot_ntw_r5 <- ggplot() +
+  geom_sf(data = ideea_r5_sf, fill = "wheat") +
+  geom_segment(
+    aes(
+      x = lon.x, y = lat.x, xend = lon.y, yend = lat.y,
+      linewidth = GW
+    ),
+    color = "dodgerblue", lineend = "round",
+    data = network_r5
+    # data = filter(a, case %in% transmission_matrix)
+  ) +
+  # geom_segment(aes(x = lon.x, y = lat.x, xend = lon.y, yend = lat.y),
+  #   color = alpha("white", .5), lineend = "round",
+  #   data = filter(a, case == "new")
+  # ) +
+  facet_wrap(~case) +
+  geom_point(aes(lon, lat), data = points_coord_r5, color = "red") +
+  labs(x = "", y = "") +
+  theme_ideea_map()
+
+```
+</details>
+
+```{r, echo=FALSE, warning=FALSE}
+plot_ntw_r5
+```
+
+
+## 32-region model
+
+
+The cost of building new lines is a function of the distance between regions and the capacity of the line.
+
+<details><summary>code</summary>
+```{r, warning=FALSE}
+regN <- "reg32"
+
+ideea_r32_sf <- get_ideea_map(nreg = 32, islands = FALSE, offshore = FALSE)
+
+transmission_lines <- ideea_data$transmission[[regN]] 
+  # filter(case == transmission_matrix, !is.na(MW)) |>
+  # filter(MW >= 0)
+
+gis_mainland_sf <- filter(ideea_r32_sf, offshore == F)
+points_coord_r32 <- st_centroid(gis_mainland_sf) |>
+  st_coordinates() |>
+  as.data.frame() |>
+  cbind(data.frame(region = gis_mainland_sf[[regN]])) |>
+  rename(lon = X, lat = Y)
+
+network_r32 <- transmission_lines |>
+  # filter(case == "current") |>
+  left_join(points_coord_r32, by = c("region.x" = "region")) |>
+  left_join(points_coord_r32, by = c("region.y" = "region")) |>
+  mutate(GW = MW / 1000) |>
+  rowwise() |>
+  mutate(
+    # rough estimate of transmission lines distance between two nodes
+    distance_km = st_distance(
+      # length in meters
+      st_sfc(st_point(c(lon.x, lat.x)), crs = 4326),
+      st_sfc(st_point(c(lon.y, lat.y)), crs = 4326)
+      ),
+    # adding 15% to the distance for landscape
+    distance_km = round(1.15 * as.numeric(distance_km) / 1e3),
+    AC_eff = 1 / (1 + 0.1 * distance_km / 1e3), # ~10% loss per 1000 km 
+    AC_invcost = 2 * distance_km, # ~ 2 cr.INR/GW/km
+    DC_eff = 1 / (1 + 0.02 * distance_km / 1e3), # ~2% loss per 1000 km
+    DC_invcost = 4 * distance_km # ~ 4 cr.INR/GW/km + converters
+  ) |>
+  # add names for transmission lines
+  mutate(
+    trd_name_ac = paste("HVAC", region.x, region.y, sep = "_"),
+    trd_name_dc = paste("HVDC", region.x, region.y, sep = "_")
+    ) |>
+  as.data.table()
+
+# create plot for each case
+plot_ntw_r32 <- ggplot() +
+  geom_sf(data = ideea_r32_sf, fill = "wheat") +
+  geom_segment(
+    aes(
+      x = lon.x, y = lat.x, xend = lon.y, yend = lat.y
+      # linewidth = GW
+    ),
+    linewidth = 1,
+    color = "dodgerblue", lineend = "round",
+    data = network_r32
+  ) +
+  facet_wrap(~case) +
+  geom_point(aes(lon, lat), data = points_coord_r32, color = "red") +
+  labs(x = "", y = "") +
+  theme_ideea_map()
+
+```
+</details>
+
+```{r, echo=FALSE}
+plot_ntw_r32
+```
+
+### Minimal network case
+
+<details><summary>code</summary>
+
+```{r, eval=FALSE, include=FALSE}
+# Create a mini-model to find lowest cost network 
+# that connects all regions. 
+# The model specifies the demand for electricity in each region,
+# in the first "nreg" slices of the year. And assigns supply
+# to only one region in every slice via supply and weather objects.
+
+# get connected regions (mainland) regions
+regs_in_mod <- get_ideea_map(32, islands = FALSE, offshore = FALSE) |>
+  st_drop_geometry() |>
+  filter(!offshore) |>
+  pull(regN)
+nreg_in_mod <- length(regs_in_mod) # number of regions
+
+# select time-slices for the weather class
+timetable <- ideea_modules$calendars$calendar_d365_h24@timetable
+ava_tbl <- data.frame(
+  region = regs_in_mod,
+  slice = timetable$slice[1:nreg_in_mod],
+  value = rep(1, nreg_in_mod)
+)
+
+# create data frame for the weather object (full year, all regions)
+ava_tot <- expand.grid(
+  region = regs_in_mod,
+  slice = timetable$slice
+) |>
+  mutate(value = 0) |>
+  rows_update(ava_tbl, by = c("region", "slice"))
+
+UNSERVED <- newImport(
+  name = "UNSERVED",
+  desc = "Unserved load - unserved electricity penalty, for debugging",
+  commodity = "ELC",
+  unit = "GWh",
+  imp = list(price = 1e6)
+)
+
+# supply creates a unit of electricity in each region
+SUPELC <- newSupply(
+  name = "SUPELC",
+  desc = "Injecton point of ELC",
+  commodity = "ELC",
+  unit = "GWh",
+  availability = data.frame(
+    cost = 1, # cost of electricity will affect the optimized network
+    ava.up = 1e4 # upper limit on supply will be adjusted by weather obj
+    ),
+  weather = data.frame(
+    weather = "WSUP",
+    wava.up = 1 # 
+  )
+)
+
+# weather limits supply to one region per slice
+WSUP <- newWeather(
+  name = "WSUP",
+  desc = "Injecton point of ELC",
+  weather = data.frame(
+    region = ava_tot$region,
+    slice = ava_tot$slice,
+    wval = ava_tot$value
+    ),
+  timeframe = "HOUR"
+  )
+
+# demand for electricity in each region, 
+# 1 GWh each selected slice and region
+DEM_ELC <- newDemand(
+  name = "DEM_ELC",
+  desc = "Demand for electricity",
+  commodity = "ELC",
+  unit = "GWh",
+  dem = data.frame(
+    # region = regs_in_mod,
+    slice = timetable$slice[1:nreg_in_mod],
+    dem = rep(1, nreg_in_mod)
+    )
+)
+DEM_ELC@dem
+
+# repository with all objects
+repo_optimal_network <- newRepository(
+  name = "repo_optimal_network",
+  ELC,
+  SUPELC,
+  WSUP,
+  UNSERVED,
+  repo_transmission_ac, # use "newlines_v01" with maximum number of lines
+  DEM_ELC
+  )
+
+# model
+mod_optimal_network <- newModel(
+  name = "optimal_network",
+  desc = "Optimal network model",
+  region = regs_in_mod,
+  repo_optimal_network,
+  calendar = ideea_modules$calendars$calendar_d365_h24,
+  horizon = ideea_modules$calendars$horizon_2050,
+  discount = 0
+  )
+# 
+# scenario/solved network
+scen_optimal_network <- solve(
+  mod_optimal_network, 
+  solver = solver_options$gams_gdx_cplex, 
+  tmp.del = F, wait = T)
+
+sns <- list(P1 = scen_optimal_network)
+
+vTradeCap <- getData(sns, "vTradeCap", merge = T, digits = 1)
+
+vTradeCap_HVAC <- vTradeCap |>
+  filter(grepl("HVAC", trade)) |>
+  as.data.table() 
+
+vTradeCap_HVDC <- vTradeCap |>
+  filter(grepl("HVDC", trade)) |>
+  as.data.table()
+
+opt_network <- 
+  left_join(
+    network,
+    vTradeCap, by = c("trd_name_ac" = "trade")
+  )
+# save(opt_network, file = "tmp/opt_network.RData")
+
+ggplot() +
+  geom_sf(data = ideea_sf, fill = "wheat") +
+  geom_segment(
+    aes(
+      x = lon.x, y = lat.x, xend = lon.y, yend = lat.y,
+      linewidth = value
+    ),
+    color = "dodgerblue", lineend = "round", alpha = .75,
+    data = filter(opt_network, value > 1)
+  ) +
+  geom_point(aes(lon, lat), data = points_coord_r32, color = "red") +
+  labs(x = "", y = "") +
+  facet_grid(year~scenario) +
+  theme_ideea_map()
+
+```
+</details>
+
+
+```{r, echo=FALSE}
+
+n1 <- network_r32 |> filter(grepl("v01$", case)) |> nrow()
+n3 <- network_r32 |> filter(grepl("v03$", case)) |> nrow()
+
+network_r32_opt <- network_r32 |>
+  filter(grepl("v0[13]$", case)) |>
+  mutate(
+    case_name = ifelse(grepl("v01$", case), 
+                       glue("Initial network ({n1} lines, v01)"),
+                       case),
+    case_name = ifelse(grepl("v03$", case),
+                       glue("Reduced network ({n3} lines, v03)"),
+                       case_name)
+  )
+
+plot_ntw_r32_opt <- ggplot() +
+  geom_sf(data = ideea_r32_sf, fill = "wheat") +
+  geom_segment(
+    aes(
+      x = lon.x, y = lat.x, xend = lon.y, yend = lat.y
+      # linewidth = GW
+    ),
+    linewidth = 1,
+    color = "dodgerblue", lineend = "round",
+    data = network_r32_opt
+    # data = filter(a, case %in% transmission_matrix)
+  ) +
+  facet_wrap(~case_name) +
+  geom_point(aes(lon, lat), data = points_coord_r32, color = "red") +
+  labs(x = "", y = "") +
+  theme_ideea_map()
+plot_ntw_r32_opt
+
+```
+
+```{r, echo=FALSE, eval=params$save_network}
+if (params$save_network) {
+  save(
+    network_r5, 
+    network_r32,
+    file = here("data-raw", "network_tables.RData")
+  )
+}
+
+```
+

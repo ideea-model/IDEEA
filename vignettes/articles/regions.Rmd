@@ -20,8 +20,8 @@ knitr::opts_chunk$set(
 Geographical information system (GIS) files, or maps are used in the project for identification of locations of solar and wind energy potential and visualisation of the model data and modeling results. IDEEA package has embedded maps with alternative regional divisions, starting from one region (the country level) to 37 regions (each state as a region) or 46 zones where few regions are split into several distant territories (such as Puduchery). The maps are available in *simple feature* (`sf`) format and can be called using the `get_ideea_maps` function:
 ```{r, message=FALSE, warning=FALSE}
 library(IDEEA)
-ideea_sf <- get_ideea_map()
-plot(ideea_sf["region"], main = paste0(length(unique(ideea_sf$region)), 
+ideea_sf <- get_ideea_map(nreg = 5, offshore = TRUE)
+plot(ideea_sf["reg5"], main = paste0(length(unique(ideea_sf$reg5)), 
                                        " regions map with offshores"))
 ```
 
@@ -34,15 +34,15 @@ Administratively, India is organized into 28 states and 8 Union territories, ini
 
 
 ```{r}
-ideea_sf <- get_ideea_map(nreg = 36, offshore = TRUE, islands = TRUE)
+ideea_sf <- get_ideea_map(nreg = 32, offshore = TRUE, islands = TRUE)
 # ideea_sf
-plot(ideea_sf["region"], main = paste0(length(unique(ideea_sf$region)), " regions map"))
+plot(ideea_sf["reg32"], main = paste0(length(unique(ideea_sf$reg32)), " regions map"))
 ```
 
 The IDEEA map can me acquired for 1, 5, 7, 32, 34, 36, 37 or 46 regions. The `offshore` and `islands` arguments allow to include or exclude offshore areas and islands, respectively. The `rename` argument allows to rename the columns to `region` and `name` for the region short and long names. The `reg_off` argument allows to add a column with offshore areas to the region names. The `aggregate` argument allows to aggregate geometries of regions with the same name. 
 
 ```{r}
-ideea_sf <- get_ideea_map(nreg = 1)
+ideea_sf <- get_ideea_map(nreg = 1, rename = T)
 plot(ideea_sf["region"], main = paste0(length(unique(ideea_sf$region)), " regions map"))
 ```
 

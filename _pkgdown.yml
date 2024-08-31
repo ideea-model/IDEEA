@@ -2,6 +2,7 @@ url: https://ideea-model.github.io/IDEEA
 template:
   bootstrap: 5
   bootswatch: minty
+  # light-switch: true
   # ganalytics: G-1FN9MK20PS
   includes:
     in_header: |
@@ -15,7 +16,8 @@ template:
         gtag('config', 'G-1FN9MK20PS');
       </script>
 navbar:
- components:
+  # bg: light
+  components:
    articles:
     text: Articles
     menu:
@@ -29,6 +31,8 @@ navbar:
     - text: "IDEEA model components"
     - text: "—Regions"
       href: articles/regions.html
+    - text: "—Time"
+      href: articles/calendars.html
     - text: "—Datasets"
       href: articles/data.html
     - text: "IDEEA model sectors"
@@ -36,10 +40,19 @@ navbar:
       href: articles/energy.html
     - text: "—Electricity"
       href: articles/electricity.html
+    - text: "—Transmission"
+      href: articles/transmission.html
     - text: "—Hydrogen"
       href: articles/hydrogen.html
     - text: "—CCUS"
       href: articles/ccus.html
+    - text: "—Reports"
+      href: articles/reports.html
+    # - text: -------
+    - text: "Regional models"
+    - text: "—Karnataka"
+      href: articles/karnataka.html
+    # - text: "IDEEA "
     # - text: "● Demand projections"
     # - text: -------
     # - text: "Featured technologies"
@@ -52,11 +65,6 @@ navbar:
       href: articles/iron_steel.html
     - text: "—Refineries"
     - text: "—Cement and Clinker"
-    # - text: -------
-    - text: "Regional models"
-    - text: "—Karnataka"
-      # href: articles/karnataka.html
-    # - text: "IDEEA "
     - text: -------
     - text: "IDEEA in Switch (in work)"
     - text: "IDEEA in PyPSA (planned)"
@@ -73,3 +81,11 @@ navbar:
 # — long dash
 # ● bullet point
 
+deploy:
+  install_metadata: true
+
+figures:
+  dpi: 300
+  # other.parameters:
+  #   rgl:
+  #     fig.asp: 1
