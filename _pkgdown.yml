@@ -46,6 +46,13 @@ navbar:
       href: articles/hydrogen.html
     - text: "—CCUS"
       href: articles/ccus.html
+    - text: "—Reports"
+      href: articles/reports.html
+    # - text: -------
+    - text: "Regional models"
+    - text: "—Karnataka"
+      href: articles/karnataka.html
+    # - text: "IDEEA "
     # - text: "● Demand projections"
     # - text: -------
     # - text: "Featured technologies"
@@ -58,13 +65,6 @@ navbar:
       href: articles/iron_steel.html
     - text: "—Refineries"
     - text: "—Cement and Clinker"
-    # - text: -------
-    - text: "Regional models"
-    - text: "—Karnataka"
-      href: articles/karnataka.html
-    # - text: "IDEEA "
-    - text: "—Reports"
-      href: articles/reports.html
     - text: -------
     - text: "IDEEA in Switch (in work)"
     - text: "IDEEA in PyPSA (planned)"
