@@ -52,3 +52,5 @@ rsconnect/
 tmp/
 scenarios/
 solwork/
+
+*.DS_Store

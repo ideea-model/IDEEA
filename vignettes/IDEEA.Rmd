@@ -5,8 +5,10 @@ params:
   solve: false
 vignette: >
   %\VignetteIndexEntry{IDEEA}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -20,7 +22,7 @@ knitr::opts_chunk$set(
 ```{r setup, message=FALSE, warning=FALSE}
 library(IDEEA)
 library(ggplot2)
-source("~/.ideea/settings.R")
+# source("~/.ideea/settings.R")
 # settings
 set_default_solver(solver_options$gams_gdx_cplex_barrier)
 set_progress_bar()
@@ -30,17 +32,18 @@ set_progress_bar()
 ### Build electric power system model
 ```{r, eval=params$solve}
 # get the spatial features
-ideea_sf <- get_ideea_map(nreg = 7, offshore = FALSE)
+ideea_sf <- get_ideea_map(nreg = 5, offshore = FALSE)
 
 # select the pre-defined model
-ideea_elc <- ideea_modules$electricity$reg7_base
+ideea_elc <- ideea_modules$electricity$reg5
 
-ideea_elc$repo_ccstechs$ECOA_CCS_FL@input$group
-ideea_elc$repo_ccstechs$ECOA_CCS_FL@input$group <- "a"
+# ideea_elc$repo_ccstechs$ECOA_CCS_FL@input$group
+# ideea_elc$repo_ccstechs$ECOA_CCS_FL@input$group <- "a"
+# 
+# ideea_elc$repo_ccstechs$EGAS_CCS_FL@input$group
+# ideea_elc$repo_ccstechs$EGAS_CCS_FL@input$group <- "a"
 
-ideea_elc$repo_ccstechs$EGAS_CCS_FL@input$group
-ideea_elc$repo_ccstechs$EGAS_CCS_FL@input$group <- "a"
-
+names(ideea_elc)
 
 # create repository for the model
 repo_elc <- newRepository("repo_electricity") |>
@@ -54,10 +57,10 @@ repo_elc <- newRepository("repo_electricity") |>
     ideea_elc$EHYD, # hydro generators
     ideea_elc$WHYD, # hydro capacity factors
     ideea_elc$EBIO, # biomass generators
-    ideea_elc$ESOL, # solar generators
+    ideea_elc$ESOL_w_const, # solar generators
     ideea_elc$WSOL, # solar capacity factors
-    ideea_elc$CT_ESOL, # limits on solar investments
-    ideea_elc$EWIN, # wind generators
+    # ideea_elc$CT_ESOL, # limits on solar investments
+    ideea_elc$EWIN_w_const, # wind generators
     ideea_elc$WWIN, # wind capacity factors
     ideea_elc$repo_geoccs, # CCS storage geo-potential
     ideea_elc$repo_ccstechs, # CCS technologies
@@ -74,16 +77,17 @@ names(repo_elc)
 mod <- newModel(
   name = "mod_electricity",
   repository = repo_elc,
-  region = ideea_sf$region,
+  region = ideea_sf$reg5,
   discount = 0.05,
-  calendar = ideea_elc$full_calendar_d365_h24,
-  horizon = ideea_elc$horizon_2020_2060_by_10
+  calendar = ideea_modules$calendars$calendar_d365_h24,
+  horizon = ideea_modules$horizons$horizon_2020_2060_by_10
 )
 
 ```
 
 ### Solve base scenario
 ```{r, eval=params$solve}
+scen_BY <- interpolate(mod, horizon = newHorizon(2020, rep(1, 1)))
 
 # base year scenario (1 year only)
 scen_BY <- solve(mod, horizon = newHorizon(2020, rep(1, 1)))

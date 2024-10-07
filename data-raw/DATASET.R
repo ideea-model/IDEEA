@@ -76,7 +76,7 @@ if (F) {
   library(IDEEA)
   library(data.table)
   library(tidyverse)
-  ideea_data <- ideea_data
+  ideea_data <- IDEEA::ideea_data
   transmission <- list(
     reg5 = list(),
     reg32 = list()
@@ -105,7 +105,11 @@ if (F) {
     )
   }
   ideea_data$transmission <- transmission
-  usethis::use_data(ideea_data, internal = F, overwrite = T)
+  usethis::use_data(ideea_data,
+                    internal = F,
+                    # compress_level = 9,
+                    compress = "xz",
+                    overwrite = T)
 }
 
 ### electricity.Rmd ####
@@ -130,7 +134,10 @@ if (F) { # run manually
   )
   names(ideea_modules$electricity)
   # save to 'data/ideea_modules.rda'
-  usethis::use_data(ideea_modules, internal = F, overwrite = T)
+  usethis::use_data(ideea_modules, internal = F, overwrite = T,
+                    compress = "xz"
+                    # compression_level = 9
+                    )
   # rebuild the package
 }
 
