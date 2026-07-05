@@ -7,7 +7,6 @@
 #' @return on the first run creates file in '~/.ideea.R' with commented settings and opens the file for editing. On the second run, sources the file to load the settings. Returns TRUE invisibly if successful, or FALSE if not. The function is called with the loading of IDEEA package and sources the '~/.ideea.R' file if previously created.
 #' @export
 #'
-#' @examples
 ideea_global_options <- function(edit = FALSE, load = !edit, remove = FALSE) {
   fl <- "~/.ideea.R" # hardwired ideea options file in the system home folder
   if (!file.exists(fl)) {

@@ -54,6 +54,10 @@ ideea_gif_cf <- function(
     filename = "ideea_cl.gif"
     ) {
 
+  if (!requireNamespace("animation", quietly = TRUE)) {
+    stop("Package 'animation' is required to write GIFs with ideea_gif_cf(). ",
+         "Please install it.", call. = FALSE)
+  }
   verbose <- TRUE
   nframes <- length(slice)
 

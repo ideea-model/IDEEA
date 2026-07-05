@@ -174,7 +174,7 @@ WHYD_AF <- newWeather("WHYD_AF",
 
 ## Generating technologies
 ### Thermal
-```{r}
+```{r, fig.height=4, fig.width=5}
 gen_cap
 ii <- grepl("Thermal", gen_cap$enSource)
 summary(ii)
@@ -1025,6 +1025,7 @@ scen_KA_1Y <- write_script(
 # scen_KA_1Y@misc$tmp.dir
 scen_KA_1Y <- solve_scenario(scen_KA_1Y, wait = T)
 scen_KA_1Y <- read(scen_KA_1Y)
+summary(scen_KA_1Y)
 
 ```
 

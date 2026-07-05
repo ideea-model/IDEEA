@@ -30,7 +30,7 @@ get_ideea_map(
 
 \item{merge_islands}{logical, \code{mainland} column should be dropped (if TRUE) or added (FALSE) to the returned sf-object.}
 
-\item{...}{}
+\item{...}{additional arguments (currently unused).}
 }
 \value{
 IDEEA map with in 'sf' or 'sp' format

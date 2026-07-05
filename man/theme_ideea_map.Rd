@@ -6,6 +6,9 @@
 \usage{
 theme_ideea_map()
 }
+\value{
+A \code{ggplot2} theme object.
+}
 \description{
 ggplot theme for IDEEA maps
 }

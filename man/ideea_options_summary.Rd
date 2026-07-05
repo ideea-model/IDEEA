@@ -13,7 +13,7 @@ a list of IDEEA global options
 Summary of IDEEA global options
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 ideea_options_summary()
 \dontshow{\}) # examplesIf}
 }

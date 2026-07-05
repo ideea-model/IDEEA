@@ -7,7 +7,10 @@
 drop_process_vintage(x)
 }
 \arguments{
-\item{x}{}
+\item{x}{A data.frame with a \code{process} column.}
+}
+\value{
+\code{x} with the vintage suffix removed from its \code{process} column.
 }
 \description{
 Drop the numeric part of a names in \code{process} column of a data frame

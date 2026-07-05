@@ -7,8 +7,18 @@
 drop_cluster(name, digits = 2, cluster_flag = "CL")
 }
 \arguments{
-\item{cluster_flag}{}
+\item{name}{character vector of names.}
+
+\item{digits}{integer, number of digits in the cluster number (default 2).}
+
+\item{cluster_flag}{character prefix that may precede the cluster number (default "CL").}
+}
+\value{
+The names with the cluster identifier removed.
 }
 \description{
 Drop cluster identifier from a name
+}
+\examples{
+drop_cluster(c("ESOL_V2030_CL47", "ESOL_CL21_V2030"))
 }

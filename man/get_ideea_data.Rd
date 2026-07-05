@@ -41,6 +41,8 @@ get_ideea_data(
 
 \item{drop_na}{logical, should \code{NA} values be dropped from the data}
 
+\item{rename}{logical, if TRUE, return generic \code{region}/\code{name} columns instead of \verb{reg\{nreg\}}/\verb{name\{nreg\}} (default FALSE).}
+
 \item{reg_tbl}{data.frame with regional mapping (for custom weights or regions)}
 
 \item{weight}{character name of column to use as disaggregating weights if the disaggregation of the data is required, for example the saved data is by 5 regions, but the requested data is for 32 regions. In general, it is not recommended to disaggregate due to the strong assumptions. But the algorithm is also used to convert data from 36 to 32 regions because of not exact match of regions' shapes (see \href{https://ideea-model.github.io/IDEEA/articles/regions.html}{Regions} article). The default value is the area of the region (\code{"km^2"}) for \code{agg_fun = sum} and it is equal to \code{1} (no weights) for \code{agg_fun = mean} and all other functions.}

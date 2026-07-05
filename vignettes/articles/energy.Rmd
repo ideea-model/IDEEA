@@ -573,7 +573,8 @@ ideea_cl_sf <- get_ideea_cl_sf(resource = "win", tol = 0.05) |>
   )
 
 ggplot() +
-  geom_sf(data = ideea_sf) +
+  # geom_sf(data = ideea_sf) +
+  geom_sf(data = gis_sf) +
   geom_sf(aes(fill = MW_max/1e3), data = ideea_cl_sf) +
   scale_fill_viridis_c(option = "H", name = "GW") +
   theme_map()

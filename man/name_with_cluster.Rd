@@ -7,8 +7,19 @@
 name_with_cluster(name, cluster, ndigits = 2)
 }
 \arguments{
-\item{ndigits}{}
+\item{name}{character (vector), base name to append the cluster number to.}
+
+\item{cluster}{integer, cluster number to append.}
+
+\item{ndigits}{integer, zero-padded width of the cluster number (default 2).}
+}
+\value{
+A character vector: \code{name} with the zero-padded cluster number appended.
 }
 \description{
 Combine name with cluster number
+}
+\examples{
+name_with_cluster("SOL", 1)
+name_with_cluster("WIN_CL", 99)
 }

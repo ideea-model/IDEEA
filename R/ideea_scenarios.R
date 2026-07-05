@@ -24,10 +24,9 @@
 
 #' Get current IDEEA-scenarios directory
 #'
-#' @return
+#' @return Character path to the current IDEEA scenarios directory.
 #' @export
 #'
-#' @examples
 ideea_scenarios <- function() {
   # getOption("IDEEA.scenarios")
   energyRt::get_scenarios_path()
@@ -36,10 +35,9 @@ ideea_scenarios <- function() {
 
 #' List saved scenarios in the IDEEA-scenarios directory
 #'
-#' @return
+#' @return A character vector of saved scenario directory names.
 #' @export
 #'
-#' @examples
 ideea_scenarios_list <- function() {
   path <- ideea_scenarios()
   if (is.null(path)) {

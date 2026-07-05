@@ -2040,9 +2040,9 @@ scen_REF_sub@path
 
 scen_REF_sub <- write_sc(
   scen_REF_sub,
-  solver = solver_options$gams_gdx_cplex_barrier
+  # solver = solver_options$gams_gdx_cplex_barrier
   # solver = solver_options$gams_gdx_cplex_parallel
-  # solver = solver_options$julia_highs_barrier
+  solver = solver_options$julia_highs_barrier
   # solver = solver_options$julia_highs_simplex
   # solver = solver_options$julia_highs_parallel
 )
@@ -2050,7 +2050,7 @@ scen_REF_sub@status
 scen_REF_sub@misc$tmp.dir
 
 # solve_scenario(scen_REF_sub, wait = F, force = F)
-scen_REF_sub <- solve(scen_REF_sub, wait = F, tmp.del = F)
+scen_REF_sub <- solve(scen_REF_sub, wait = T, tmp.del = F)
 scen_REF_sub <- read(scen_REF_sub)
 
 # store scenario on disk (unload from RAM)
