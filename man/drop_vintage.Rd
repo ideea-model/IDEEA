@@ -9,6 +9,9 @@ drop_vintage(x)
 \arguments{
 \item{x}{A character vector}
 }
+\value{
+The input character vector with a trailing \verb{_<number>} (vintage) suffix removed.
+}
 \description{
 Drop the numeric part of a string (aka vintage in names of technologies)
 }

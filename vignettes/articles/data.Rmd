@@ -108,8 +108,15 @@ ggplot() +
 The next step is to acquire weather data from MERRA-2 dataset, time-series for every location (cell) that will be further used to estimate capacity factors for wind and solar generators by hours. We use `merra2ools` package to streamline the process. The weather data available from 1980 to 2020. In this example we sample locations for 2019, that is embedded in the IDEEA R-package. Other years are available for download from IDEEA's Zenodo repository, and can be attached using `ideea_extra()` function.  
 
 ```{r, eval=FALSE}
+# TEMPORARY PATCH TO UPDATE MERRA2
+devtools::load_all("C:/Users/admin/Documents/R/merra2ools")
+get_merra2_dir()
+set_merra2_options(merra2.arrow.dir = "D:/merra2_arrow2")
+
 overwrite <- FALSE
-for (wyear in seq(2020, 1981, -1)) {
+# for (wyear in seq(2020, 1981, -1)) {
+for (wyear in seq(2023, 2024, 1)) {
+  # stop()
   fname <- ideea_extra("merra2", glue("merra_raw_{wyear}.fst")) # file to save
   # fpath <- ideea_extra("merra2", fname) # file name with path
   if (file.exists(fname) & !overwrite) {
@@ -123,9 +130,13 @@ for (wyear in seq(2020, 1981, -1)) {
     tz = "Asia/Kolkata"
     )
   # merra <- merra |> select(UTC, locid, W10M, W50M, SWGDN, ALBEDO)
+  merra <- merra |> 
+    select(all_of(
+      c("UTC", "locid", "W10M", "W50M", "WDIR", "T10M", "SWGDN", "ALBEDO", 
+        "PRECTOTCORR", "RHOA")))
   message("Saving 'raw' data: ", fname)
   fst::write_fst(merra, path = fname, compress = 100)
-  cat("File size:", {file.size(fname) |> gdata::humanReadable()}, "\n"
+  cat("File size:", gdata::humanReadable(file.size(fname)), "\n")
 }
 ```
 
@@ -231,7 +242,7 @@ for (nreg in c(5, 32)) {
 #### Cluster locations
 ```{r}
 # make a sample of capacity factors time-series for clustering
-merra <- fst::read_fst(ideea_extra("merra2", "merra_raw_2019.fst"), 
+merra <- fst::read_fst(ideea_extra("merra2", "merra_raw_2024.fst"), 
                        as.data.table = TRUE) 
 
 # estimate capacity factors at different hub-heights
@@ -243,8 +254,8 @@ merra_wind <-  merra |>
   select("UTC", "locid", starts_with("wcf_"))
 
 # cluster locations based on 
-for (nreg in c(5, 32)) {
-# for (nreg in c(32)) {
+# for (nreg in c(5, 32)) {
+for (nreg in c(32)) {
   
   regN <- glue("reg{nreg}") 
   regN_off <- glue("reg{nreg}_off") 

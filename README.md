@@ -17,7 +17,7 @@ Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](c
 
 Indian Zero Carbon Energy Pathways (IDEEA) is a collaborative open
 energy modeling initiative between [Environmental Defense
-Fund](www.edf.org), [Global Change Programme, Jadavpur
+Fund](https://www.edf.org), [Global Change Programme, Jadavpur
 University](http://juglobalchangeprogram.org/gcp/), and [Indian
 Institute of Science, Energy Transition Group](https://iisc.ac.in/) to
 develop tools and scenarios of India’s energy transition. The project
@@ -25,6 +25,12 @@ aims evaluation a broad set of scenarios with high penetration of
 variable renewables and identify a set of most cost-efficient options of
 deep decarbonization and carbon neutrality for India for broad public
 discussion.
+
+The project was started at the [Environmental Defense
+Fund](https://www.edf.org) (EDF, 2019–2022) and is now developed
+independently. A new, **full energy-system** version of IDEEA is under
+development by the [World Resources Institute](https://www.wri.org)
+(WRI), expected later in 2026.
 
 ## IDEEA models
 

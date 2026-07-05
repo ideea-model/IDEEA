@@ -78,7 +78,7 @@ if (F) {
 
 if (F) {
   # patch: extend investment period for 2050 techs (2024-06-27)
-  library(IEEEA); library(data.table)
+  library(IDEEA); library(data.table)
   ideea_modules <- IDEEA::ideea_modules
   techs <- ideea_modules$techs
   techs |> class()
@@ -103,4 +103,19 @@ if (F) {
 
   usethis::use_data(ideea_modules, internal = F, overwrite = T)
   # rebuild the package
+}
+
+if (F) {
+  # patch: add reg35 to reg_tbl
+  # C:\Users\admin\Documents\R\WRI\IDEEA-Internal-Repo\data\ideea_regions.csv
+  library(data.table)
+  ideea_data <- IDEEA::ideea_data
+  ideea_data$reg_tbl
+  reg_tbl <- fread("C:/Users/admin/Documents/R/WRI/IDEEA-Internal-Repo/data/ideea_regions.csv")
+  reg_tbl$name35
+  ideea_data$reg_tbl <- reg_tbl
+
+  # save to the package data
+  usethis::use_data(ideea_data, internal = F, overwrite = T)
+
 }

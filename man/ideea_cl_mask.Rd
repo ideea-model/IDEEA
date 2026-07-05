@@ -7,8 +7,16 @@
 ideea_cl_mask(tol, width = 2)
 }
 \arguments{
-\item{tol}{}
+\item{tol}{numeric in \verb{[0, 1]}, the cluster loss tolerance.}
+
+\item{width}{integer, zero-padded width of the tolerance in the mask (default 2).}
+}
+\value{
+A character file-mask string such as \code{"TOL05"}.
 }
 \description{
 Cluster
+}
+\examples{
+ideea_cl_mask(0.05)
 }

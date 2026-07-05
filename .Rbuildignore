@@ -10,3 +10,5 @@ dev/
 solwork/
 scenarios/
 tmp/
+^\.positai$
+^\.claude$

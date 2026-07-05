@@ -19,7 +19,21 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: IDEEA comunity \email{ideea@email.org}
+\strong{Maintainer}: Oleg Lugovoy \email{olugovoy@optimalsolution.dev} (\href{https://orcid.org/0000-0001-5546-9875}{ORCID})
+
+Authors:
+\itemize{
+  \item Oleg Lugovoy \email{olugovoy@optimalsolution.dev} (\href{https://orcid.org/0000-0001-5546-9875}{ORCID})
+  \item Praveen P \email{praveenp1@iisc.ac.in} (\href{https://orcid.org/0000-0001-5546-9875}{ORCID})
+  \item Tarun Sharma \email{tarunsharma@ms.iitr.ac.in} (\href{https://orcid.org/0000-0003-3636-2858}{ORCID})
+  \item Sourish Chatterjee \email{sourish.ju09@gmail.com} (\href{https://orcid.org/0000-0001-5042-9831}{ORCID})
+  \item Balachandra Patil \email{patilb@iisc.ac.in} (\href{https://orcid.org/0000-0002-5218-2112}{ORCID})
+  \item Arijit Mukherjee \email{arijitgcprf2021@gmail.com} (\href{https://orcid.org/0000-0002-3554-1216}{ORCID})
+  \item Varun Jyothiprakash \email{varunjyothiprakash@gmail.com} (\href{https://orcid.org/0000-0002-3628-4960}{ORCID})
+  \item Arvind Singh Bisht \email{iarvindbisht@gmail.com} (\href{https://orcid.org/0000-0003-4738-4243}{ORCID})
+  \item Abhishek Das \email{abhishekdas1@iisc.ac.in} (\href{https://orcid.org/0000-0001-8236-3574}{ORCID})
+  \item Ankit Sharma \email{imankitsharma2020@gmail.com} (\href{https://orcid.org/0009-0008-0453-5965}{ORCID})
+}
 
 }
 \keyword{internal}

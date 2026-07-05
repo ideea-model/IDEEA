@@ -6,6 +6,9 @@
 \usage{
 ideea_scenarios()
 }
+\value{
+Character path to the current IDEEA scenarios directory.
+}
 \description{
 Get current IDEEA-scenarios directory
 }

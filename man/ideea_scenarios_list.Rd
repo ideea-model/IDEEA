@@ -6,6 +6,9 @@
 \usage{
 ideea_scenarios_list()
 }
+\value{
+A character vector of saved scenario directory names.
+}
 \description{
 List saved scenarios in the IDEEA-scenarios directory
 }

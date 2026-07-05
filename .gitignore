@@ -54,3 +54,4 @@ scenarios/
 solwork/
 
 *.DS_Store
+.positai

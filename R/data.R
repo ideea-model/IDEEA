@@ -7,7 +7,7 @@
 #' @param rename logical, if TRUE, the `region` and `name` will be returned instead of `reg{nreg}` and `name{nreg}`
 #' @param reg_off logical, if TRUE, `reg_off` or `reg{nreg}_off` column will be added with added `_off` to the names of offshore areas/regions.
 #' @param merge_islands logical, `mainland` column should be dropped (if TRUE) or added (FALSE) to the returned sf-object.
-#' @param ...
+#' @param ... additional arguments (currently unused).
 #'
 #' @return IDEEA map with in 'sf' or 'sp' format
 #' @export
@@ -118,7 +118,7 @@ if (F) {
 #' @param sets character, a regular expression to identify key-columns in the datasets, used for grouping. The default value (`IDEEA:::.ideea_sets_pattern`) covers all sets in the embedded to the package data. If new datasets added with different names of sets, the default value has to be reviewed.
 #' @param as_DT logical, results will be returned in `data.table` format if TRUE (default)
 #' @param drop_na logical, should `NA` values be dropped from the data
-#' @param rename
+#' @param rename logical, if TRUE, return generic `region`/`name` columns instead of `reg{nreg}`/`name{nreg}` (default FALSE).
 #' @param reg_tbl data.frame with regional mapping (for custom weights or regions)
 #' @param weight character name of column to use as disaggregating weights if the disaggregation of the data is required, for example the saved data is by 5 regions, but the requested data is for 32 regions. In general, it is not recommended to disaggregate due to the strong assumptions. But the algorithm is also used to convert data from 36 to 32 regions because of not exact match of regions' shapes (see [Regions](https://ideea-model.github.io/IDEEA/articles/regions.html) article). The default value is the area of the region (`"km^2"`) for `agg_fun = sum` and it is equal to `1` (no weights) for `agg_fun = mean` and all other functions.
 #'

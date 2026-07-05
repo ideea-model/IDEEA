@@ -6,6 +6,16 @@
 \usage{
 drop_process_cluster(x, digits = 2, cluster_flag = "CL")
 }
+\arguments{
+\item{x}{A data.frame with a \code{process} column.}
+
+\item{digits}{integer, number of digits in the cluster number (default 2).}
+
+\item{cluster_flag}{character prefix that may precede the cluster number (default "CL").}
+}
+\value{
+\code{x} with the cluster identifier dropped from its \code{process} column.
+}
 \description{
 Drop cluster identifier from a process name
 }

@@ -4,8 +4,10 @@ output: pdf_document
 # output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{transport}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -20,6 +22,7 @@ knitr::opts_chunk$set(
 ```{r setup, warning=FALSE, message=FALSE}
 library(IDEEA)
 library(data.table)
+# library(energyRt.dev)
 ```
 
 Here we develop a transportation sector model for India with several sub-sectors or branches:  
@@ -148,7 +151,8 @@ LDVG <- newTechnology(
     act2aout = c(NA, .01) # find emissions data per km
     )
   )
-  
+
+energyRt::draw(LDVG)
 draw(LDVG)
 
 ```

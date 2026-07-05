@@ -6,7 +6,6 @@
 #' @return (invisible) logical, TRUE if the directory is set, FALSE otherwise.
 #' @export
 #'
-#' @examples
 set_ideea_extra <- function(path = NULL) {
   # browser()
   if (!is.null(path) && path != "") {
@@ -109,6 +108,10 @@ get_ideea_cf <- function(
     # file_name = "auto",
     overwrite = FALSE
 ) {
+  if (!requireNamespace("fst", quietly = TRUE)) {
+    stop("Package 'fst' is required by get_ideea_cf() to read/write ",
+         "capacity-factor data files. Please install it.", call. = FALSE)
+  }
   # browser()
   tmask <- ideea_cl_mask(tol)
   cf_file <- ideea_extra(
@@ -120,6 +123,17 @@ get_ideea_cf <- function(
     message("Reading capacity factors data from:"); cat("  ", cf_file, "\n")
     merra_cf_cl <- fst::read_fst(cf_file, as.data.table = TRUE)
   } else if (data == "merra2") {
+    # merra2ools and lubridate are optional (Suggests) dependencies, only needed
+    # to compute capacity factors from raw MERRA2 reanalysis data.
+    .need <- c("merra2ools", "lubridate")
+    .miss <- .need[!vapply(.need, requireNamespace, logical(1), quietly = TRUE)]
+    if (length(.miss)) {
+      stop("Package(s) ", paste(sQuote(.miss), collapse = ", "), " are required ",
+           "to compute capacity factors from raw MERRA2 data (`data = \"merra2\"`). ",
+           "Install merra2ools from https://github.com/optimal2050/merra2ools, ",
+           "or use precomputed capacity factors via `load_from_extra = TRUE`.",
+           call. = FALSE)
+    }
     # load raw MERRA2 data
     merra_file <- ideea_extra(data, glue(data_file))
     message("Reading MERRA2 data:"); cat("  ", merra_file, "\n")
@@ -359,6 +373,10 @@ get_ideea_cl_sf <- function(
     data = "merra2",
     clusters_sf_file = "locid_{resource}_cl_r{nreg}_sf.RData"
 ) {
+  if (!requireNamespace("units", quietly = TRUE)) {
+    stop("Package 'units' is required by get_ideea_cl_sf(). Please install it.",
+         call. = FALSE)
+  }
   # browser()
   fl <- ideea_extra(data, glue("locid_{resource}_cl_r{nreg}_sf.RData"))
   if (!file.exists(fl)) {

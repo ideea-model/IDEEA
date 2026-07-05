@@ -41,6 +41,5 @@
 #' @importFrom glue glue
 #' @importFrom readr write_lines
 #' @importFrom stringr str_extract
-#' @importFrom units set_units
 ## usethis namespace: end
 NULL

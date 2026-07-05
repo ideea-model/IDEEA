@@ -12,7 +12,6 @@ tech_type_levels <- c(
 #' @return x data.frame with added or overwritten 'tech_type' column.
 #' @export
 #'
-#' @examples
 add_tech_type <- function(x, factors = TRUE, force = TRUE) {
   x <- x |>
     mutate(tech_type = process) |>
@@ -137,10 +136,9 @@ ideea_snapshot <- function(scen, YEAR, SLICE, return_data = FALSE) {
 
 #' ggplot theme for IDEEA maps
 #'
-#' @return
+#' @return A `ggplot2` theme object.
 #' @export
 #'
-#' @examples
 theme_ideea_map <- function() {
   theme_bw() +
     theme(

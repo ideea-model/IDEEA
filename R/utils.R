@@ -2,7 +2,7 @@
 #'
 #' @param x A character vector
 #'
-#' @return
+#' @return The input character vector with a trailing `_<number>` (vintage) suffix removed.
 #' @export
 #'
 #' @examples
@@ -15,9 +15,9 @@ drop_vintage <- function(x) {
 
 #' Drop the numeric part of a names in `process` column of a data frame
 #'
-#' @param x
+#' @param x A data.frame with a `process` column.
 #'
-#' @return
+#' @return `x` with the vintage suffix removed from its `process` column.
 #' @export
 #'
 #' @examples
@@ -61,8 +61,6 @@ drop_process_vintage <- function(x) {
 #'
 #' @return data frame with added column `regN_off`
 #' @export
-#'
-#' @examples
 #'
 add_reg_off <- function(x, regN,
                         regN_off = paste0(regN, "_off"),

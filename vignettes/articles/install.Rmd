@@ -47,7 +47,8 @@ pkg_install("sf", upgrade = TRUE) # working with GIS/maps
 pkg_install("reticulate", upgrade = TRUE) # running Python from R
 # install energyRt and merra2ools
 pkg_install("energyRt/merra2ools") # (fix version later)
-pkg_install("energyRt/energyRt@v0.50") # (fix version later)
+pkg_install("energyRt/energyRt@v0.50") #
+pkg_install("energyRt/globalwindatlas") #
 # install IDEEA
 pkg_install("ideea-model/IDEEA@v0.50") 
 # GAMS users may want to install `gdxtools` (see GAMS section)

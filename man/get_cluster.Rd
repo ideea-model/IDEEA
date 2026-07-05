@@ -7,8 +7,19 @@
 get_cluster(name, digits = 2, cluster_flag = "CL")
 }
 \arguments{
-\item{cluster_flag}{}
+\item{name}{character vector of names to extract the cluster number from.}
+
+\item{digits}{integer, number of digits in the cluster number (default 2).}
+
+\item{cluster_flag}{character prefix that may precede the cluster number (default "CL").}
+}
+\value{
+A character vector of the extracted cluster numbers (\code{NA} where none found).
 }
 \description{
 Extract cluster string or number from a name
+}
+\examples{
+get_cluster(c("ESOL_2030_47", "ESOL_21_2030"))
+get_cluster("ESOL_CL2030_471", digits = 3)
 }
